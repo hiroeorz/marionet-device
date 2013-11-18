@@ -39,8 +39,12 @@ typedef struct {
    ETERM* modep;
 } isr_t;
 
+int
+pthread_tryjoin_np(pthread_t thread, void **retval);
 
-static int gpio_valfd (int);
+static int
+gpio_valfd (int);
+
 ETERM*
 gpio_set_int (ETERM* pinp, ETERM* pidp, 
               void (*isr) (ETERM*, ETERM*, ETERM*), ETERM* modep);
