@@ -1,0 +1,45 @@
+%% -*- mode: erlang;erlang-indent-level: 4;indent-tabs-mode: nil -*-
+%% ex: ts=4 sw=4 ft=erlang et
+
+{application, rgpio,
+ [
+  {description, ""},
+  {vsn, "1"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+  {mod, { rgpio_app, []}},
+  {env, [
+         %% {PinNo, ReadWriteMode, WatchMode}
+         {gpio, [
+                 { 1, dummy, none},
+                 { 2, in,    falling},
+                 { 3, in,    rising},
+                 { 4, in,    both},
+                 { 5, dummy, none},
+                 { 6, dummy, none},
+                 { 7, in,    both},
+                 { 8, in,    both},
+                 { 9, in,    both},
+                 {10, in,    both},
+                 {11, in,    both},
+                 {12, dummy, none},
+                 {13, dummy, none},
+                 {14, in,    both},
+                 {15, in,    both},
+                 {16, dummy, none},
+                 {17, in,    both},
+                 {18, in,    both},
+                 {19, dummy, none},
+                 {20, dummy, none},
+                 {21, dummy, none},
+                 {22, out,   none},
+                 {23, out,   none},
+                 {24, out,   none},
+                 {25, out,   none},
+                 {27, out,   none}
+                ]}
+  ]}
+ ]}.

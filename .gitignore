@@ -1,0 +1,13 @@
+*.beam
+doc/*.html
+ebin
+.eunit
+*~
+erl_crash.dump
+deps
+.DS_Store
+log
+eunit.coverage.xml
+_build
+eunit.coverage.xml
+priv/rgpio_lib
