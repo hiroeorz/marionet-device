@@ -11,3 +11,4 @@ eunit.coverage.xml
 _build
 eunit.coverage.xml
 priv/rgpio_lib
+c_src/*.o
