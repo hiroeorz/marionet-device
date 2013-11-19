@@ -16,6 +16,20 @@ $ cd RaspberryPiGPIO
 $ make
 ```
 
+Or add deps line to your app's rebar.conf.
+
+```erlang
+{rgpio, ".*", {git, "https://github.com/hiroeorz/RaspberryPiGPIO.git",
+   {branch, "master"}}},
+
+```
+
+and get deps
+
+```
+$ ./rebar get-deps
+```
+
 ## Running
 
 check [default setting of gpio](https://github.com/hiroeorz/RaspberryPiGPIO/blob/master/src/rgpio.app.src).
@@ -26,22 +40,24 @@ You can change pin setting by modifing above file, if you need.
 
 ### Start application.
 
+You must run rgpio as root. Because rgpio access to /dev/mem. /dev/mem is allowed writable access from root only.
+
 ```
-$ ./start-dev
+$ sudo ./start-dev
 ```
- 
+
 ```erl-sh
 1> rgpio:start().
 ```
 
-### Read gpio
+### Read gpio value
 
 ```erl-sh
 1> rgpio:read(18).
 0
 ```
 
-### Write
+### Write value to gpio
 
 ```erl-sh
 1> rgpio:write(18, 1).
