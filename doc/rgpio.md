@@ -54,7 +54,10 @@ packed_status() -&gt; [non_neg_integer()]
 get status list that packed to 16bit unsigned integer.
 
 
+
 example: [16390,0]
+
+
 主にサーバーへの送信データサイズを減らす為の関数。
 各pinの状態を16点毎にまとめて16bit整数のリストを返します。
 RaspberryPiのGPIO点数では必要ありませんが、PLCなどもっと点数の多いものと一緒に
@@ -75,7 +78,7 @@ pulldown(PinNo) -&gt; ok
 set pulldown to a pin.
 
 
-RaspberryPi内蔵のプルダウン抵抗を用いてpinをプルアップありに設定します
+RaspberryPi内蔵のプルダウン抵抗を用いてpinをプルダウン有りに設定します
 入力無しの状態で常時GND接地の0.0Vとなり、3.3Vと短絡された場合のみ1となります
 <a name="pullnone-1"></a>
 
@@ -109,7 +112,7 @@ pullup(PinNo) -&gt; ok
 set pullup to a pin.
 
 
-RaspberryPi内蔵のプルアップ抵抗を用いてpinをプルアップありに設定します
+RaspberryPi内蔵のプルアップ抵抗を用いてpinをプルアップ有りに設定します
 入力無しの状態で常時3.3Vの電圧がかかり、GNDと接地された場合のみ0となります
 <a name="read-1"></a>
 

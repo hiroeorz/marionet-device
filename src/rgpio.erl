@@ -127,6 +127,7 @@ status([{PinNo, _Mode, _Edge} | Tail], Result) ->
 %% @doc get status list that packed to 16bit unsigned integer.
 %%
 %% example: [16390,0]
+%%
 %% 主にサーバーへの送信データサイズを減らす為の関数。
 %% 各pinの状態を16点毎にまとめて16bit整数のリストを返します。
 %% RaspberryPiのGPIO点数では必要ありませんが、PLCなどもっと点数の多いものと一緒に
