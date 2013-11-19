@@ -17,19 +17,33 @@ __Authors:__ HIROE Shin ([`shin@HIROE-no-MacBook-Pro.local`](mailto:shin@HIROE-n
 ## Function Index ##
 
 
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#set_int-2">set_int/2</a></td><td></td></tr><tr><td valign="top"><a href="#start_link-0">start_link/0</a></td><td>
-Starts the server.</td></tr></table>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#pulldown-1">pulldown/1</a></td><td></td></tr><tr><td valign="top"><a href="#pullnone-1">pullnone/1</a></td><td></td></tr><tr><td valign="top"><a href="#pullup-1">pullup/1</a></td><td></td></tr><tr><td valign="top"><a href="#start_link-0">start_link/0</a></td><td>
+Starts the server.</td></tr><tr><td valign="top"><a href="#start_poll-2">start_poll/2</a></td><td></td></tr></table>
 
 
 <a name="functions"></a>
 
 ## Function Details ##
 
-<a name="set_int-2"></a>
+<a name="pulldown-1"></a>
 
-### set_int/2 ###
+### pulldown/1 ###
 
-`set_int(PinNo, Mode) -> any()`
+`pulldown(PinNo) -> any()`
+
+
+<a name="pullnone-1"></a>
+
+### pullnone/1 ###
+
+`pullnone(PinNo) -> any()`
+
+
+<a name="pullup-1"></a>
+
+### pullup/1 ###
+
+`pullup(PinNo) -> any()`
 
 
 <a name="start_link-0"></a>
@@ -46,4 +60,11 @@ start_link() -&gt; {ok, Pid} | ignore | {error, Error}
 
 
 Starts the server
+
+<a name="start_poll-2"></a>
+
+### start_poll/2 ###
+
+`start_poll(PinNo, Mode) -> any()`
+
 

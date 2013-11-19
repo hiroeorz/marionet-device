@@ -12,7 +12,10 @@
 
 %% API
 -export([start_link/0,
-	 set_int/2]).
+	 start_poll/2,
+	 pullup/1,
+	 pulldown/1,
+	 pullnone/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -20,7 +23,8 @@
 
 -define(SERVER, ?MODULE).
 
--record(state, {pid_dict = dict:new() :: dict()}).
+-record(state, {pid_dict = dict:new() :: dict(),
+		c_node                :: atom()}).
 
 %%%===================================================================
 %%% API
@@ -36,8 +40,17 @@
 start_link() ->
     gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
 
-set_int(PinNo, Mode) ->
-    gen_server:call(?SERVER, {set_int, PinNo, Mode}).    
+start_poll(PinNo, Mode) ->
+    gen_server:call(?SERVER, {start_poll, PinNo, Mode}).    
+
+pullup(PinNo) ->
+    gen_server:call(?SERVER, {pullup_down, PinNo, pullup}).
+
+pulldown(PinNo) ->
+    gen_server:call(?SERVER, {pullup_down, PinNo, pulldown}).
+
+pullnone(PinNo) ->
+    gen_server:call(?SERVER, {pullup_down, PinNo, none}).
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -59,7 +72,9 @@ init([]) ->
 			      os:cmd("./priv/rgpio_lib"),
 			      erlang:error(port_process_down)
 		      end),
-    {ok, #state{}}.
+
+    {ok, C_Node} = application:get_env(rgpio, c_node),
+    {ok, #state{c_node = C_Node}}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -75,9 +90,18 @@ init([]) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_call({set_int, PinNo, Mode}, From, State) ->
+handle_call({start_poll, PinNo, Mode}, From, State) ->
     Ref = make_ref(),
-    {any, 'c1@raspberrypi'} ! {call, self(), Ref, {set_int, PinNo, Mode}},
+    C_Node = State#state.c_node,
+    {any, C_Node} ! {call, self(), Ref, {start_poll, PinNo, Mode}},
+
+    NewDict = dict:store(Ref, From, State#state.pid_dict),
+    {noreply, State#state{pid_dict = NewDict}};
+
+handle_call({pullup_down, PinNo, Mode}, From, State) ->
+    Ref = make_ref(),
+    C_Node = State#state.c_node,
+    {any, C_Node} ! {call, self(), Ref, {pullup_down, PinNo, Mode}},
 
     NewDict = dict:store(Ref, From, State#state.pid_dict),
     {noreply, State#state{pid_dict = NewDict}}.
@@ -111,8 +135,8 @@ handle_info({Ref, Reply}, State) ->
     gen_server:reply(From, Reply),
     {noreply, State#state{pid_dict = NewDict}};
 
-handle_info({gpio_changed, PinNo, Mode}, State) ->
-    io:format("changed: ~w : ~w", [PinNo, Mode]),
+handle_info({gpio_changed, _PinNo, _Mode} = Event, State) ->
+    gen_event:notify(rgpio_event, Event),
     {noreply, State};
 
 handle_info(Info, State) ->

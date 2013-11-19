@@ -1,5 +1,9 @@
 /* rgpio_lib.c */
 
+/*  taken from erlan_ale
+ *  https://github.com/esl/erlang_ale/blob/master/c_src/gpio_node.c 
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -9,6 +13,7 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/mman.h>
 #include <netinet/in.h>
 #include <poll.h>
 #include <pthread.h>
@@ -18,8 +23,6 @@
 #include "ei.h"
 
 #define BUFSIZE 1000
-#define NODE "rgpio@raspberrypi"
-
 #define DEBUG 1
 
 #ifdef DEBUG
@@ -42,12 +45,24 @@ typedef struct {
 int
 pthread_tryjoin_np(pthread_t thread, void **retval);
 
+void
+get_hostname(char* name);
+
+void
+strstrip(char *s);
+
 static int
 gpio_valfd (int);
 
+void
+gpio_init();
+
 ETERM*
-gpio_set_int (ETERM* pinp, ETERM* pidp, 
-              void (*isr) (ETERM*, ETERM*, ETERM*), ETERM* modep);
+gpio_pullup_down(ETERM* pinp, ETERM* modep);
+
+ETERM*
+gpio_start_poll (ETERM* pinp, ETERM* pidp, 
+		 void (*isr) (ETERM*, ETERM*, ETERM*), ETERM* modep);
 void
 handle_gpio_interrupt (ETERM* pinp, ETERM* pidp, ETERM* modep);
 
@@ -56,13 +71,22 @@ isr_handler (void *isr);
 
 int
 main(int argc, char **argv) {
-  int loop = 1;                /* Loop flag                       */
-  int got;                     /* result of receive               */
-  unsigned char buf[BUFSIZE];  /* Buffer for incomming message    */
-  ErlMessage emsg;             /* Incoming message                */
-  
+  int loop = 1;                         /* Loop flag                       */
+  int got;                              /* Result of receive               */
+  unsigned char buf[BUFSIZE];           /* Buffer for incomming message    */
+  ErlMessage emsg;                      /* Incoming message                */
+  char hostname[255];                   /* Node hostname                   */
+  char erlang_nodename[255] = "rgpio@"; /* Node name                       */
+
+  /* initialize memory map */
+  gpio_init();
+
   /* Representations of Erlang terms */
   ETERM *msg_type, *fromp, *refp, *tuplep, *fnp, *arg1p, *arg2p, *resp;
+
+  get_hostname(hostname);
+  strcat(erlang_nodename, hostname);
+  strstrip(erlang_nodename);
 
   /* initialize erl_interface (once only) */
   erl_init(NULL, 0);
@@ -71,7 +95,7 @@ main(int argc, char **argv) {
   if (erl_connect_init(1, "rgpio", 0) == -1 )
     erl_err_quit("erl_connect_init");
 
-  if ((fd_erlang_node = erl_connect(NODE)) < 0)
+  if ((fd_erlang_node = erl_connect(erlang_nodename)) < 0)
     erl_err_quit("erl_connect");
 
   while(loop) {
@@ -98,11 +122,15 @@ main(int argc, char **argv) {
 	if (strncmp(ERL_ATOM_PTR(msg_type), "call", 4) == 0) {
 	  /* call expects a msg back */
 	  /* always at least one argument so we get that out first*/
-	  arg1p = erl_element(2, tuplep);              
+	  arg1p = erl_element(2, tuplep); // pin number           
 
-	  if (strncmp(ERL_ATOM_PTR(fnp), "set_int", 7) == 0) {
+	  if (strncmp(ERL_ATOM_PTR(fnp), "start_poll", 10) == 0) {
 	    arg2p = erl_element(3, tuplep);
-	    resp = gpio_set_int(arg1p, fromp, handle_gpio_interrupt, arg2p);
+	    resp = gpio_start_poll(arg1p, fromp, handle_gpio_interrupt, arg2p);
+	  }
+	  else if (strncmp(ERL_ATOM_PTR(fnp), "pullup_down", 11) == 0) {
+	    arg2p = erl_element(3, tuplep);
+	    resp = gpio_pullup_down(arg1p, arg2p);
 	  }
 	  
 	  printf("return msg!\n");
@@ -126,9 +154,129 @@ main(int argc, char **argv) {
   return 0;
 }
 
+void
+get_hostname(char* name)
+{
+   FILE *f;
+   
+   if( !(f = popen("hostname -s", "r")) ){
+      perror("Can't execute cmd");
+   }
+   
+   fgets(name, 255, f);
+
+}
+
+void
+strstrip( char *s )
+{
+   char *start;
+   char *end;
+
+   // Exit if param is NULL pointer
+   if (s == NULL)
+      return;
+
+   // Skip over leading whitespace
+   start = s;
+   while ((*start) && isspace(*start))
+      start++;      
+
+   // Is string just whitespace?
+   if (!(*start)) 
+   {         
+      *s = 0x00; // Truncate entire string
+      return;     
+   }     
+
+   // Find end of string
+   end = start;
+   while (*end)         
+      end++;     
+
+   // Step back from NUL
+   end--;      
+
+   // Step backward until first non-whitespace
+   while ((end != start) && isspace(*end))         
+      end--;     
+
+   // Chop off trailing whitespace
+   *(end + 1) = 0x00;
+
+   // If had leading whitespace, then move entire string back to beginning
+   if (s != start)
+      memmove(s, start, end-start+1);      
+
+   return; 
+} 
+
+#define PERI_BASE 0x20000000
+#define GPIO_BASE (PERI_BASE + 0x200000)
+#define BLOCK_SIZE 4096
+#define GPIO_PULLNONE 0x0
+#define GPIO_PULLDOWN 0x1
+#define GPIO_PULLUP   0x2
+static volatile unsigned int *gpio;
+
+void
+gpio_init()
+{
+  int fd;
+  void *gpio_map;
+
+  fd = open ("/dev/mem", O_RDWR | O_SYNC);
+  if (fd < 0) {
+    printf("error: cannot open /dev/mem\n");
+    exit(-1);
+  }
+
+  gpio_map = mmap(NULL, BLOCK_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED,
+		  fd, GPIO_BASE);
+
+  if ((int) gpio_map ==  -1) {
+    printf("error: cannot open /dev/mem on the memory\n");
+    exit(-1);
+  }
+
+  close(fd);
+  gpio = (unsigned int *) gpio_map;
+}
+
 ETERM*
-gpio_set_int (ETERM* pinp, ETERM* pidp,
-              void (*isr) (ETERM*, ETERM*, ETERM*), ETERM* modep)
+gpio_pullup_down(ETERM* pinp, ETERM* modep)
+{
+  int pin = ERL_INT_VALUE(pinp);
+  int pullmode = 0;
+
+  if (strncmp(ERL_ATOM_PTR(modep), "pullup", 6) == 0) {
+    printf("pullup: %d\n", pin);
+    pullmode = GPIO_PULLUP;
+  }
+  else if (strncmp(ERL_ATOM_PTR(modep), "pulldown", 8) == 0) {
+    printf("pulldown: %d\n", pin);
+    pullmode = GPIO_PULLDOWN;
+  }
+  else if (strncmp(ERL_ATOM_PTR(modep), "none", 4) == 0) {
+    printf("pullnone: %d\n", pin);
+    pullmode = GPIO_PULLNONE;
+  }
+
+  gpio[37] = pullmode & 0x3;
+  usleep(1);
+
+  gpio[38] = 0x1 << pin;
+  usleep(1);
+
+  gpio[37] = 0;
+  gpio[38] = 0;
+
+  return erl_format("ok");
+}
+
+ETERM*
+gpio_start_poll (ETERM* pinp, ETERM* pidp,
+		 void (*isr) (ETERM*, ETERM*, ETERM*), ETERM* modep)
 {
   /* Details of the ISR */
   isr_t *i = (isr_t *) malloc (sizeof (isr_t));
@@ -184,7 +332,6 @@ isr_handler (void *isr) {
 	  fdset[0].events = POLLPRI;
 
 	  rc = poll (fdset, nfds, 10000);	/* Timeout in ms */
-	  printf("loop\n");
 
 	  if (rc < 0)
 	    {

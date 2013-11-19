@@ -10,8 +10,7 @@
 %% ===================================================================
 
 start(_StartType, _StartArgs) ->
-    {ok, GpioList} = application:get_env(gpio),
-    rgpio_sup:start_link(GpioList).
+    rgpio_sup:start_link().
 
 stop(_State) ->
     ok.

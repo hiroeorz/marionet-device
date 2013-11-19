@@ -4,7 +4,7 @@
 {application, rgpio,
  [
   {description, ""},
-  {vsn, "1"},
+  {vsn, "0.1"},
   {registered, []},
   {applications, [
                   kernel,
@@ -12,34 +12,46 @@
                  ]},
   {mod, { rgpio_app, []}},
   {env, [
-         %% {PinNo, ReadWriteMode, WatchMode}
+         %% {PinNo, ReadWriteMode, Edge, PullMode}
+         %% PinNo         :: 1 .. 27
+         %% ReadWriteMode :: in      | out    | dummy
+         %% Edge          :: falling | rising | both   | none
+         %% PullMode      :: up      | down   | none
          {gpio, [
-                 { 1, dummy, none},
-                 { 2, in,    falling},
-                 { 3, in,    rising},
-                 { 4, in,    both},
-                 { 5, dummy, none},
-                 { 6, dummy, none},
-                 { 7, in,    both},
-                 { 8, in,    both},
-                 { 9, in,    both},
-                 {10, in,    both},
-                 {11, in,    both},
-                 {12, dummy, none},
-                 {13, dummy, none},
-                 {14, in,    both},
-                 {15, in,    both},
-                 {16, dummy, none},
-                 {17, in,    both},
-                 {18, in,    both},
-                 {19, dummy, none},
-                 {20, dummy, none},
-                 {21, dummy, none},
-                 {22, out,   none},
-                 {23, out,   none},
-                 {24, out,   none},
-                 {25, out,   none},
-                 {27, out,   none}
-                ]}
+                 { 1, dummy, none,    down},
+                 { 2, in,    falling, up  }, %% can't set pulldown
+                 { 3, in,    rising,  up  }, %% can't set pulldown
+                 { 4, in,    both,    down},
+                 { 5, dummy, both,    down},
+                 { 6, dummy, both,    down},
+                 { 7, in,    both,    down},
+                 { 8, in,    both,    down},
+                 { 9, in,    both,    down},
+                 {10, in,    both,    down},
+                 {11, in,    both,    down},
+                 {12, dummy, both,    down},
+                 {13, dummy, both,    down},
+                 {14, in,    both,    down},
+                 {15, in,    both,    down},
+                 {16, dummy, both,    down},
+                 {17, in,    both,    up  }, %% pullup for debug
+                 {18, in,    both,    down},
+                 {19, dummy, both,    down},
+                 {20, dummy, both,    down},
+                 {21, dummy, both,    down},
+                 {22, out,   none,    down},
+                 {23, out,   none,    down},
+                 {24, out,   none,    down},
+                 {25, out,   none,    down},
+                 {26, dummy, none,    down},
+                 {27, out,   both,    down}
+                ]},
+
+         %% your event handler module.
+         {pin_event_handlers, []},
+
+         %% driver node node name
+         %% c1@ is fixed. change your hostname part of 'raspberrypi'.
+         {c_node, c1@raspberrypi}
   ]}
  ]}.

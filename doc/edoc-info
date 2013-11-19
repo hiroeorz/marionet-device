@@ -1,4 +1,5 @@
 %% encoding: UTF-8
 {application,edown}.
 {packages,[]}.
-{modules,[rgpio,rgpio_app,rgpio_pin,rgpio_port,rgpio_sup]}.
+{modules,[rgpio,rgpio_app,rgpio_event,rgpio_pin,rgpio_pin_sup,rgpio_port,
+          rgpio_sup]}.

@@ -1,17 +1,17 @@
 %%%-------------------------------------------------------------------
-%%% @author HIROE Shin <shin@hibiscus>
+%%% @author HIROE Shin <shin@HIROE-no-MacBook-Pro.local>
 %%% @copyright (C) 2013, HIROE Shin
 %%% @doc
 %%%
 %%% @end
-%%% Created : 17 Nov 2013 by HIROE Shin <shin@hibiscus>
+%%% Created : 19 Nov 2013 by HIROE Shin <shin@HIROE-no-MacBook-Pro.local>
 %%%-------------------------------------------------------------------
--module(rgpio_sup).
+-module(rgpio_pin_sup).
 
 -behaviour(supervisor).
 
 %% API
--export([start_link/0]).
+-export([start_link/1]).
 
 %% Supervisor callbacks
 -export([init/1]).
@@ -23,14 +23,17 @@
 %%%===================================================================
 
 %%--------------------------------------------------------------------
-%% @doc Starts the supervisor
+%% @doc
+%% Starts the supervisor
+%%
 %% @end
 %%--------------------------------------------------------------------
--spec start_link() -> {ok, Pid} | ignore | {error, Error} when
+-spec start_link(IOList) -> {ok, Pid} | ignore | {error, Error} when
+      IOList :: [ {non_neg_integer(), in | out} ], 
       Pid :: pid(),
       Error :: term().
-start_link() ->
-    supervisor:start_link({local, ?SERVER}, ?MODULE, []).
+start_link(IOList) ->
+    supervisor:start_link({local, ?SERVER}, ?MODULE, [IOList]).
 
 %%%===================================================================
 %%% Supervisor callbacks
@@ -49,44 +52,24 @@ start_link() ->
 %%                     {error, Reason}
 %% @end
 %%--------------------------------------------------------------------
-init([]) ->
+init([IOList]) ->
     RestartStrategy = one_for_one,
     MaxRestarts = 1000,
     MaxSecondsBetweenRestarts = 3600,
 
     SupFlags = {RestartStrategy, MaxRestarts, MaxSecondsBetweenRestarts},
-    Specs = [rgpio_event_spec(), port_spec(), rgpio_pin_sup_spec()],
-    {ok, {SupFlags, Specs}}.
+    {ok, {SupFlags, child_list(IOList)}}.
 
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
 
-port_spec() ->
+child_list(IOList) ->
     Restart = permanent,
     Shutdown = 2000,
     Type = worker,
 
-    {rgpio_port, 
-     {rgpio_port, start_link, []},
-     Restart, Shutdown, Type, [rgpio_port]}.
-
-rgpio_pin_sup_spec() ->
-    Restart = permanent,
-    Shutdown = 2000,
-    Type = supervisor,
-    {ok, GpioList} = application:get_env(gpio),
-
-    {rgpio_pin_sup, 
-     {rgpio_pin_sup, start_link, [GpioList]},
-     Restart, Shutdown, Type, [rgpio_pin_sup]}.
-
-rgpio_event_spec() ->
-    Restart = permanent,
-    Shutdown = 2000,
-    Type = supervisor,
-    {ok, Handlers} = application:get_env(pin_event_handlers),
-
-    {rgpio_event, 
-     {rgpio_event, start_link, [Handlers]},
-     Restart, Shutdown, Type, [rgpio_event]}.
+    [ {{rgpio_pin, PinNo}, 
+       {rgpio_pin, start_link, [{PinNo, Mode, Edge, Pull}]},
+       Restart, Shutdown, Type, [rgpio]}
+      || {PinNo, Mode, Edge, Pull} <- IOList ].

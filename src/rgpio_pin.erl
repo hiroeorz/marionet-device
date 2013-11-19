@@ -11,53 +11,57 @@
 -behaviour(gen_server).
 
 %% API
--export([start/0]).
 -export([start_link/1,
 	 read/1,
 	 write/2,
-	 set_int/2]).
+	 set_int/2,
+	 pullup/1,
+	 pulldown/1,
+	 pullnone/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
 	 terminate/2, code_change/3]).
 
+-type mode() :: in | out | dummy.
+-type edge() :: falling | rising | both | none.
+-type pull() :: up | down | none.
+
 -define(SERVER, ?MODULE).
 
 -record(state, {pin_no      :: non_neg_integer(),
 		file_io     :: file:io_device(),
-		watcher_pid :: pid(),
-		edge        :: none | rising | falling | both,
-		mode        :: in | out | dummy }).
+		edge        :: edge(),
+		mode        :: mode(),
+		pull        :: pull() }).
 
 %%%===================================================================
 %%% API
 %%%===================================================================
 
-start() ->
-    application:start(rgpio).
-
 %%--------------------------------------------------------------------
 %% @doc Starts the server
 %% @end
 %%--------------------------------------------------------------------
--spec start_link({PinNo, Mode} | {PinNo, Mode, Edge}) -> 
+-spec start_link({PinNo, Mode} | {PinNo, Mode, Edge, Pull}) -> 
 			{ok, Pid} |
 			ignore    |
 			{error, Error} when
       PinNo :: non_neg_integer(),
       Mode :: in | out | dummy,
-      Edge :: none | rising | falling | both,
+      Edge :: edge(),
+      Pull :: pull(),
       Pid :: pid(),
       Error :: term().
 start_link({PinNo, Mode}) when Mode =:= in orelse 
 			       Mode =:= out orelse
 			       Mode =:= dummy ->
-    start_link({PinNo, Mode, none});
+    start_link({PinNo, Mode, none, none});
 
-start_link({PinNo, Mode, Edge}) when Mode =:= in orelse 
-				     Mode =:= out orelse
-				     Mode =:= dummy ->
-    gen_server:start_link(?MODULE, [PinNo, Mode, Edge], []).
+start_link({PinNo, Mode, Edge, Pull}) when Mode =:= in orelse 
+					   Mode =:= out orelse
+					   Mode =:= dummy ->
+    gen_server:start_link(?MODULE, [PinNo, Mode, Edge, Pull], []).
 
 %%--------------------------------------------------------------------
 %% @doc read gpio value.
@@ -85,10 +89,37 @@ write(PinNo, Val) when is_integer(PinNo) andalso is_integer(Val) ->
 %%--------------------------------------------------------------------
 -spec set_int(PinNo, Mode) -> ok | {error, Reason} when
       PinNo :: non_neg_integer(),
-      Mode :: falling | rising | both | none,
+      Mode :: edge(),
       Reason :: term().
 set_int(PinNo, Mode) ->
     gen_server:call(get_child(PinNo), {set_int, Mode}).    
+
+%%--------------------------------------------------------------------
+%% @doc set pullup to a pin.
+%% @end
+%%--------------------------------------------------------------------
+-spec pullup(PinNo) -> ok when
+      PinNo :: non_neg_integer().
+pullup(PinNo) ->
+    rgpio_port:pullup(PinNo).
+
+%%--------------------------------------------------------------------
+%% @doc set pulldown to a pin.
+%% @end
+%%--------------------------------------------------------------------
+-spec pulldown(PinNo) -> ok when
+      PinNo :: non_neg_integer().
+pulldown(PinNo) ->
+    rgpio_port:pulldown(PinNo).
+
+%%--------------------------------------------------------------------
+%% @doc release pin mode from pullup pulldown.
+%% @end
+%%--------------------------------------------------------------------
+-spec pullnone(PinNo) -> ok when
+      PinNo :: non_neg_integer().
+pullnone(PinNo) ->
+    rgpio_port:pullnone(PinNo).
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -105,25 +136,31 @@ set_int(PinNo, Mode) ->
 %%                     {stop, Reason}
 %% @end
 %%--------------------------------------------------------------------
-init([PinNo, dummy, _Edge]) ->
+init([PinNo, dummy, _Edge, _Pull]) ->
     {ok, #state{pin_no = PinNo, mode = dummy}};
 
-init([PinNo, Mode, Edge]) ->
+init([PinNo, Mode, Edge, Pull]) ->
     ok = unexport(PinNo), timer:sleep(300), %% waiting for file deleted...
     ok = export(PinNo),   timer:sleep(300), %% waiting for file created...
     ok = set_mode(PinNo, Mode),
     {ok, FileIO} = open(PinNo, Mode),
 
-    WPid = case Edge of
-	       none -> undefined;
-	       Edge when Edge =:= rising orelse
-			 Edge =:= falling orelse
-			 Edge =:= both ->
-		   ok  = set_interrupt(PinNo, Edge)
-	   end,
+    case Edge of
+	none -> undefined;
+	Edge when Edge =:= rising orelse
+		  Edge =:= falling orelse
+		  Edge =:= both ->
+	    ok  = set_interrupt(PinNo, Edge)
+    end,
 
-    {ok, #state{pin_no = PinNo, file_io = FileIO, watcher_pid = WPid,
-		edge = Edge, mode = Mode}}.
+    case Pull of
+	up   -> rgpio_port:pullup(PinNo);
+	down -> rgpio_port:pulldown(PinNo);
+	none -> rgpio_port:pullnone(PinNo)
+    end,
+
+    {ok, #state{pin_no = PinNo, file_io = FileIO, edge = Edge, 
+		mode = Mode, pull = Pull}}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -258,7 +295,7 @@ code_change(_OldVsn, State, _Extra) ->
       PinNo :: non_neg_integer(),
       Pid :: pid().
 get_child(PinNo) ->
-    List = supervisor:which_children(rgpio_sup),
+    List = supervisor:which_children(rgpio_pin_sup),
 
     Fun = fun({{rgpio_pin, No}, _, _, _}) ->
 		  No =:= PinNo;
@@ -297,7 +334,7 @@ read_row(FileIO) ->
       Reason :: term().
 open(PinNo, Mode) ->
     OpenMode = case Mode of
-		   out -> write;
+		   out -> read_write;
 		   in  -> read
 	       end,
 
@@ -353,11 +390,11 @@ set_mode(PinNo, Mode) when Mode =:= in orelse
 %%--------------------------------------------------------------------
 -spec set_interrupt(PinNo, Mode) -> ok | {error, Reason} when
       PinNo :: non_neg_integer(),
-      Mode :: rising | falling | both | none,      
+      Mode :: edge(),      
       Reason :: term().
 set_interrupt(PinNo, Mode) ->
     ok = set_int_mode(PinNo, Mode),
-    rgpio_port:set_int(PinNo, Mode).
+    rgpio_port:start_poll(PinNo, Mode).
 
 %%--------------------------------------------------------------------
 %% @private
@@ -366,7 +403,7 @@ set_interrupt(PinNo, Mode) ->
 %%--------------------------------------------------------------------
 -spec set_int_mode(PinNo, Mode) -> ok when
       PinNo :: non_neg_integer(),
-      Mode :: rising | falling | both | none.
+      Mode :: edge().
 set_int_mode(PinNo, Mode) ->
     FileName = io_lib:format("/sys/class/gpio/gpio~w/edge", [PinNo]),
     {ok, FileIO} = file:open(FileName, write),
