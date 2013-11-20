@@ -10,7 +10,8 @@
 
 %% API
 -export([start/0]).
--export([read/1,
+-export([set_pin_mode/2,
+	 read/1,
 	 write/2,
 	 set_int/2,
 	 pullup/1,
@@ -26,6 +27,16 @@
 
 start() ->
     application:start(rgpio).
+
+%%--------------------------------------------------------------------
+%% @doc set pin mode, in or out or dummy.
+%% @end
+%%--------------------------------------------------------------------
+-spec set_pin_mode(PinNo, Mode) -> ok when
+      PinNo :: non_neg_integer(),
+      Mode :: rgpio_pin:edge().
+set_pin_mode(PinNo, Mode) ->
+    rgpio_pin:set_pin_mode(PinNo, Mode).
 
 %%--------------------------------------------------------------------
 %% @doc read gpio value.
@@ -120,7 +131,7 @@ status() ->
 status([], Result) ->
     lists:reverse(Result);
 
-status([{PinNo, _Mode, _Edge} | Tail], Result) ->
+status([{PinNo, _Mode, _Edge, _Pull} | Tail], Result) ->
     status(Tail, [rgpio:read(PinNo) | Result]).
 
 %%--------------------------------------------------------------------

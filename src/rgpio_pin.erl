@@ -12,6 +12,7 @@
 
 %% API
 -export([start_link/1,
+	 set_pin_mode/2,
 	 read/1,
 	 write/2,
 	 set_int/2,
@@ -62,6 +63,18 @@ start_link({PinNo, Mode, Edge, Pull}) when Mode =:= in orelse
 					   Mode =:= out orelse
 					   Mode =:= dummy ->
     gen_server:start_link(?MODULE, [PinNo, Mode, Edge, Pull], []).
+
+%%--------------------------------------------------------------------
+%% @doc set pin mode, in, out or dummy.
+%% @end
+%%--------------------------------------------------------------------
+-spec set_pin_mode(PinNo, Mode) -> ok when
+      PinNo :: non_neg_integer(),
+      Mode :: mode().
+set_pin_mode(PinNo, Mode) when Mode =:= in orelse 
+			   Mode =:= out orelse
+			   Mode =:= dummy ->
+    gen_server:call(get_child(PinNo), {set_pin_mode, Mode}).
 
 %%--------------------------------------------------------------------
 %% @doc read gpio value.
@@ -176,6 +189,20 @@ init([PinNo, Mode, Edge, Pull]) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
+
+handle_call({set_pin_mode, dummy}, _From, #state{mode = dummy} = State) ->
+    {reply, ok, State};
+
+handle_call({set_pin_mode, dummy}, _From, State) ->
+    PinNo = State#state.pin_no,
+    ok = file:close(State#state.file_io),
+    {reply, ok, #state{pin_no = PinNo, mode = dummy}};
+
+handle_call({set_pin_mode, Mode}, _From, State) ->
+    PinNo = State#state.pin_no,
+    ok = set_mode(PinNo, Mode),
+    {ok, FileIO} = open(PinNo, Mode),
+    {reply, ok, State#state{file_io = FileIO}};
 
 %% read pin state
 handle_call(read, _From, #state{mode = dummy} = State) ->

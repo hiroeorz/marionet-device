@@ -33,6 +33,18 @@ edge() = falling | rising | both | none
 
 
 
+### <a name="type-mode">mode()</a> ###
+
+
+
+<pre><code>
+mode() = in | out | dummy
+</code></pre>
+
+
+
+
+
 ### <a name="type-pull">pull()</a> ###
 
 
@@ -47,7 +59,7 @@ pull() = up | down | none
 ## Function Index ##
 
 
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#pulldown-1">pulldown/1</a></td><td>set pulldown to a pin.</td></tr><tr><td valign="top"><a href="#pullnone-1">pullnone/1</a></td><td>release pin mode from pullup pulldown.</td></tr><tr><td valign="top"><a href="#pullup-1">pullup/1</a></td><td>set pullup to a pin.</td></tr><tr><td valign="top"><a href="#read-1">read/1</a></td><td>read gpio value.</td></tr><tr><td valign="top"><a href="#set_int-2">set_int/2</a></td><td>set interrupt that fire when gpio's input or output status is chaned.</td></tr><tr><td valign="top"><a href="#start_link-1">start_link/1</a></td><td>Starts the server.</td></tr><tr><td valign="top"><a href="#write-2">write/2</a></td><td>write value to gpio.</td></tr></table>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#pulldown-1">pulldown/1</a></td><td>set pulldown to a pin.</td></tr><tr><td valign="top"><a href="#pullnone-1">pullnone/1</a></td><td>release pin mode from pullup pulldown.</td></tr><tr><td valign="top"><a href="#pullup-1">pullup/1</a></td><td>set pullup to a pin.</td></tr><tr><td valign="top"><a href="#read-1">read/1</a></td><td>read gpio value.</td></tr><tr><td valign="top"><a href="#set_int-2">set_int/2</a></td><td>set interrupt that fire when gpio's input or output status is chaned.</td></tr><tr><td valign="top"><a href="#set_pin_mode-2">set_pin_mode/2</a></td><td>set pin mode, in, out or dummy.</td></tr><tr><td valign="top"><a href="#start_link-1">start_link/1</a></td><td>Starts the server.</td></tr><tr><td valign="top"><a href="#write-2">write/2</a></td><td>write value to gpio.</td></tr></table>
 
 
 <a name="functions"></a>
@@ -114,6 +126,18 @@ set_int(PinNo, Mode) -&gt; ok | {error, Reason}
 <ul class="definitions"><li><code>PinNo = non_neg_integer()</code></li><li><code>Mode = <a href="#type-edge">edge()</a></code></li><li><code>Reason = term()</code></li></ul>
 
 set interrupt that fire when gpio's input or output status is chaned.
+<a name="set_pin_mode-2"></a>
+
+### set_pin_mode/2 ###
+
+
+<pre><code>
+set_pin_mode(PinNo, Mode) -&gt; ok
+</code></pre>
+
+<ul class="definitions"><li><code>PinNo = non_neg_integer()</code></li><li><code>Mode = <a href="#type-mode">mode()</a></code></li></ul>
+
+set pin mode, in, out or dummy.
 <a name="start_link-1"></a>
 
 ### start_link/1 ###

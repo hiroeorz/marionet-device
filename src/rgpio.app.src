@@ -19,8 +19,8 @@
          %% PullMode      :: up      | down   | none
          {gpio, [
                  { 1, dummy, none,    down},
-                 { 2, in,    falling, up  }, %% can't set pulldown
-                 { 3, in,    rising,  up  }, %% can't set pulldown
+                 { 2, in,    both,    up  }, %% can't set pulldown
+                 { 3, in,    both,    up  }, %% can't set pulldown
                  { 4, in,    both,    down},
                  { 5, dummy, both,    down},
                  { 6, dummy, both,    down},
@@ -34,7 +34,7 @@
                  {14, in,    both,    down},
                  {15, in,    both,    down},
                  {16, dummy, both,    down},
-                 {17, in,    both,    up  }, %% pullup for debug
+                 {17, in,    both,    down},
                  {18, in,    both,    down},
                  {19, dummy, both,    down},
                  {20, dummy, both,    down},
