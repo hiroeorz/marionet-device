@@ -45,9 +45,16 @@ You must run rgpio as root. Because rgpio access to /dev/mem. /dev/mem is allowe
 ```
 $ sudo ./start-dev
 ```
+-------
+or start erlang mode as root
+
+```
+$ sudo erl -pa ebin deps/*/ebin -sname rgpio -setcookie rgpio
+```
+and start rgpio in erl shell.
 
 ```erl-sh
-1> rgpio:start().
+1> application:start(rgpio).
 ```
 
 ### Read gpio value
