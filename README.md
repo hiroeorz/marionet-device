@@ -83,7 +83,7 @@ ok
 ```erl-sh
 1> rgpio:set_pin_mode(18, out).
 ok
-2> rgpio:set_pin_mode(24, down).
+2> rgpio:set_pin_mode(24, in).
 ok
 ```
 

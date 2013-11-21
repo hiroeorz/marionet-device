@@ -31,7 +31,7 @@ start() ->
     application:start(rgpio).
 
 %%--------------------------------------------------------------------
-%% @doc set pin mode, in or out or dummy.
+%% @doc set pin mode, in or out.
 %% @end
 %%--------------------------------------------------------------------
 -spec set_pin_mode(PinNo, Mode) -> ok when
