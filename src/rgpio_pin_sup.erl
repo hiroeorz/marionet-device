@@ -69,7 +69,15 @@ child_list(IOList) ->
     Shutdown = 2000,
     Type = worker,
 
-    [ {{rgpio_pin, PinNo}, 
-       {rgpio_pin, start_link, [{PinNo, Mode, Edge, Pull}]},
-       Restart, Shutdown, Type, [rgpio]}
-      || {PinNo, Mode, Edge, Pull} <- IOList ].
+    L1 = [ {{rgpio_pin, PinNo}, 
+	    {rgpio_pin, start_link, [{PinNo, Mode, Opts}]},
+	    Restart, Shutdown, Type, [rgpio]}
+	   || {PinNo, Mode, Opts} <- IOList ],
+
+    L2 = [ {{rgpio_pin, PinNo}, 
+	    {rgpio_pin, start_link, [{PinNo, Mode, []}]},
+	    Restart, Shutdown, Type, [rgpio]}
+	   || {PinNo, Mode} <- IOList ],
+
+    L1 ++ L2.
+    

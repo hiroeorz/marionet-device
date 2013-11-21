@@ -26,7 +26,7 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
 	 terminate/2, code_change/3]).
 
--type mode() :: in | out | dummy.
+-type mode() :: in | out.
 -type edge() :: falling | rising | both | none.
 -type pull() :: up | down | none.
 
@@ -51,31 +51,28 @@
 			ignore    |
 			{error, Error} when
       PinNo :: non_neg_integer(),
-      Mode :: in | out | dummy,
+      Mode :: mode(),
       Edge :: edge(),
       Pull :: pull(),
       Pid :: pid(),
       Error :: term().
-start_link({PinNo, Mode}) when Mode =:= in orelse 
-			       Mode =:= out orelse
-			       Mode =:= dummy ->
-    start_link({PinNo, Mode, none, none});
+start_link({PinNo, Mode}) when Mode =:= in orelse
+			       Mode =:= out ->
+    start_link({PinNo, Mode, []});
 
-start_link({PinNo, Mode, Edge, Pull}) when Mode =:= in orelse 
-					   Mode =:= out orelse
-					   Mode =:= dummy ->
-    gen_server:start_link(?MODULE, [PinNo, Mode, Edge, Pull], []).
+start_link({PinNo, Mode, Opts}) when Mode =:= in orelse 
+				     Mode =:= out ->
+    gen_server:start_link(?MODULE, [PinNo, Mode, Opts], []).
 
 %%--------------------------------------------------------------------
-%% @doc set pin mode, in, out or dummy.
+%% @doc set pin mode, in or out.
 %% @end
 %%--------------------------------------------------------------------
 -spec set_pin_mode(PinNo, Mode) -> ok when
       PinNo :: non_neg_integer(),
       Mode :: mode().
 set_pin_mode(PinNo, Mode) when Mode =:= in orelse 
-			   Mode =:= out orelse
-			   Mode =:= dummy ->
+			       Mode =:= out ->
     gen_server:call(get_child(PinNo), {set_pin_mode, Mode}).
 
 %%--------------------------------------------------------------------
@@ -173,10 +170,10 @@ set_active_low(PinNo, Mode) ->
 %%                     {stop, Reason}
 %% @end
 %%--------------------------------------------------------------------
-init([PinNo, dummy, _Edge, _Pull]) ->
-    {ok, #state{pin_no = PinNo, mode = dummy}};
-
-init([PinNo, Mode, Edge, Pull]) ->
+init([PinNo, Mode, Opts]) ->
+    Edge = proplists:get_value(edge, Opts, none), 
+    Pull = proplists:get_value(pull, Opts, none),
+    ActiveLow = proplists:get_value(active_low, Opts),
     ok = unexport(PinNo), timer:sleep(300), %% waiting for file deleted...
     ok = export(PinNo),   timer:sleep(300), %% waiting for file created...
     ok = set_mode(PinNo, Mode),
@@ -194,6 +191,12 @@ init([PinNo, Mode, Edge, Pull]) ->
 	up   -> rgpio_port:pullup(PinNo);
 	down -> rgpio_port:pulldown(PinNo);
 	none -> rgpio_port:pullnone(PinNo)
+    end,
+
+    case ActiveLow of
+	true  -> ok = write_active_low(PinNo, 1);
+	false -> ok = write_active_low(PinNo, 0);
+	undefined -> ok
     end,
 
     {ok, #state{pin_no = PinNo, file_io = FileIO, edge = Edge, 
@@ -214,14 +217,6 @@ init([PinNo, Mode, Edge, Pull]) ->
 %% @end
 %%--------------------------------------------------------------------
 
-handle_call({set_pin_mode, dummy}, _From, #state{mode = dummy} = State) ->
-    {reply, ok, State};
-
-handle_call({set_pin_mode, dummy}, _From, State) ->
-    PinNo = State#state.pin_no,
-    ok = file:close(State#state.file_io),
-    {reply, ok, #state{pin_no = PinNo, mode = dummy}};
-
 handle_call({set_pin_mode, Mode}, _From, State) ->
     PinNo = State#state.pin_no,
     ok = set_mode(PinNo, Mode),
@@ -229,9 +224,6 @@ handle_call({set_pin_mode, Mode}, _From, State) ->
     {reply, ok, State#state{file_io = FileIO}};
 
 %% read pin state
-handle_call(read, _From, #state{mode = dummy} = State) ->
-    {reply, 0, State};
-
 handle_call(read, _From, State) ->
     Reply = case read_row(State#state.file_io) of
 		{ok, Val} -> list_to_integer(Val);
@@ -241,9 +233,6 @@ handle_call(read, _From, State) ->
     {reply, Reply, State};
 
 %% write pin state
-handle_call({write, _Val}, _From, #state{mode = dummy} = State) ->
-    {reply, ok, State};
-
 handle_call({write, Val}, _From, State) ->
     FileIO = State#state.file_io,
     {ok, 0} = file:position(FileIO, 0),
@@ -256,9 +245,6 @@ handle_call({write, Val}, _From, State) ->
     {reply, Reply, State};
 
 % set interrupt
-handle_call({set_int, _Mode}, _From,  #state{mode = dummy} = State) ->
-    {reply, ok, State};
-    
 handle_call({set_int, Mode}, _From, #state{pin_no = PinNo} = State) ->
     Reply = set_interrupt(PinNo, Mode),
     {reply, Reply, State};
@@ -267,6 +253,7 @@ handle_call(get_active_low, _From, #state{pin_no = PinNo} = State) ->
     Reply = read_active_low(PinNo),
     {reply, Reply, State};
 
+%% set active_low
 handle_call({set_active_low, Mode}, _From, #state{pin_no = PinNo} = State) when
       Mode =:= 0 orelse
       Mode =:= 1 ->
@@ -296,25 +283,7 @@ handle_cast(_Msg, State) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-%% now modifing...
-handle_info({changed, {PinNo, Val}}, #state{edge = both} = State) ->
-    io:format("change! ~w: ~w~n", [PinNo, Val]),
-    {noreply, State};
-
-handle_info({changed, {PinNo, 1}}, #state{edge = rising} = State) ->
-    io:format("rising! ~w: ~w~n", [PinNo, 1]),
-    {noreply, State};
-
-handle_info({changed, {PinNo, 0}}, #state{edge = falling} = State) ->
-    io:format("falling! ~w: ~w~n", [PinNo, 0]),
-    {noreply, State};
-
-handle_info({changed, {PinNo, Val}}, State) ->
-    io:format("ignore: ~w: ~w~n", [PinNo, Val]),
-    {noreply, State};
-
-handle_info(Info, State) ->
-    io:format("unknown message received: ~p~n", [Info]),
+handle_info(_Info, State) ->
     {noreply, State}.
 
 %%--------------------------------------------------------------------
@@ -391,7 +360,7 @@ read_row(FileIO) ->
 %%--------------------------------------------------------------------
 -spec open(PinNo, Mode) -> ok | {error, Reason} when
       PinNo :: non_neg_integer(),
-      Mode :: in | out,
+      Mode :: mode(),
       Reason :: term().
 open(PinNo, Mode) ->
     OpenMode = case Mode of
@@ -436,7 +405,7 @@ export(PinNo) ->
 %%--------------------------------------------------------------------
 -spec set_mode(PinNo, Mode) -> ok when
       PinNo :: non_neg_integer(),
-      Mode :: in | out.
+      Mode :: mode().
 set_mode(PinNo, Mode) when Mode =:= in orelse
 			   Mode =:= out ->
     FileName = io_lib:format("/sys/class/gpio/gpio~w/direction", [PinNo]),

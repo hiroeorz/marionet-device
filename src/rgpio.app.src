@@ -12,39 +12,31 @@
                  ]},
   {mod, { rgpio_app, []}},
   {env, [
-         %% {PinNo, ReadWriteMode, Edge, PullMode}
-         %% PinNo         :: 1 .. 27
-         %% ReadWriteMode :: in      | out    | dummy
-         %% Edge          :: falling | rising | both   | none
-         %% PullMode      :: up      | down   | none
+         %% {PinNo, ReadWriteMode, [Options]}
+         %% PinNo         :: 2 .. 27
+         %% ReadWriteMode :: in      | out
+         %% Options
+         %%    edge       :: falling | rising | both     | none
+         %%    pull       :: up      | down   | none
+         %%    active_low :: true    | false  | undefined
          {gpio, [
-                 { 1, dummy, none,    down},
-                 { 2, in,    both,    up  }, %% can't set pulldown
-                 { 3, in,    both,    up  }, %% can't set pulldown
-                 { 4, in,    both,    down},
-                 { 5, dummy, both,    down},
-                 { 6, dummy, both,    down},
-                 { 7, in,    both,    down},
-                 { 8, in,    both,    down},
-                 { 9, in,    both,    down},
-                 {10, in,    both,    down},
-                 {11, in,    both,    down},
-                 {12, dummy, both,    down},
-                 {13, dummy, both,    down},
-                 {14, in,    both,    down},
-                 {15, in,    both,    down},
-                 {16, dummy, both,    down},
-                 {17, in,    both,    down},
-                 {18, in,    both,    down},
-                 {19, dummy, both,    down},
-                 {20, dummy, both,    down},
-                 {21, dummy, both,    down},
-                 {22, out,   none,    down},
-                 {23, out,   none,    down},
-                 {24, out,   none,    down},
-                 {25, out,   none,    down},
-                 {26, dummy, none,    down},
-                 {27, out,   both,    down}
+                 { 2, in,    [{edge, both}, {pull, up}] }, %% can't set pulldown
+                 { 3, in,    [{edge, both}, {pull, up}] }, %% can't set pulldown
+                 { 4, in,    [{edge, both}, {pull, down}] },
+                 { 7, in,    [{edge, both}, {pull, up}, {active_low, true}] },
+                 { 8, in,    [{edge, both}, {pull, up}, {active_low, true}] },
+                 { 9, in,    [{edge, both}, {pull, down}] },
+                 {10, in,    [{edge, both}, {pull, down}] },
+                 {11, in,    [{edge, both}, {pull, down}] },
+                 {14, in,    [{edge, both}, {pull, down}] },
+                 {15, in,    [{edge, both}, {pull, down}] },
+                 {17, in,    [{edge, both}, {pull, down}] },
+                 {18, in,    [{edge, both}, {pull, down}] },
+                 {22, out,   [{pull, down}] },
+                 {23, out,   [{pull, down}] },
+                 {24, out,   [{pull, down}] },
+                 {25, out,   [{pull, down}] },
+                 {27, out,   [{pull, down}] }
                 ]},
 
          %% your event handler module.

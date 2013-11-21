@@ -139,14 +139,14 @@ If gpio18 set interrupt rising and pin status changed 0 to 1 , called event hand
 
 ```erl-sh
 1> rgpio:status().
-[0,1,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0]
+[1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
 ```
 
 ### Get all status that packed 16bit integer.
 
 ```erl-sh
 1> rgpio:packed_status().
-[16390,0]
+[3,0]
 ```
 
 ## Todo

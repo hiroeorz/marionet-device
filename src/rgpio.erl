@@ -17,6 +17,7 @@
 	 pullup/1,
 	 pulldown/1,
 	 pullnone/1,
+	 get_active_low/1,
 	 set_active_low/2,
 	 add_event_handler/1,
 	 status/0,
@@ -113,7 +114,7 @@ pullnone(PinNo) ->
 %% Mode=1: 通電時のread/1の結果は 通電->0 解放->1
 %% @end
 %%--------------------------------------------------------------------
--spec set_active_low(PinNo) -> ok when
+-spec get_active_low(PinNo) -> ok when
       PinNo :: non_neg_integer().
 get_active_low(PinNo) ->
     rgpio_pin:get_active_low(PinNo).
@@ -157,7 +158,7 @@ status() ->
 status([], Result) ->
     lists:reverse(Result);
 
-status([{PinNo, _Mode, _Edge, _Pull} | Tail], Result) ->
+status([{PinNo, _Mode, _Opts} | Tail], Result) ->
     status(Tail, [rgpio:read(PinNo) | Result]).
 
 %%--------------------------------------------------------------------
