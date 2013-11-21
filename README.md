@@ -76,8 +76,6 @@ ok
 ```erl-sh
 1> rgpio:set_pin_mode(18, out).
 ok
-3> rgpio:set_pin_mode(24, dummy).
-ok
 2> rgpio:set_pin_mode(24, down).
 ok
 ```

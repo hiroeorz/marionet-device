@@ -352,7 +352,6 @@ read_row(FileIO) ->
     {ok, 0} = file:position(FileIO, 0),
     file:read(FileIO, 1).
 
-
 %%--------------------------------------------------------------------
 %% @private
 %% @doc open device file.
