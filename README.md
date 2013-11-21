@@ -105,6 +105,25 @@ ok
 4> rgpio:set_int(18, none).
 ok
 ```
+### Get active low
+ 
+```erl-sh
+1> rgpio:get_active_low(4).
+0
+```
+
+### Set active low
+
+```erl-sh
+1> rgpio:write(22, 1).
+ok
+2> rgpio:read(22).
+1
+3> rgpio:set_active_low(22, 1).
+ok
+2> rgpio:read(22).
+0
+```
 
 ### Add event handler
 

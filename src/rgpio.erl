@@ -17,6 +17,7 @@
 	 pullup/1,
 	 pulldown/1,
 	 pullnone/1,
+	 set_active_low/2,
 	 add_event_handler/1,
 	 status/0,
 	 packed_status/0]).
@@ -104,6 +105,31 @@ pulldown(PinNo) ->
       PinNo :: non_neg_integer().
 pullnone(PinNo) ->
     rgpio_pin:pullnone(PinNo).
+
+%%--------------------------------------------------------------------
+%% @doc get active low from a pin.
+%%
+%% Mode=0: 通電時のread/1の結果は 通電->1 解放->0 (デフォルト)
+%% Mode=1: 通電時のread/1の結果は 通電->0 解放->1
+%% @end
+%%--------------------------------------------------------------------
+-spec set_active_low(PinNo) -> ok when
+      PinNo :: non_neg_integer().
+get_active_low(PinNo) ->
+    rgpio_pin:get_active_low(PinNo).
+
+%%--------------------------------------------------------------------
+%% @doc set active low to a pin.
+%%
+%% Mode=1: active_lowを1に設定して、通電->0 解放->1 となるようにビット反転します
+%% Mode=0: active_lowを0に設定して、通電->1 解放->0 となるようにします
+%% @end
+%%--------------------------------------------------------------------
+-spec set_active_low(PinNo, Mode) -> ok when
+      PinNo :: non_neg_integer(),
+      Mode :: rgpio_pin:mode().
+set_active_low(PinNo, Mode) ->
+    rgpio_pin:set_active_low(PinNo, Mode).
 
 %%--------------------------------------------------------------------
 %% @doc add event handler to gen_event.

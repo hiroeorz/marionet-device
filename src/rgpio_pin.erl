@@ -18,7 +18,9 @@
 	 set_int/2,
 	 pullup/1,
 	 pulldown/1,
-	 pullnone/1]).
+	 pullnone/1,
+	 get_active_low/1,
+	 set_active_low/2]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -82,7 +84,7 @@ set_pin_mode(PinNo, Mode) when Mode =:= in orelse
 %%--------------------------------------------------------------------
 -spec read(PinNo) -> Val when
       PinNo :: non_neg_integer(),
-      Val :: non_neg_integer().
+      Val :: mode().
 read(PinNo) when is_integer(PinNo) ->
     gen_server:call(get_child(PinNo), read).
 
@@ -92,7 +94,7 @@ read(PinNo) when is_integer(PinNo) ->
 %%--------------------------------------------------------------------
 -spec write(PinNo, Val) -> ok when
       PinNo :: non_neg_integer(),
-      Val :: non_neg_integer().      
+      Val :: mode().      
 write(PinNo, Val) when is_integer(PinNo) andalso is_integer(Val) ->
     gen_server:call(get_child(PinNo), {write, Val}).
 
@@ -133,6 +135,28 @@ pulldown(PinNo) ->
       PinNo :: non_neg_integer().
 pullnone(PinNo) ->
     rgpio_port:pullnone(PinNo).
+
+%%--------------------------------------------------------------------
+%% @doc get active low to from a pin.
+%% @end
+%%--------------------------------------------------------------------
+-spec get_active_low(PinNo) -> mode() when
+      PinNo :: non_neg_integer().
+get_active_low(PinNo) ->
+    gen_server:call(get_child(PinNo), get_active_low).
+
+%%--------------------------------------------------------------------
+%% @doc set active low to a pin.
+%%
+%% Mode=1: active_lowを1に設定して、通電->0 解放->1 となるようにビット反転します
+%% Mode=0: active_lowを0に設定して、通電->1 解放->0 となるようにします
+%% @end
+%%--------------------------------------------------------------------
+-spec set_active_low(PinNo, Mode) -> ok when
+      PinNo :: non_neg_integer(),
+      Mode :: mode().
+set_active_low(PinNo, Mode) ->
+    gen_server:call(get_child(PinNo), {set_active_low, Mode}).
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -237,6 +261,16 @@ handle_call({set_int, _Mode}, _From,  #state{mode = dummy} = State) ->
     
 handle_call({set_int, Mode}, _From, #state{pin_no = PinNo} = State) ->
     Reply = set_interrupt(PinNo, Mode),
+    {reply, Reply, State};
+
+handle_call(get_active_low, _From, #state{pin_no = PinNo} = State) ->
+    Reply = read_active_low(PinNo),
+    {reply, Reply, State};
+
+handle_call({set_active_low, Mode}, _From, #state{pin_no = PinNo} = State) when
+      Mode =:= 0 orelse
+      Mode =:= 1 ->
+    Reply = write_active_low(PinNo, Mode),
     {reply, Reply, State}.
 
 %%--------------------------------------------------------------------
@@ -435,4 +469,32 @@ set_int_mode(PinNo, Mode) ->
     FileName = io_lib:format("/sys/class/gpio/gpio~w/edge", [PinNo]),
     {ok, FileIO} = file:open(FileName, write),
     ok = file:write(FileIO, atom_to_list(Mode)),
+    ok = file:close(FileIO).
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc read active low mode to device file.
+%% @end
+%%--------------------------------------------------------------------
+-spec read_active_low(PinNo) -> mode() when
+      PinNo :: non_neg_integer().
+read_active_low(PinNo) ->
+    FileName = io_lib:format("/sys/class/gpio/gpio~w/active_low", [PinNo]),
+    {ok, FileIO} = file:open(FileName, read),
+    Reply = file:read(FileIO, 1),
+    ok = file:close(FileIO),
+    Reply.
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc write active low mode to device file.
+%% @end
+%%--------------------------------------------------------------------
+-spec write_active_low(PinNo, Mode) -> ok when
+      PinNo :: non_neg_integer(),
+      Mode :: mode().
+write_active_low(PinNo, Mode) ->
+    FileName = io_lib:format("/sys/class/gpio/gpio~w/active_low", [PinNo]),
+    {ok, FileIO} = file:open(FileName, write),
+    ok = file:write(FileIO, io_lib:format("~w", [Mode])),
     ok = file:close(FileIO).
