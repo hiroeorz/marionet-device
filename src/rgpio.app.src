@@ -20,16 +20,7 @@
          %%    pull       :: up      | down   | none
          %%    active_low :: true    | false  | undefined
          {gpio, [
-                 { 2, in,    [{edge, both}, {pull, up}] }, %% can't set pulldown
-                 { 3, in,    [{edge, both}, {pull, up}] }, %% can't set pulldown
                  { 4, in,    [{edge, both}, {pull, down}] },
-                 { 7, in,    [{edge, both}, {pull, up}, {active_low, true}] },
-                 { 8, in,    [{edge, both}, {pull, up}, {active_low, true}] },
-                 { 9, in,    [{edge, both}, {pull, down}] },
-                 {10, in,    [{edge, both}, {pull, down}] },
-                 {11, in,    [{edge, both}, {pull, down}] },
-                 {14, in,    [{edge, both}, {pull, down}] },
-                 {15, in,    [{edge, both}, {pull, down}] },
                  {17, in,    [{edge, both}, {pull, down}] },
                  {18, in,    [{edge, both}, {pull, down}] },
                  {22, out,   [{pull, down}] },
