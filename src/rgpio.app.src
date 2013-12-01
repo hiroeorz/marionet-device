@@ -20,14 +20,14 @@
          %%    pull       :: up      | down   | none
          %%    active_low :: true    | false  | undefined
          {gpio, [
-                 { 4, in,    [{edge, both}, {pull, down}] },
-                 {17, in,    [{edge, both}, {pull, down}] },
-                 {18, in,    [{edge, both}, {pull, down}] },
-                 {22, out,   [{pull, down}] },
-                 {23, out,   [{pull, down}] },
-                 {24, out,   [{pull, down}] },
-                 {25, out,   [{pull, down}] },
-                 {27, out,   [{pull, down}] }
+                 { 4, in,  [{edge, both}, {pull, down}] },
+                 {17, in,  [{edge, both}, {pull, down}] },
+                 {18, in,  [{edge, both}, {pull, down}] },
+                 {22, in,  [{edge, both}, {pull, down}] },
+                 {23, in,  [{edge, both}, {pull, down}] },
+                 {24, in,  [{edge, both}, {pull, down}] },
+                 {25, out, [{edge, both}, {pull, down}] },
+                 {27, out, [{edge, both}, {pull, down}] }
                 ]},
 
          %% your event handler module.
@@ -35,6 +35,10 @@
 
          %% driver node node name
          %% c1@ is fixed. change your hostname part of 'raspberrypi'.
-         {c_node, c1@raspberrypi}
+         {c_node, c1@raspberrypi},
+
+         %% arduino extend setting.
+         {arduino_enable, true},
+         {arduino, [{speed, 57600}, {device, "/dev/ttyACM0"}] }
   ]}
  ]}.

@@ -56,11 +56,31 @@ init([]) ->
 
     SupFlags = {RestartStrategy, MaxRestarts, MaxSecondsBetweenRestarts},
     Specs = [rgpio_event_spec(), port_spec(), rgpio_pin_sup_spec()],
-    {ok, {SupFlags, Specs}}.
+
+    {ok, ArduinoEnable} = application:get_env(arduino_enable),
+
+    Specs1 = case ArduinoEnable of
+		 true  -> Specs ++ [arduino_spec()];
+		 false -> Specs
+	     end,
+
+    {ok, {SupFlags, Specs1}}.
 
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+arduino_spec() ->
+    Restart = permanent,
+    Shutdown = 2000,
+    Type = worker,
+
+    {ok, Arduino} = application:get_env(arduino),
+    Device = proplists:get_value(device, Arduino, "/dev/ttyACM0"),
+    Speed = proplists:get_value(speed, Arduino, 57600),
+
+    {rgpio_arduino, 
+     {rgpio_arduino, start_link, [Speed, Device]},
+     Restart, Shutdown, Type, [rgpio_port]}.
 
 port_spec() ->
     Restart = permanent,

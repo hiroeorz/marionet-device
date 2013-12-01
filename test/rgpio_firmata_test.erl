@@ -2,6 +2,9 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
+format_version_report_test() ->
+    <<16#F9:8, 2:8, 3:8>> = rgpio_firmata:format(version_report).
+
 format_digital_io_message_test() ->
     <<16#90:8, 0:8, 0:8>> = 
 	rgpio_firmata:format(digital_io_message, {0, [0,0,0,0,0,0,0,0]} ),
@@ -76,6 +79,22 @@ format_analog_io_message_test() ->
     <<16#E1:8, 1:8, 1:8>> = rgpio_firmata:format(analog_io_message, {1, 129} ),
     <<16#E2:8, 1:8, 1:8>> = rgpio_firmata:format(analog_io_message, {2, 129} ).
 
+format_set_pin_mode_test() ->
+    <<16#F4:8, 0:8, 0:8>> = rgpio_firmata:format(set_pin_mode, {0, 0} ),
+    <<16#F4:8, 0:8, 1:8>> = rgpio_firmata:format(set_pin_mode, {0, 1} ),
+    <<16#F4:8, 1:8, 0:8>> = rgpio_firmata:format(set_pin_mode, {1, 0} ),
+    <<16#F4:8, 127:8, 4:8>> = rgpio_firmata:format(set_pin_mode, {127, 4} ).
     
-    
-    
+format_analogin_reporting_test() ->
+    <<16#C0:8, 0:8>> = rgpio_firmata:format(set_analogin_reporting, {0, 0} ),
+    <<16#C1:8, 0:8>> = rgpio_firmata:format(set_analogin_reporting, {1, 0} ),
+    <<16#C2:8, 1:8>> = rgpio_firmata:format(set_analogin_reporting, {2, 1} ).
+
+format_digital_port_reporting_test() ->
+    <<16#D0:8, 0:8>> = rgpio_firmata:format(set_digital_port_reporting, {0, 0}),
+    <<16#D1:8, 0:8>> = rgpio_firmata:format(set_digital_port_reporting, {1, 0}),
+    <<16#D2:8, 1:8>> = rgpio_firmata:format(set_digital_port_reporting, {2, 1}).
+
+format_version_report_request_test() ->
+    <<16#F9:8 >> = rgpio_firmata:format(version_report_request).
+

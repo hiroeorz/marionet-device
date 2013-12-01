@@ -84,6 +84,8 @@ init([]) ->
 %%--------------------------------------------------------------------
 handle_event({gpio_changed, PinNo, Mode}, State) ->
     io:format("changed: ~w : ~w~n", [PinNo, Mode]),
+    BinMsg = rgpio_firmata:format(digital_io_message, { 0, rgpio:status() }),
+    io:format("firmata formatted: ~p", [BinMsg]),
     {ok, State}.
 
 %%--------------------------------------------------------------------
