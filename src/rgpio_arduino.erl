@@ -12,7 +12,8 @@
 
 %% API
 -export([start_link/2,
-	 send/1,
+	 call/1,
+	 cast/1,
 	 firmata_version/0]).
 
 %% gen_server callbacks
@@ -50,11 +51,14 @@ start_link(Speed, Device) ->
       MeasureVersion :: non_neg_integer(),
       MinorVersion :: non_neg_integer().
 firmata_version() ->
-    {version_report, V} = send(rgpio_firmata:format(version_report_request)),
+    {version_report, V} = call(rgpio_firmata:format(version_report_request)),
     {ok, V}.
 
-send(Bin) when is_binary(Bin) ->
-    gen_server:call(?SERVER, {send, Bin}).
+call(Bin) when is_binary(Bin) ->
+    gen_server:call(?SERVER, {call, Bin}).
+
+cast(Bin) when is_binary(Bin) ->
+    gen_server:cast(?SERVER, {cast, Bin}).
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -95,9 +99,9 @@ init([Speed, Device]) ->
 %% @end
 %%--------------------------------------------------------------------
 % now thinking...
-handle_call({send, Bin}, From, State) ->
+handle_call({call, Bin}, From, State) ->
     SerialPid = State#state.serial_pid,
-    SerialPid ! {send, Bin},
+    send(Bin, SerialPid),
     NewQueue = queue:in(From, State#state.process_queue),
     {noreply, State#state{process_queue = NewQueue}}.
 
@@ -111,7 +115,9 @@ handle_call({send, Bin}, From, State) ->
 %%                                  {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_cast(_Msg, State) ->
+handle_cast({cast, Bin}, State) ->
+    SerialPid = State#state.serial_pid,
+    send(Bin, SerialPid),
     {noreply, State}.
 
 %%--------------------------------------------------------------------
@@ -153,8 +159,9 @@ handle_info({data, Bin}, #state{recv_queue = RecvQueue} = State) ->
     if byte_size(TailOfTotal) >= Size ->
 	    <<Code:8, Body:Size/binary, TailBin/binary>> = Queue,
 	    Reply = rgpio_firmata:parse(Code, Body),
-	    NewState = reply(Reply, State),
-	    {noreply, NewState#state{waiting_code = undefined,
+	    NewState1 = handle_firmata(Reply, State),
+	    NewState2 = reply(Reply, NewState1),
+	    {noreply, NewState2#state{waiting_code = undefined,
 				     recv_queue = TailBin}};
        true ->
 	    {noreply, State#state{waiting_code = Code, recv_queue = Queue}}
@@ -166,6 +173,26 @@ handle_info({data, Bin}, #state{recv_queue = RecvQueue} = State) ->
 handle_info(Info, State) ->
     io:format("unknown info: ~p~n", [Info]),
     {noreply, State}.
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc handle firmata message from arduino.
+%% @end
+%%--------------------------------------------------------------------
+handle_firmata({sysex,{name_and_version_report, _}}, State) ->
+    {ok, Config} = application:get_env(rgpio, arduino),
+    GpioList = proplists:get_value(gpio, Config),
+    MaxPortNo = (length(GpioList) div 8),
+    io:format("gpio: ~p~n", [GpioList]),
+
+    SerialPid = State#state.serial_pid,
+    ok = init_digital_pin(GpioList, SerialPid),
+    ok = set_digital_port_reporting(MaxPortNo, SerialPid),
+    State;
+
+handle_firmata(Reply, State) ->
+    io:format("haldle unknown message: ~p~n", [Reply]),
+    State.
 
 reply(Reply, State) ->
     case queue:out(State#state.process_queue) of
@@ -191,8 +218,9 @@ process_firmata_sysex(Queue, State) ->
 	      TailBin/binary>> = Queue,
 
 	    Reply = rgpio_firmata:parse(?SYSEX_START_CODE, Body),
-	    NewState = reply(Reply, State),
-	    {noreply, NewState#state{recv_queue = TailBin}};
+	    NewState1 = reply(Reply, State),
+	    NewState2 = handle_firmata(Reply, NewState1),
+	    {noreply, NewState2#state{recv_queue = TailBin}};
 	false ->
 	    {noreply, State#state{recv_queue = Queue}}
     end.
@@ -246,3 +274,38 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+
+%% send message to serial process.
+send(Bin, SerialPid) ->
+    SerialPid ! {send, Bin}.
+
+%% set all digital pin mode.
+init_digital_pin([], _SerialPid) ->
+    ok;
+
+init_digital_pin([{PinNo, Mode} | Tail], SerialPid) ->
+    set_digital_pin_mode(PinNo, Mode, SerialPid),
+    init_digital_pin(Tail, SerialPid).
+
+%% set digital pin to reporting.
+set_digital_port_reporting(-1, _SerialPid) ->
+    ok;
+
+set_digital_port_reporting(PortNo, SerialPid) ->
+    io:format("set digital port(~p) to 1~n", [PortNo]),
+    Command = rgpio_firmata:format(set_digital_port_reporting, {PortNo, 1}),
+    send(Command, SerialPid),
+    io:format("set digital port command:~p~n", [Command]),
+    set_digital_port_reporting(PortNo - 1, SerialPid).
+
+%% set digital pin mode.
+set_digital_pin_mode(PinNo, Mode, SerialPid) ->
+    ModeInt = case Mode of
+		  in  -> 0;
+		  out -> 1
+	      end,
+
+    io:format("set digital pin(~p) mode:~p~n", [PinNo, ModeInt]),
+    Command = rgpio_firmata:format(set_pin_mode, {PinNo, ModeInt}),
+    io:format("set digital pin mode command~p~n", [Command]),
+    send(Command, SerialPid).

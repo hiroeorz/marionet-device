@@ -39,6 +39,24 @@
 
          %% arduino extend setting.
          {arduino_enable, true},
-         {arduino, [{speed, 57600}, {device, "/dev/ttyACM0"}] }
+         {arduino, [{speed, 57600}, 
+                    {device, "/dev/ttyACM0"},
+                    {gpio, [
+                            { 0, in},
+                            { 1, in},
+                            { 2, in},
+                            { 3, in},
+                            { 4, in},
+                            { 5, in},
+                            { 6, in},
+                            { 7, in},
+                            { 8, in},
+                            { 9, in},
+                            {10, out},
+                            {11, out},
+                            {12, out},
+                            {13, out}
+                           ]}
+                    ]}
   ]}
  ]}.

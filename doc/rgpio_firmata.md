@@ -50,7 +50,7 @@ create binary data that formatted by firmata protocol format.
 
 ### parse/2 ###
 
-`parse(X1, Bin) -> any()`
+`parse(Code, Bin) -> any()`
 
 
 <a name="size-1"></a>
