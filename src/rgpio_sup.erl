@@ -77,9 +77,13 @@ arduino_spec() ->
     {ok, Arduino} = application:get_env(arduino),
     Device = proplists:get_value(device, Arduino, "/dev/ttyACM0"),
     Speed = proplists:get_value(speed, Arduino, 57600),
+    Digital = proplists:get_value(digital, Arduino),
+    Analog = proplists:get_value(analog, Arduino),
+    DiPortReporting = proplists:get_value(digital_port_reporting, Arduino),
 
     {rgpio_arduino, 
-     {rgpio_arduino, start_link, [Speed, Device]},
+     {rgpio_arduino, start_link, [Speed, Device, Digital, Analog, 
+				  DiPortReporting]},
      Restart, Shutdown, Type, [rgpio_port]}.
 
 port_spec() ->

@@ -15,7 +15,7 @@ __Authors:__ HIROE Shin ([`shin@HIROE-no-MacBook-Pro.local`](mailto:shin@HIROE-n
 ## Function Index ##
 
 
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#format-1">format/1</a></td><td>create binary data that formatted by firmata protocol format.</td></tr><tr><td valign="top"><a href="#format-2">format/2</a></td><td>create binary data that formatted by firmata protocol format.</td></tr><tr><td valign="top"><a href="#parse-2">parse/2</a></td><td></td></tr><tr><td valign="top"><a href="#size-1">size/1</a></td><td></td></tr></table>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#format-1">format/1</a></td><td>create binary data that formatted by firmata protocol format.</td></tr><tr><td valign="top"><a href="#format-2">format/2</a></td><td>create binary data that formatted by firmata protocol format.</td></tr><tr><td valign="top"><a href="#format-3">format/3</a></td><td></td></tr><tr><td valign="top"><a href="#parse-2">parse/2</a></td><td></td></tr><tr><td valign="top"><a href="#size-1">size/1</a></td><td></td></tr></table>
 
 
 <a name="functions"></a>
@@ -46,6 +46,13 @@ format(FormatName, X2::tuple()) -&gt; binary()
 <ul class="definitions"><li><code>FormatName = atom()</code></li></ul>
 
 create binary data that formatted by firmata protocol format.
+<a name="format-3"></a>
+
+### format/3 ###
+
+`format(X1, X2, Interval) -> any()`
+
+
 <a name="parse-2"></a>
 
 ### parse/2 ###

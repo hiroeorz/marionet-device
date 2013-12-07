@@ -11,54 +11,122 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/2,
+-export([start_link/5,
 	 call/1,
 	 cast/1,
-	 firmata_version/0]).
+	 firmata_version_request/0,
+	 initialize/0,
+	 digital/0,
+	 analog/0,
+	 digital_write/2]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
 	 terminate/2, code_change/3]).
+
+%% timer use function
+-export([init_pin/1]).
 
 -define(SERVER, ?MODULE).
 -define(SYSEX_START_CODE, 16#F0).
 -define(SYSEX_END_CODE,   16#F7).
 
 -record(state, {serial_pid                  :: pid(),
+		init_flag = true            :: boolean(),
 		process_queue = queue:new() :: queue(),
 		recv_queue = <<>>           :: binary(),
-		waiting_code                :: non_neg_integer() }).
+		digital_conf                :: [tuple()],
+		analog_conf                 :: [non_neg_integer()],
+		digital_port_reporting_conf :: [non_neg_integer()] }).
 
 -type serial_speed() :: 9600 | 19200 | 38400 | 57600 | 115200. 
+-type pin_mode() :: in | out | analog | pwm | servo.
 
 %%%===================================================================
 %%% API
 %%%===================================================================
 
 %%--------------------------------------------------------------------
-%% @doc
-%% Starts the server
-%%
+%% @doc Starts the server
 %% @end
 %%--------------------------------------------------------------------
--spec start_link(Speed, Device) -> {ok, pid()} | ignore | {error, term()} when
+-spec start_link(Speed, Device, Digital, Analog, DiPortReporting) -> 
+			{ok, pid()}     |
+			ignore          |
+			{error, term()} when
       Speed :: serial_speed(),
-      Device :: string().
-start_link(Speed, Device) ->
-    gen_server:start_link({local, ?SERVER}, ?MODULE, [Speed, Device], []).
+      Device :: string(),
+      Digital :: [ {PinNo,  pin_mode(), Opts} ],
+      PinNo :: non_neg_integer(),
+      Opts :: [tuple()],
+      Analog :: [non_neg_integer()],
+      DiPortReporting :: [non_neg_integer()].
+start_link(Speed, Device, Digital, Analog, DiPortReporting) ->
+    gen_server:start_link({local, ?SERVER}, 
+			  ?MODULE, [Speed, Device, Digital, Analog, 
+				    DiPortReporting], []).
 
--spec firmata_version() -> {ok, {MeasureVersion, MinorVersion}} when
-      MeasureVersion :: non_neg_integer(),
-      MinorVersion :: non_neg_integer().
-firmata_version() ->
-    {version_report, V} = call(rgpio_firmata:format(version_report_request)),
-    {ok, V}.
+%%--------------------------------------------------------------------
+%% @doc get firmata version from arduino.
+%% @end
+%%--------------------------------------------------------------------
+-spec firmata_version_request() -> ok.
+firmata_version_request() ->
+    cast(rgpio_firmata:format(version_report_request)).
 
 call(Bin) when is_binary(Bin) ->
     gen_server:call(?SERVER, {call, Bin}).
 
 cast(Bin) when is_binary(Bin) ->
     gen_server:cast(?SERVER, {cast, Bin}).
+
+%%--------------------------------------------------------------------
+%% @doc get digital state.
+%% @end
+%%--------------------------------------------------------------------
+digital() ->
+    case ets:first(arduino_digital) of 
+	'$end_of_table' ->
+	    [];
+	Key ->
+	    digital(Key, [])
+    end.
+
+digital('$end_of_table', Result) ->
+    lists:reverse(Result);
+
+digital(Key, Result) ->
+    [{_PortNo, [X0, X1, X2, X3, X4, X5, X6, X7]}] = 
+	ets:lookup(arduino_digital, Key),
+
+    NextKey = ets:next(arduino_digital, Key),
+    digital(NextKey, [X7, X6, X5, X4, X3, X2, X1, X0 | Result]).
+
+%%--------------------------------------------------------------------
+%% @doc get analog state.
+%% @end
+%%--------------------------------------------------------------------
+analog() ->
+    case ets:first(arduino_analog) of 
+	'$end_of_table' ->
+	    [];
+	Key ->
+	    analog(Key, [])
+    end.
+
+analog('$end_of_table', Result) ->
+    lists:reverse(Result);
+
+analog(Key, Result) ->
+    [{_PinNo, Val}] = ets:lookup(arduino_analog, Key),
+    NextKey = ets:next(arduino_analog, Key),
+    analog(NextKey, [Val | Result]).
+
+initialize() ->
+    gen_server:cast(?SERVER, initialize).
+
+digital_write(PortNo, Vals) ->
+    gen_server:cast(?SERVER, {digital_write, [PortNo, Vals]}).
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -75,11 +143,20 @@ cast(Bin) when is_binary(Bin) ->
 %%                     {stop, Reason}
 %% @end
 %%--------------------------------------------------------------------
-init([Speed, Device]) ->
+init([Speed, Device, Digital, Analog, DiPortReporting]) ->
     case file:open(Device, [read]) of
 	{error, eisdir} -> %% device file exist
 	    Pid = serial:start([{speed, Speed}, {open, Device}]),
-	    {ok, #state{serial_pid = Pid}};
+	    ets:new(arduino_digital, [ordered_set, protected, named_table]),
+	    ets:new(arduino_analog,  [ordered_set, protected, named_table]),
+
+	    State = #state{serial_pid = Pid, 
+			   digital_conf = Digital, 
+			   analog_conf = Analog,
+			   digital_port_reporting_conf = DiPortReporting},
+	    reset_config(State),
+	    version_report_request(State),
+	    {ok, State};
 	{error, enoent} -> %% file not exist
 	    ignore
     end.
@@ -118,6 +195,15 @@ handle_call({call, Bin}, From, State) ->
 handle_cast({cast, Bin}, State) ->
     SerialPid = State#state.serial_pid,
     send(Bin, SerialPid),
+    {noreply, State};
+
+handle_cast(initialize, State) ->
+    State1 = init_pin(State),
+    {noreply, State1};
+
+handle_cast({dirigal_write, PortNo, Vals}, State) ->
+    SerialPid = State#state.serial_pid,
+    digital_write(PortNo, Vals, SerialPid),
     {noreply, State}.
 
 %%--------------------------------------------------------------------
@@ -135,36 +221,47 @@ handle_cast({cast, Bin}, State) ->
 %% sysex firmata data
 %%--------------------------------------------------------------------------
 handle_info({data, <<?SYSEX_START_CODE:8, _/binary>> = Queue},
-	    #state{waiting_code = undefined, 
-		   recv_queue = <<>>} = State) ->
+	    #state{recv_queue = <<>>} = State) ->
 
-    process_firmata_sysex(Queue, State);
+    State1 = check_first_message(State),
+    process_firmata_sysex(Queue, State1);
 
 handle_info({data, Bin},
-	    #state{waiting_code = undefined,
-		   recv_queue = <<?SYSEX_START_CODE:8, _/binary>>} = State) ->
+	    #state{recv_queue = <<?SYSEX_START_CODE:8, _/binary>>} = State) ->
 
-    RecvQueue = State#state.recv_queue,
+    State1 = check_first_message(State),
+    RecvQueue = State1#state.recv_queue,
     Queue = <<RecvQueue/binary, Bin/binary>>,
-    process_firmata_sysex(Queue, State);
+    process_firmata_sysex(Queue, State1);
 
 %%--------------------------------------------------------------------------
 %% normal firmata data
 %%--------------------------------------------------------------------------
+handle_info({data, <<>>}, #state{recv_queue = <<>>} = State) ->
+    {noreply, State};
+
 handle_info({data, Bin}, #state{recv_queue = RecvQueue} = State) ->
+    State1 = check_first_message(State),
     Queue = <<RecvQueue/binary, Bin/binary>>,
     <<Code:8, TailOfTotal/binary>> = Queue,
     Size = rgpio_firmata:size(Code),
 
+    if Size =:= unknown ->
+	    io:format("code(~p) not matched in getting size~n", [Code]),
+	    io:format("data = ~p~n", [Queue]),
+	    erlang:error(invalid_firmata_code);
+       true -> ok
+    end,
+
     if byte_size(TailOfTotal) >= Size ->
 	    <<Code:8, Body:Size/binary, TailBin/binary>> = Queue,
 	    Reply = rgpio_firmata:parse(Code, Body),
-	    NewState1 = handle_firmata(Reply, State),
+	    NewState1 = handle_firmata(Reply, State1),
 	    NewState2 = reply(Reply, NewState1),
-	    {noreply, NewState2#state{waiting_code = undefined,
-				     recv_queue = TailBin}};
+
+	    handle_info({data, TailBin}, NewState2#state{recv_queue = <<>>});
        true ->
-	    {noreply, State#state{waiting_code = Code, recv_queue = Queue}}
+	    {noreply, State#state{recv_queue = Queue}}
     end;
 
 %%--------------------------------------------------------------------------
@@ -179,15 +276,22 @@ handle_info(Info, State) ->
 %% @doc handle firmata message from arduino.
 %% @end
 %%--------------------------------------------------------------------
-handle_firmata({sysex,{name_and_version_report, _}}, State) ->
-    {ok, Config} = application:get_env(rgpio, arduino),
-    GpioList = proplists:get_value(gpio, Config),
-    MaxPortNo = (length(GpioList) div 8),
-    io:format("gpio: ~p~n", [GpioList]),
+handle_firmata({sysex, {name_and_version_report, {_, _, SketchName}}}, State) ->
+    io:format("Arduino sketch: ~s~n", [SketchName]),
+    State;
 
-    SerialPid = State#state.serial_pid,
-    ok = init_digital_pin(GpioList, SerialPid),
-    ok = set_digital_port_reporting(MaxPortNo, SerialPid),
+handle_firmata({version_report, {MeasureVer, MinorVer}}, State) ->
+    io:format("Firmata version: ~w.~w~n", [MeasureVer, MinorVer]),
+    State;
+
+handle_firmata({digital_io_message, {PortNo, Status}}, State) ->
+    io:format("digital: ~w:~p~n", [PortNo, Status]),
+    true = ets:insert(arduino_digital, {PortNo, Status}),
+    State;
+
+handle_firmata({analog_io_message, {PinNo, Val}}, State) ->
+    %%io:format("analog: ~w:~w~n", [PinNo, Val]),
+    true = ets:insert(arduino_analog, {PinNo, Val}),
     State;
 
 handle_firmata(Reply, State) ->
@@ -200,7 +304,6 @@ reply(Reply, State) ->
 	    gen_server:reply(From, Reply),
 	    State#state{process_queue = NewQueue};
 	{empty, _}->
-	    io:format("queue ~p~n", [Reply]),
 	    State
     end.
 
@@ -220,7 +323,8 @@ process_firmata_sysex(Queue, State) ->
 	    Reply = rgpio_firmata:parse(?SYSEX_START_CODE, Body),
 	    NewState1 = reply(Reply, State),
 	    NewState2 = handle_firmata(Reply, NewState1),
-	    {noreply, NewState2#state{recv_queue = TailBin}};
+
+	    handle_info({data, TailBin}, NewState2#state{recv_queue = <<>>});
 	false ->
 	    {noreply, State#state{recv_queue = Queue}}
     end.
@@ -279,33 +383,97 @@ code_change(_OldVsn, State, _Extra) ->
 send(Bin, SerialPid) ->
     SerialPid ! {send, Bin}.
 
+%% version report request
+version_report_request(State) ->
+    SerialPid = State#state.serial_pid,
+    send(rgpio_firmata:format(version_report_request), SerialPid).
+
+%% reset arduino config.
+reset_config(State) ->
+    SerialPid = State#state.serial_pid,
+    send(rgpio_firmata:format(syste_reset), SerialPid),
+    ok.
+
+%% init all pins if init_flag is true.
+check_first_message(#state{init_flag = true} = State) ->
+    timer:sleep(1000),
+    init_pin(State),
+    State#state{init_flag = false};
+
+check_first_message(#state{init_flag = false} = State) ->
+    State.
+
+%% set digital pin mode(in or out or analog or pwm or servo).
+%% set digital pin reporting.
+%% set analog  pin reporting. 
+init_pin(State) ->
+    io:format("Arduino pin initializing "),
+    ok = reset_config(State),
+    timer:sleep(10), %%一旦反映させる
+    DigitalList = State#state.digital_conf,
+    DigitalPortReporting = State#state.digital_port_reporting_conf,
+    AnalogList = State#state.analog_conf,
+
+    SerialPid = State#state.serial_pid,
+    ok = sampling_interval(30, SerialPid),
+    ok = init_pin_mode(DigitalList, SerialPid),
+    ok = set_digital_port_reporting(0, DigitalPortReporting, SerialPid),
+    ok = set_analog_port_reporting(AnalogList, SerialPid),
+    io:format("done.~n"),
+    State.
+
 %% set all digital pin mode.
-init_digital_pin([], _SerialPid) ->
+init_pin_mode([], _SerialPid) ->
     ok;
 
-init_digital_pin([{PinNo, Mode} | Tail], SerialPid) ->
+init_pin_mode([{PinNo, Mode} | Tail], SerialPid) ->
     set_digital_pin_mode(PinNo, Mode, SerialPid),
-    init_digital_pin(Tail, SerialPid).
-
-%% set digital pin to reporting.
-set_digital_port_reporting(-1, _SerialPid) ->
-    ok;
-
-set_digital_port_reporting(PortNo, SerialPid) ->
-    io:format("set digital port(~p) to 1~n", [PortNo]),
-    Command = rgpio_firmata:format(set_digital_port_reporting, {PortNo, 1}),
-    send(Command, SerialPid),
-    io:format("set digital port command:~p~n", [Command]),
-    set_digital_port_reporting(PortNo - 1, SerialPid).
+    init_pin_mode(Tail, SerialPid).
 
 %% set digital pin mode.
 set_digital_pin_mode(PinNo, Mode, SerialPid) ->
     ModeInt = case Mode of
-		  in  -> 0;
-		  out -> 1
+		  in     -> 0;
+		  out    -> 1;
+		  analog -> 2;
+		  pwm    -> 3;
+		  servo  -> 4
 	      end,
 
-    io:format("set digital pin(~p) mode:~p~n", [PinNo, ModeInt]),
     Command = rgpio_firmata:format(set_pin_mode, {PinNo, ModeInt}),
-    io:format("set digital pin mode command~p~n", [Command]),
     send(Command, SerialPid).
+
+%% set digital pin to reporting.
+set_digital_port_reporting(_, [],  _SerialPid) ->
+    ok;
+
+set_digital_port_reporting(PortNo, [Mode | Tail], SerialPid) ->
+    Vals = [1, 1, 1, 1, 1, 1, 1, 1],
+    true = ets:insert(arduino_analog, {PortNo, Vals}),
+    Command = rgpio_firmata:format(set_digital_port_reporting, {PortNo, Mode}),
+    send(Command, SerialPid),
+    digital_write(PortNo, Vals, SerialPid),
+    io:format("."),
+    set_digital_port_reporting(PortNo + 1, Tail, SerialPid).
+
+%% set analog pin to reporting.
+set_analog_port_reporting([], _SerialPid) ->
+    ok;
+
+set_analog_port_reporting([PinNo | Tail], SerialPid) ->
+    Command = rgpio_firmata:format(set_analogin_reporting, {PinNo, 1}),
+    true = ets:insert(arduino_analog, {PinNo, 0}),
+    send(Command, SerialPid),
+    io:format("."),
+    set_analog_port_reporting(Tail, SerialPid).
+
+digital_write(PortNo, Vals, SerialPid) when is_list(Vals) andalso
+					    length(Vals) =:= 8 ->
+    Command = rgpio_firmata:format(digital_io_message, {PortNo, Vals}),
+    send(Command, SerialPid).
+    
+sampling_interval(Interval, SerialPid) ->
+    Command = rgpio_firmata:format(sysex, sampling_interval, Interval),
+    send(Command, SerialPid),
+    ok.
+    
