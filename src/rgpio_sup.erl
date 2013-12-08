@@ -80,10 +80,11 @@ arduino_spec() ->
     Digital = proplists:get_value(digital, Arduino),
     Analog = proplists:get_value(analog, Arduino),
     DiPortReporting = proplists:get_value(digital_port_reporting, Arduino),
+    DiPortOffset = proplists:get_value(digital_port_offset, Arduino),
 
     {rgpio_arduino, 
      {rgpio_arduino, start_link, [Speed, Device, Digital, Analog, 
-				  DiPortReporting]},
+				  DiPortReporting, DiPortOffset]},
      Restart, Shutdown, Type, [rgpio_port]}.
 
 port_spec() ->
@@ -91,8 +92,9 @@ port_spec() ->
     Shutdown = 2000,
     Type = worker,
 
+    {ok, GpioList} = application:get_env(gpio),
     {rgpio_port, 
-     {rgpio_port, start_link, []},
+     {rgpio_port, start_link, [GpioList]},
      Restart, Shutdown, Type, [rgpio_port]}.
 
 rgpio_pin_sup_spec() ->

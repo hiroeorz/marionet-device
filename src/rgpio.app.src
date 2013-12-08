@@ -20,12 +20,12 @@
          %%    pull       :: up      | down   | none
          %%    active_low :: true    | false  | undefined
          {gpio, [
-                 { 4, in,  [{edge, both}, {pull, down}] },
-                 {17, in,  [{edge, both}, {pull, down}] },
-                 {18, in,  [{edge, both}, {pull, down}] },
-                 {22, in,  [{edge, both}, {pull, down}] },
-                 {23, in,  [{edge, both}, {pull, down}] },
-                 {24, in,  [{edge, both}, {pull, down}] },
+                 { 4, in,  [{edge, both}, {pull, up}] },
+                 {17, in,  [{edge, both}, {pull, up}] },
+                 {18, in,  [{edge, both}, {pull, up}] },
+                 {22, in,  [{edge, both}, {pull, up}] },
+                 {23, in,  [{edge, both}, {pull, up}] },
+                 {24, in,  [{edge, both}, {pull, up}] },
                  {25, out, [{edge, both}, {pull, down}] },
                  {27, out, [{edge, both}, {pull, down}] }
                 ]},
@@ -39,10 +39,11 @@
 
          %% arduino extend setting.
          {arduino_enable, true},
-         {arduino, [{speed, 57600}, 
+         {arduino, [{speed, 57600},
                     {device, "/dev/ttyACM0"},
-                    {analog, [0, 1, 2] },
+                    {analog, [0, 1, 2, 3, 4, 5] },
                     {digital_port_reporting, [1, 1]},
+                    {digital_port_offset, 1},
                     {digital, [
                                { 0, in},
                                { 1, in},
