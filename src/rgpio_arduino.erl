@@ -11,12 +11,12 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/2, start_link/4, start_link/5, start_link/6,
+-export([start_link/0, start_link/1,
 	 cast/1,
 	 firmata_version_request/0,
 	 initialize/0,
-	 digital/0,
-	 analog/0,
+	 all_digital/0,
+	 all_analog/0,
 	 digital_write/2]).
 
 %% gen_server callbacks
@@ -35,11 +35,10 @@
 		recv_queue = <<>>           :: binary(),
 		digital_conf                :: [tuple()],
 		analog_conf                 :: [non_neg_integer()],
+		sampling_interval = 19      :: non_neg_integer(),
 		digital_port_reporting_conf :: [non_neg_integer()],
-		digital_port_offset = 0     :: non_neg_integer() }).
-
--type serial_speed() :: 9600 | 19200 | 38400 | 57600 | 115200. 
--type pin_mode() :: in | out | analog | pwm | servo.
+		digital_port_offset = 0     :: non_neg_integer(),
+		analog_offset = 0           :: non_neg_integer()}).
 
 %%%===================================================================
 %%% API
@@ -49,59 +48,15 @@
 %% @doc Starts the server
 %% @end
 %%--------------------------------------------------------------------
--spec start_link(Speed, Device) -> 
-			{ok, pid()}     |
-			ignore          |
-			{error, term()} when
-      Speed :: serial_speed(),
-      Device :: string().
-start_link(Speed, Device) ->
-    start_link(Speed, Device, [], []).
 
--spec start_link(Speed, Device, Digital, Analog) -> 
-			{ok, pid()}     |
-			ignore          |
-			{error, term()} when
-      Speed :: serial_speed(),
-      Device :: string(),
-      Digital :: [ {PinNo,  pin_mode(), Opts} ],
-      PinNo :: non_neg_integer(),
-      Opts :: [tuple()],
-      Analog :: [non_neg_integer()].
-start_link(Speed, Device, Digital, Analog) ->
-    start_link(Speed, Device, Digital, Analog, []).
+-spec start_link() -> {ok, pid()} | ignore | {error, term()}.
+start_link() ->
+    start_link([]).
 
--spec start_link(Speed, Device, Digital, Analog, DiPortReporting) -> 
-			{ok, pid()}     |
-			ignore          |
-			{error, term()} when
-      Speed :: serial_speed(),
-      Device :: string(),
-      Digital :: [ {PinNo,  pin_mode(), Opts} ],
-      PinNo :: non_neg_integer(),
-      Opts :: [tuple()],
-      Analog :: [non_neg_integer()],
-      DiPortReporting :: [non_neg_integer()].
-start_link(Speed, Device, Digital, Analog, DiPortReporting) ->
-    start_link(Speed, Device, Digital, Analog, DiPortReporting, 0).
-
--spec start_link(Speed, Device, Digital, Analog,
-		 DiPortReporting, DiPortOffset) -> 
-			{ok, pid()}     |
-			ignore          |
-			{error, term()} when
-      Speed :: serial_speed(),
-      Device :: string(),
-      Digital :: [ {PinNo,  pin_mode(), Opts} ],
-      PinNo :: non_neg_integer(),
-      Opts :: [tuple()],
-      Analog :: [non_neg_integer()],
-      DiPortReporting :: [non_neg_integer()],
-      DiPortOffset :: non_neg_integer().
-start_link(Speed, Device, Digital, Analog, DiPortReporting, DiPortOffset) ->
-    gen_server:start_link({local, ?SERVER}, 
-			  ?MODULE, [Speed, Device, Digital, Analog, 
-				    DiPortReporting, DiPortOffset], []).
+-spec start_link(Conf) -> {ok, pid()} | ignore | {error, term()} when
+      Conf :: [tuple()].
+start_link(Conf) ->
+    gen_server:start_link({local, ?SERVER}, ?MODULE, [Conf], []).
 
 %%--------------------------------------------------------------------
 %% @doc get firmata version from arduino.
@@ -123,43 +78,51 @@ cast(Bin) when is_binary(Bin) ->
 %% @doc get digital state.
 %% @end
 %%--------------------------------------------------------------------
-digital() ->
-    case ets:first(arduino_digital) of 
-	'$end_of_table' ->
-	    [];
-	Key ->
-	    digital(Key, [])
+all_digital() ->
+    case ets:info(arduino_digital) of  %% for before init call.
+	undefined -> [];
+	_ ->
+	    case ets:first(arduino_digital) of 
+		'$end_of_table' ->
+		    [];
+		Key ->
+		    all_digital(Key, [])
+	    end
     end.
 
-digital('$end_of_table', Result) ->
+all_digital('$end_of_table', Result) ->
     lists:reverse(Result);
 
-digital(Key, Result) ->
+all_digital(Key, Result) ->
     [{_PortNo, [X0, X1, X2, X3, X4, X5, X6, X7]}] = 
 	ets:lookup(arduino_digital, Key),
 
     NextKey = ets:next(arduino_digital, Key),
-    digital(NextKey, [X7, X6, X5, X4, X3, X2, X1, X0 | Result]).
+    all_digital(NextKey, [X7, X6, X5, X4, X3, X2, X1, X0 | Result]).
 
 %%--------------------------------------------------------------------
 %% @doc get analog state.
 %% @end
 %%--------------------------------------------------------------------
-analog() ->
-    case ets:first(arduino_analog) of 
-	'$end_of_table' ->
-	    [];
-	Key ->
-	    analog(Key, [])
+all_analog() ->
+    case ets:info(arduino_digital) of %% for before init call.
+	undefined -> [];
+	_ ->
+	    case ets:first(arduino_analog) of 
+		'$end_of_table' ->
+		    [];
+		Key ->
+		    all_analog(Key, [])
+	    end
     end.
 
-analog('$end_of_table', Result) ->
+all_analog('$end_of_table', Result) ->
     lists:reverse(Result);
 
-analog(Key, Result) ->
+all_analog(Key, Result) ->
     [{_PinNo, Val}] = ets:lookup(arduino_analog, Key),
     NextKey = ets:next(arduino_analog, Key),
-    analog(NextKey, [Val | Result]).
+    all_analog(NextKey, [Val | Result]).
 
 initialize() ->
     gen_server:cast(?SERVER, initialize).
@@ -182,7 +145,17 @@ digital_write(PortNo, Vals) ->
 %%                     {stop, Reason}
 %% @end
 %%--------------------------------------------------------------------
-init([Speed, Device, Digital, Analog, DiPortReporting, DiPortOffset]) ->
+init([Conf]) ->
+    Device = proplists:get_value(device, Conf, "/dev/ttyACM0"),
+    Speed = proplists:get_value(speed, Conf, 57600),
+    Digital = proplists:get_value(digital, Conf, 
+				  [{PinNo, in} || PinNo <- lists:seq(0, 13)] ),
+    Analog = proplists:get_value(analog, Conf, [0, 1, 2, 3, 4, 5]),
+    SamplingInterval = proplists:get_value(analog_offset, Conf, 19),
+    AnalogOffset = proplists:get_value(analog_offset, Conf, 0),
+    DiPortReporting = proplists:get_value(digital_port_reporting, Conf, [1, 1]),
+    DiPortOffset = proplists:get_value(digital_port_offset, Conf, 0),
+
     case file:open(Device, [read]) of
 	{error, eisdir} -> %% device file exist
 	    Pid = serial:start([{speed, Speed}, {open, Device}]),
@@ -192,8 +165,11 @@ init([Speed, Device, Digital, Analog, DiPortReporting, DiPortOffset]) ->
 	    State = #state{serial_pid = Pid, 
 			   digital_conf = Digital, 
 			   analog_conf = Analog,
+			   sampling_interval = SamplingInterval,
 			   digital_port_reporting_conf = DiPortReporting,
-			   digital_port_offset = DiPortOffset},
+			   digital_port_offset = DiPortOffset,
+			   analog_offset = AnalogOffset},
+
 	    reset_config(State),
 	    version_report_request(State),
 	    {ok, State};
@@ -307,6 +283,35 @@ handle_info(Info, State) ->
 
 %%--------------------------------------------------------------------
 %% @private
+%% @doc
+%% This function is called by a gen_server when it is about to
+%% terminate. It should be the opposite of Module:init/1 and do any
+%% necessary cleaning up. When it returns, the gen_server terminates
+%% with Reason. The return value is ignored.
+%%
+%% @spec terminate(Reason, State) -> void()
+%% @end
+%%--------------------------------------------------------------------
+terminate(_Reason, _State) ->
+    ok.
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%% Convert process state when code is changed
+%%
+%% @spec code_change(OldVsn, State, Extra) -> {ok, NewState}
+%% @end
+%%--------------------------------------------------------------------
+code_change(_OldVsn, State, _Extra) ->
+    {ok, State}.
+
+%%%===================================================================
+%%% Firmata handler functions
+%%%===================================================================
+
+%%--------------------------------------------------------------------
+%% @private
 %% @doc handle firmata message from arduino.
 %% @end
 %%--------------------------------------------------------------------
@@ -320,12 +325,13 @@ handle_firmata({version_report, {MeasureVer, MinorVer}}, State) ->
 
 handle_firmata({digital_io_message, {ArduinoPortNo, Status}}, State) ->
     PortNo = ArduinoPortNo + State#state.digital_port_offset,
-    gen_event:notify(rgpio_event, {digital_changed, PortNo, Status}),
+    gen_event:notify(rgpio_event, {digital_port_changed, PortNo, Status}),
     true = ets:insert(arduino_digital, {PortNo, Status}),
     State;
 
 handle_firmata({analog_io_message, {PinNo, Val}}, State) ->
     %%io:format("analog: ~w:~w~n", [PinNo, Val]),
+    gen_event:notify(rgpio_event, {analog_recv, PinNo, Val}),
     true = ets:insert(arduino_analog, {PinNo, Val}),
     State;
 
@@ -374,31 +380,6 @@ has_sysex_end(<<?SYSEX_END_CODE:8, _/binary>>, Size) ->
 has_sysex_end(<<_:8/integer, TailBin/binary>>, Size) ->
     has_sysex_end(<<TailBin/binary>>, Size + 1).
 
-%%--------------------------------------------------------------------
-%% @private
-%% @doc
-%% This function is called by a gen_server when it is about to
-%% terminate. It should be the opposite of Module:init/1 and do any
-%% necessary cleaning up. When it returns, the gen_server terminates
-%% with Reason. The return value is ignored.
-%%
-%% @spec terminate(Reason, State) -> void()
-%% @end
-%%--------------------------------------------------------------------
-terminate(_Reason, _State) ->
-    ok.
-
-%%--------------------------------------------------------------------
-%% @private
-%% @doc
-%% Convert process state when code is changed
-%%
-%% @spec code_change(OldVsn, State, Extra) -> {ok, NewState}
-%% @end
-%%--------------------------------------------------------------------
-code_change(_OldVsn, State, _Extra) ->
-    {ok, State}.
-
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
@@ -433,15 +414,19 @@ check_first_message(#state{init_flag = false} = State) ->
 init_pin(State) ->
     io:format("Arduino pin initializing "),
     ok = reset_config(State),
-    timer:sleep(10), %%一旦反映させる
+    timer:sleep(3), %%一旦反映させる
     DigitalList = State#state.digital_conf,
     DigitalPortReporting = State#state.digital_port_reporting_conf,
     AnalogList = State#state.analog_conf,
+    SamplingInterval = State#state.sampling_interval,
 
     SerialPid = State#state.serial_pid,
-    ok = sampling_interval(30, SerialPid),
+    ok = sampling_interval(SamplingInterval, SerialPid),
+    timer:sleep(3), %%一旦反映させる
     ok = init_pin_mode(DigitalList, SerialPid),
+    timer:sleep(3), %%一旦反映させる
     ok = set_digital_port_reporting(0, DigitalPortReporting, SerialPid),
+    timer:sleep(3), %%一旦反映させる
     ok = set_analog_port_reporting(AnalogList, SerialPid),
     io:format("done.~n"),
     State.
@@ -491,11 +476,13 @@ set_analog_port_reporting([PinNo | Tail], SerialPid) ->
     io:format("."),
     set_analog_port_reporting(Tail, SerialPid).
 
+%% write digital value(0 or 1).
 digital_write(PortNo, Vals, SerialPid) when is_list(Vals) andalso
 					    length(Vals) =:= 8 ->
     Command = rgpio_firmata:format(digital_io_message, {PortNo, Vals}),
     send(Command, SerialPid).
-    
+
+%% set analog sampling interval.
 sampling_interval(Interval, SerialPid) ->
     Command = rgpio_firmata:format(sysex, sampling_interval, Interval),
     send(Command, SerialPid),

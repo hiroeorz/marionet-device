@@ -20,7 +20,8 @@
 	 pulldown/1,
 	 pullnone/1,
 	 get_active_low/1,
-	 set_active_low/2]).
+	 set_active_low/2,
+	 all_digital/0]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -154,6 +155,23 @@ get_active_low(PinNo) ->
       Mode :: mode().
 set_active_low(PinNo, Mode) ->
     gen_server:call(get_child(PinNo), {set_active_low, Mode}).
+
+%%--------------------------------------------------------------------
+%% @doc get status list.
+%%
+%% example: [0,1,1,0,0,0,0,0]
+%% @end
+%%--------------------------------------------------------------------
+-spec all_digital() -> [ 1 | 0 ].
+all_digital() ->
+    {ok, GpioList} = application:get_env(rgpio, gpio),
+    all_digital(GpioList, []).
+
+all_digital([], Result) ->
+    lists:reverse(Result);
+
+all_digital([{PinNo, _Mode, _Opts} | Tail], Result) ->
+    all_digital(Tail, [rgpio:read(PinNo) | Result]).
 
 %%%===================================================================
 %%% gen_server callbacks

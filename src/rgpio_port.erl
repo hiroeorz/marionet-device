@@ -11,7 +11,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/1,
+-export([start_link/0,
 	 start_poll/2,
 	 pullup/1,
 	 pulldown/1,
@@ -35,10 +35,9 @@
 %% @doc Starts the server
 %% @end
 %%--------------------------------------------------------------------
--spec start_link(GpioList) -> {ok, pid()} | ignore | {error, term()} when
-      GpioList :: [tuple()].
-start_link(GpioList) ->
-    gen_server:start_link({local, ?SERVER}, ?MODULE, [GpioList], []).
+-spec start_link() -> {ok, pid()} | ignore | {error, term()}.
+start_link() ->
+    gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
 
 start_poll(PinNo, Mode) ->
     gen_server:call(?SERVER, {start_poll, PinNo, Mode}).    
@@ -67,14 +66,14 @@ pullnone(PinNo) ->
 %%                     {stop, Reason}
 %% @end
 %%--------------------------------------------------------------------
-init([GpioList]) ->
+init([]) ->
     _Pid = spawn_link(fun() ->
 			      os:cmd("./priv/rgpio_lib"),
 			      erlang:error(port_process_down)
 		      end),
 
     {ok, C_Node} = application:get_env(rgpio, c_node),
-    {ok, #state{c_node = C_Node, gpio = GpioList}}.
+    {ok, #state{c_node = C_Node}}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -136,37 +135,12 @@ handle_info({Ref, Reply}, State) ->
     {noreply, State#state{pid_dict = NewDict}};
 
 handle_info({gpio_changed, PinNo, _Edge}, State) ->
-    AllStatus = rgpio:status(),
-    GpioList = State#state.gpio,
-
-    case get_pin_posision(PinNo, GpioList) of
-	noentry ->
-	    io:format("pin change report for no entry pin:~p~n", [PinNo]);
-	DigitalPos when is_integer(DigitalPos) ->
-	    PortNo = DigitalPos div 8,
-	    Status = lists:sublist(AllStatus, PortNo * 8 + 1, 8),
-	    io:format("digital: ~w:~p~n", [PortNo, Status]),
-	    gen_event:notify(rgpio_event, {digital_changed, PortNo, Status})
-    end,
-
+    gen_event:notify(rgpio_event, {digital_pin_changed, PinNo}),
     {noreply, State};
 
 handle_info(Info, State) ->
     io:format("unknown message recieved: ~p~n", [Info]),
     {noreply, State}.
-
-get_pin_posision(PinNo, GpioList) ->
-    PinNoList = [Pin || {Pin, _, _} <- GpioList],
-    get_pin_posision(PinNo, PinNoList, 0).
-
-get_pin_posision(_PinNo, [], _Pos) ->
-    noentry;
-
-get_pin_posision(PinNo, [PinNo | _Tail], Pos) ->
-    Pos;
-
-get_pin_posision(PinNo, [_ | Tail], Pos) ->
-    get_pin_posision(PinNo, Tail, Pos + 1).
 
 %%--------------------------------------------------------------------
 %% @private

@@ -55,7 +55,8 @@ init([]) ->
     MaxSecondsBetweenRestarts = 3600,
 
     SupFlags = {RestartStrategy, MaxRestarts, MaxSecondsBetweenRestarts},
-    Specs = [rgpio_event_spec(), port_spec(), rgpio_pin_sup_spec()],
+    Specs = [rgpio_event_spec(), port_spec(), rgpio_pin_sup_spec(),
+	     rgpio_status_spec()],
 
     {ok, ArduinoEnable} = application:get_env(arduino_enable),
 
@@ -74,17 +75,10 @@ arduino_spec() ->
     Shutdown = 2000,
     Type = worker,
 
-    {ok, Arduino} = application:get_env(arduino),
-    Device = proplists:get_value(device, Arduino, "/dev/ttyACM0"),
-    Speed = proplists:get_value(speed, Arduino, 57600),
-    Digital = proplists:get_value(digital, Arduino),
-    Analog = proplists:get_value(analog, Arduino),
-    DiPortReporting = proplists:get_value(digital_port_reporting, Arduino),
-    DiPortOffset = proplists:get_value(digital_port_offset, Arduino),
+    {ok, ArduinoConf} = application:get_env(arduino),
 
     {rgpio_arduino, 
-     {rgpio_arduino, start_link, [Speed, Device, Digital, Analog, 
-				  DiPortReporting, DiPortOffset]},
+     {rgpio_arduino, start_link, [ArduinoConf]},
      Restart, Shutdown, Type, [rgpio_port]}.
 
 port_spec() ->
@@ -92,9 +86,8 @@ port_spec() ->
     Shutdown = 2000,
     Type = worker,
 
-    {ok, GpioList} = application:get_env(gpio),
     {rgpio_port, 
-     {rgpio_port, start_link, [GpioList]},
+     {rgpio_port, start_link, []},
      Restart, Shutdown, Type, [rgpio_port]}.
 
 rgpio_pin_sup_spec() ->
@@ -116,3 +109,13 @@ rgpio_event_spec() ->
     {rgpio_event, 
      {rgpio_event, start_link, [Handlers]},
      Restart, Shutdown, Type, [rgpio_event]}.
+
+rgpio_status_spec() ->
+    Restart = permanent,
+    Shutdown = 2000,
+    Type = worker,
+    {ok, GpioList} = application:get_env(gpio),
+
+    {rgpio_status, 
+     {rgpio_status, start_link, [GpioList]},
+     Restart, Shutdown, Type, [rgpio_status]}.

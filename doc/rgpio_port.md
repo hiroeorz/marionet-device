@@ -17,7 +17,7 @@ __Authors:__ HIROE Shin ([`shin@HIROE-no-MacBook-Pro.local`](mailto:shin@HIROE-n
 ## Function Index ##
 
 
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#pulldown-1">pulldown/1</a></td><td></td></tr><tr><td valign="top"><a href="#pullnone-1">pullnone/1</a></td><td></td></tr><tr><td valign="top"><a href="#pullup-1">pullup/1</a></td><td></td></tr><tr><td valign="top"><a href="#start_link-1">start_link/1</a></td><td>Starts the server.</td></tr><tr><td valign="top"><a href="#start_poll-2">start_poll/2</a></td><td></td></tr></table>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#pulldown-1">pulldown/1</a></td><td></td></tr><tr><td valign="top"><a href="#pullnone-1">pullnone/1</a></td><td></td></tr><tr><td valign="top"><a href="#pullup-1">pullup/1</a></td><td></td></tr><tr><td valign="top"><a href="#start_link-0">start_link/0</a></td><td>Starts the server.</td></tr><tr><td valign="top"><a href="#start_poll-2">start_poll/2</a></td><td></td></tr></table>
 
 
 <a name="functions"></a>
@@ -45,16 +45,17 @@ __Authors:__ HIROE Shin ([`shin@HIROE-no-MacBook-Pro.local`](mailto:shin@HIROE-n
 `pullup(PinNo) -> any()`
 
 
-<a name="start_link-1"></a>
+<a name="start_link-0"></a>
 
-### start_link/1 ###
+### start_link/0 ###
 
 
 <pre><code>
-start_link(GpioList) -&gt; {ok, pid()} | ignore | {error, term()}
+start_link() -&gt; {ok, pid()} | ignore | {error, term()}
 </code></pre>
 
-<ul class="definitions"><li><code>GpioList = [tuple()]</code></li></ul>
+<br></br>
+
 
 Starts the server
 <a name="start_poll-2"></a>

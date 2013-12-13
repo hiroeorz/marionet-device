@@ -20,8 +20,7 @@
 	 get_active_low/1,
 	 set_active_low/2,
 	 add_event_handler/1,
-	 status/0,
-	 packed_status/0]).
+	 all_digital/0]).
 
 %%%===================================================================
 %%% API
@@ -145,66 +144,11 @@ add_event_handler(Module) ->
     rgpio_event:add_handler(Module).
 
 %%--------------------------------------------------------------------
-%% @doc get status list.
+%% @doc get all digital status list.
 %%
-%% example: [0,1,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0]
+%% example: [0,1,1,0,0,0,0,0]
 %% @end
 %%--------------------------------------------------------------------
--spec status() -> [ 1 | 0 ].
-status() ->
-    {ok, GpioList} = application:get_env(rgpio, gpio),
-    status(GpioList, []).
-
-status([], Result) ->
-    lists:reverse(Result);
-
-status([{PinNo, _Mode, _Opts} | Tail], Result) ->
-    status(Tail, [rgpio:read(PinNo) | Result]).
-
-%%--------------------------------------------------------------------
-%% @doc get status list that packed to 16bit unsigned integer.
-%%
-%% example: [16390,0]
-%%
-%% 主にサーバーへの送信データサイズを減らす為の関数。
-%% 各pinの状態を16点毎にまとめて16bit整数のリストを返します。
-%% RaspberryPiのGPIO点数では必要ありませんが、PLCなどもっと点数の多いものと一緒に
-%% 使われたときに型を合わせる用。
-%% 16ビットに足りない分は0で埋めます。
-%% @end
-%%--------------------------------------------------------------------
--spec packed_status() -> [non_neg_integer()].
-packed_status() ->
-    List = case status() of
-	       Status1 when (length(Status1) rem 16) =:= 0  ->
-		   Status1;
-	       Status2 ->
-		   Rem = length(Status2) rem 16,
-		   Status2 ++ lists:map(fun(_) -> 0 end, lists:seq(1, 16 - Rem))
-	   end,
-
-    packed_status(List, []).
-
-packed_status([], Result) ->
-    lists:reverse(Result);
-
-packed_status([X1,  X2,  X3,  X4,  X5,  X6,  X7,  X8,
-	       X9, X10, X11, X12, X13, X14, X15, X16 | Tail], Result) ->
-    <<Int:16/big-unsigned-integer>> = <<X16:1/integer,
-					X15:1/integer,
-					X14:1/integer,
-					X13:1/integer,
-					X12:1/integer,
-					X11:1/integer,
-					X10:1/integer,
-					X9:1/integer,
-					X8:1/integer,
-					X7:1/integer,
-					X6:1/integer,
-					X5:1/integer,
-					X4:1/integer,
-					X3:1/integer,
-					X2:1/integer,
-					X1:1/integer>>,
-
-    packed_status(Tail, [Int | Result]).
+-spec all_digital() -> [ 1 | 0 ].
+all_digital() ->
+    rgpio_status:all_digital().

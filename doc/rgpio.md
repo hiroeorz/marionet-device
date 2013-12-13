@@ -15,7 +15,7 @@ __Authors:__ HIROE Shin ([`shin@hibiscus`](mailto:shin@hibiscus)).
 ## Function Index ##
 
 
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#add_event_handler-1">add_event_handler/1</a></td><td>add event handler to gen_event.</td></tr><tr><td valign="top"><a href="#get_active_low-1">get_active_low/1</a></td><td>get active low from a pin.</td></tr><tr><td valign="top"><a href="#packed_status-0">packed_status/0</a></td><td>get status list that packed to 16bit unsigned integer.</td></tr><tr><td valign="top"><a href="#pulldown-1">pulldown/1</a></td><td>set pulldown to a pin.</td></tr><tr><td valign="top"><a href="#pullnone-1">pullnone/1</a></td><td>release pin mode from pullup pulldown.</td></tr><tr><td valign="top"><a href="#pullup-1">pullup/1</a></td><td>set pullup to a pin.</td></tr><tr><td valign="top"><a href="#read-1">read/1</a></td><td>read gpio value.</td></tr><tr><td valign="top"><a href="#set_active_low-2">set_active_low/2</a></td><td>set active low to a pin.</td></tr><tr><td valign="top"><a href="#set_int-2">set_int/2</a></td><td>set interrupt that fire when gpio's input or output status is chaned.</td></tr><tr><td valign="top"><a href="#set_pin_mode-2">set_pin_mode/2</a></td><td>set pin mode, in or out.</td></tr><tr><td valign="top"><a href="#start-0">start/0</a></td><td></td></tr><tr><td valign="top"><a href="#status-0">status/0</a></td><td>get status list.</td></tr><tr><td valign="top"><a href="#write-2">write/2</a></td><td>write value to gpio.</td></tr></table>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#add_event_handler-1">add_event_handler/1</a></td><td>add event handler to gen_event.</td></tr><tr><td valign="top"><a href="#all_digital-0">all_digital/0</a></td><td>get all digital status list.</td></tr><tr><td valign="top"><a href="#get_active_low-1">get_active_low/1</a></td><td>get active low from a pin.</td></tr><tr><td valign="top"><a href="#pulldown-1">pulldown/1</a></td><td>set pulldown to a pin.</td></tr><tr><td valign="top"><a href="#pullnone-1">pullnone/1</a></td><td>release pin mode from pullup pulldown.</td></tr><tr><td valign="top"><a href="#pullup-1">pullup/1</a></td><td>set pullup to a pin.</td></tr><tr><td valign="top"><a href="#read-1">read/1</a></td><td>read gpio value.</td></tr><tr><td valign="top"><a href="#set_active_low-2">set_active_low/2</a></td><td>set active low to a pin.</td></tr><tr><td valign="top"><a href="#set_int-2">set_int/2</a></td><td>set interrupt that fire when gpio's input or output status is chaned.</td></tr><tr><td valign="top"><a href="#set_pin_mode-2">set_pin_mode/2</a></td><td>set pin mode, in or out.</td></tr><tr><td valign="top"><a href="#start-0">start/0</a></td><td></td></tr><tr><td valign="top"><a href="#write-2">write/2</a></td><td>write value to gpio.</td></tr></table>
 
 
 <a name="functions"></a>
@@ -38,6 +38,23 @@ add event handler to gen_event.
 
 
 event fired when gpio's input or output status is chaned.
+<a name="all_digital-0"></a>
+
+### all_digital/0 ###
+
+
+<pre><code>
+all_digital() -&gt; [1 | 0]
+</code></pre>
+
+<br></br>
+
+
+
+get all digital status list.
+
+
+example: [0,1,1,0,0,0,0,0]
 <a name="get_active_low-1"></a>
 
 ### get_active_low/1 ###
@@ -55,31 +72,6 @@ get active low from a pin.
 
 Mode=0: 通電時のread/1の結果は 通電->1 解放->0 (デフォルト)
 Mode=1: 通電時のread/1の結果は 通電->0 解放->1
-<a name="packed_status-0"></a>
-
-### packed_status/0 ###
-
-
-<pre><code>
-packed_status() -&gt; [non_neg_integer()]
-</code></pre>
-
-<br></br>
-
-
-
-get status list that packed to 16bit unsigned integer.
-
-
-
-example: [16390,0]
-
-
-主にサーバーへの送信データサイズを減らす為の関数。
-各pinの状態を16点毎にまとめて16bit整数のリストを返します。
-RaspberryPiのGPIO点数では必要ありませんが、PLCなどもっと点数の多いものと一緒に
-使われたときに型を合わせる用。
-16ビットに足りない分は0で埋めます。
 <a name="pulldown-1"></a>
 
 ### pulldown/1 ###
@@ -191,23 +183,6 @@ set pin mode, in or out.
 `start() -> any()`
 
 
-<a name="status-0"></a>
-
-### status/0 ###
-
-
-<pre><code>
-status() -&gt; [1 | 0]
-</code></pre>
-
-<br></br>
-
-
-
-get status list.
-
-
-example: [0,1,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0]
 <a name="write-2"></a>
 
 ### write/2 ###

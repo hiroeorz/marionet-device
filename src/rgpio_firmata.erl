@@ -24,6 +24,7 @@
 -define(VERSION_REPORT_CODE,             16#F9).
 -define(SYSTEM_RESET_CODE,               16#FF).
 
+-define(SYSEX_CAPABILITY_QUERY,          16#6B).
 -define(SYSEX_PIN_STATE_QUERY,           16#6D).
 -define(SYSEX_PIN_STATE_RESPONSE,        16#6E).
 -define(SYSEX_EXTENDED_ANALOG,           16#6F).
@@ -273,6 +274,18 @@ format(sysex, sampling_interval, Interval) ->
 
     <<?SYSEX_START_CODE:8, 
       ?SYSEX_SAMPLING_INTERVAL:8, IntervalBin:2/binary, 
+      ?SYSEX_END_CODE:8>>;
+
+%--------------------------------------------------------------------
+% capabilities query
+%--------------------------------------------------------------------
+% 0  START_SYSEX (0xF0) (MIDI System Exclusive)
+% 1  capabilities query (0x6B)
+% 2  END_SYSEX (0xF7) (MIDI End of SysEx - EOX)
+%--------------------------------------------------------------------
+format(sysex, capability_query, {}) ->
+    <<?SYSEX_START_CODE:8, 
+      ?SYSEX_CAPABILITY_QUERY:8,
       ?SYSEX_END_CODE:8>>;
 
 %--------------------------------------------------------------------

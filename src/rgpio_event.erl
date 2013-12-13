@@ -82,8 +82,23 @@ init([]) ->
 %%                          remove_handler
 %% @end
 %%--------------------------------------------------------------------
-handle_event({digital_changed, PortNo, Status}, State) ->
-    io:format("digital: ~w:~p~n", [PortNo, Status]),
+
+%% receive digital pin(1bit) changed message.
+handle_event({digital_pin_changed, GpioPinNo}, State) ->
+    PinState = rgpio_pin:read(GpioPinNo),
+    {ok, PortNo, Status} = rgpio_status:update_digital_pin(GpioPinNo, PinState),
+    io:format("digital port updated: ~w:~p~n", [PortNo, Status]),
+    {ok, State};
+
+%% receive digital port(8bit) changed message.
+handle_event({digital_port_changed, PortNo, Status}, State) ->
+    io:format("digital port updated: ~w:~p~n", [PortNo, Status]),
+    ok = rgpio_status:update_digital_port(PortNo, Status),
+    {ok, State};
+
+handle_event({analog_recv, PinNo, Value}, State) ->
+    %%io:format("analog: ~w:~p~n", [PinNo, Val]),
+    ok = rgpio_status:update_analog_value(PinNo, Value),
     {ok, State}.
 
 %%--------------------------------------------------------------------

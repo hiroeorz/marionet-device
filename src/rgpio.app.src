@@ -20,12 +20,12 @@
          %%    pull       :: up      | down   | none
          %%    active_low :: true    | false  | undefined
          {gpio, [
-                 { 4, in,  [{edge, both}, {pull, up}] },
-                 {17, in,  [{edge, both}, {pull, up}] },
-                 {18, in,  [{edge, both}, {pull, up}] },
-                 {22, in,  [{edge, both}, {pull, up}] },
-                 {23, in,  [{edge, both}, {pull, up}] },
-                 {24, in,  [{edge, both}, {pull, up}] },
+                 { 4, in,  [{edge, both}, {pull, up}, {active_low, true}] },
+                 {17, in,  [{edge, both}, {pull, up}, {active_low, true}] },
+                 {18, in,  [{edge, both}, {pull, up}, {active_low, true}] },
+                 {22, in,  [{edge, both}, {pull, up}, {active_low, true}] },
+                 {23, in,  [{edge, both}, {pull, up}, {active_low, true}] },
+                 {24, in,  [{edge, both}, {pull, up}, {active_low, true}] },
                  {25, out, [{edge, both}, {pull, down}] },
                  {27, out, [{edge, both}, {pull, down}] }
                 ]},
@@ -41,9 +41,12 @@
          {arduino_enable, true},
          {arduino, [{speed, 57600},
                     {device, "/dev/ttyACM0"},
+                    {firmata_handler, firmata_handler},
                     {analog, [0, 1, 2, 3, 4, 5] },
+                    {sampling_interval, 100},
                     {digital_port_reporting, [1, 1]},
                     {digital_port_offset, 1},
+                    {analog_offset, 0},
                     {digital, [
                                { 0, in},
                                { 1, in},
