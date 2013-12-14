@@ -58,11 +58,19 @@ init([IOList]) ->
     MaxSecondsBetweenRestarts = 3600,
 
     SupFlags = {RestartStrategy, MaxRestarts, MaxSecondsBetweenRestarts},
-    {ok, {SupFlags, child_list(IOList)}}.
+    {ok, {SupFlags, child_list(IOList) ++ [db_child(IOList)] }}.
 
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+
+db_child(IOList) ->
+    Restart = permanent,
+    Shutdown = 2000,
+    Type = worker,
+
+    {rgpio_pin_db, {rgpio_pin_db, start_link, [IOList]},
+     Restart, Shutdown, Type, [rgpio_pin_db]}.
 
 child_list(IOList) ->
     Restart = permanent,
@@ -71,12 +79,12 @@ child_list(IOList) ->
 
     L1 = [ {{rgpio_pin, PinNo}, 
 	    {rgpio_pin, start_link, [{PinNo, Mode, Opts}]},
-	    Restart, Shutdown, Type, [rgpio]}
+	    Restart, Shutdown, Type, [rgpio_pin]}
 	   || {PinNo, Mode, Opts} <- IOList ],
 
     L2 = [ {{rgpio_pin, PinNo}, 
 	    {rgpio_pin, start_link, [{PinNo, Mode, []}]},
-	    Restart, Shutdown, Type, [rgpio]}
+	    Restart, Shutdown, Type, [rgpio_pin]}
 	   || {PinNo, Mode} <- IOList ],
 
     L1 ++ L2.

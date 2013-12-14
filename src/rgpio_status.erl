@@ -12,7 +12,6 @@
 
 %% API
 -export([start_link/1,
-	 update_digital_pin/2,
 	 update_digital_port/2,
 	 digital/1,
 	 all_digital/0,
@@ -39,22 +38,6 @@
       Gpio :: [tuple()].
 start_link(Gpio) ->
     gen_server:start_link({local, ?SERVER}, ?MODULE, [Gpio], []).
-
-%%--------------------------------------------------------------------
-%% @doc update digital pin.
-%%
-%% GpioPinNo is No of total pin in RaspberryPi GPIO.
-%% @end
-%%--------------------------------------------------------------------
--spec update_digital_pin(GpioPinNo, PinState) -> {ok, PortNo, Status} when
-      GpioPinNo :: non_neg_integer(),
-      PinState :: 0 | 1,
-      PortNo :: non_neg_integer(),
-      Status :: [0 | 1].
-update_digital_pin(GpioPinNo, PinState) when is_integer(GpioPinNo),
-					     PinState =:= 0;
-					     PinState =:= 1 ->
-    gen_server:call(?SERVER, {update_digital_pin, GpioPinNo, PinState}).
 
 %%--------------------------------------------------------------------
 %% @doc update digital port(8bit).
@@ -160,26 +143,8 @@ init([Gpio]) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_call({update_digital_pin, GpioPinNo, PinState}, _From, 
-	    #state{gpio = Gpio} = State) ->
-
-    case get_pin_position(GpioPinNo, Gpio) of
-	noentry ->
-	    io:format("pin change report for no entry pin:~p~n", [GpioPinNo]),
-	    {reply, {error, undefined_pin_no}, State};
-	{PortNo, PinNo} ->
-	    io:format("~w : ~w~n", [GpioPinNo, PinNo]),
-	    OldPortStatus = case ets:lookup(digital, PortNo) of
-				[] ->
-				    [0, 0, 0, 0, 0, 0, 0, 0];
-				[{PortNo, List}] ->
-				    List
-			    end,
-
-	    NewPortStatus = update_status(PinNo, PinState, OldPortStatus),
-	    true = ets:insert(digital, {PortNo, NewPortStatus}),
-	    {reply, {ok, PortNo, NewPortStatus}, State}
-    end.
+handle_call(_Msg, _From, State) ->
+    {reply, ok, State}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -191,7 +156,6 @@ handle_call({update_digital_pin, GpioPinNo, PinState}, _From,
 %%                                  {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-
 handle_cast({update_digital_port, PortNo, Status}, State) ->
     true = ets:insert(digital, {PortNo, Status}),
     {noreply, State};
@@ -241,48 +205,6 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
-
-%%--------------------------------------------------------------------
-%% @private
-%% @doc update status of a port.
-%% @end
-%%--------------------------------------------------------------------
--spec update_status(PinNo, State, List) -> [1 | 0] when
-      PinNo :: non_neg_integer(),
-      State :: 0 | 1,
-      List :: [0 | 1].
-update_status(PinNo, State, List) ->
-    L = lists:foldl(fun(_S, NewList) when PinNo =:= length(NewList) ->
-			    [State | NewList];
-		       (S, NewList) ->
-			    [S | NewList]
-		    end, [], List),
-    lists:reverse(L).
-
-%%--------------------------------------------------------------------
-%% @private
-%% @doc get pin position in a port. PinNo(in arguments) is total No of all pins.
-%% @end
-%%--------------------------------------------------------------------
--spec get_pin_position(GpioPinNo, GpioList) -> {PortNo, PinNo} when
-      GpioPinNo :: non_neg_integer(),
-      GpioList :: [tuple()],
-      PortNo :: non_neg_integer(),
-      PinNo :: non_neg_integer().
-get_pin_position(GpioPinNo, GpioList) ->
-    GpioPinNoList = [Pin || {Pin, _, _} <- GpioList],
-    get_pin_position(GpioPinNo, GpioPinNoList, 0).
-
-get_pin_position(_GpioPinNo, [], _Pos) ->
-    noentry;
-
-get_pin_position(GpioPinNo, [GpioPinNo | _Tail], Pos) ->
-    PortNo = Pos div 8,
-    PinNo = Pos rem 8,
-    {PortNo, PinNo};
-
-get_pin_position(GpioPinNo, [_ | Tail], Pos) ->
-    get_pin_position(GpioPinNo, Tail, Pos + 1).
 
 %%--------------------------------------------------------------------
 %% @private

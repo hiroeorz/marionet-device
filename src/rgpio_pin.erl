@@ -23,6 +23,9 @@
 	 set_active_low/2,
 	 all_digital/0]).
 
+%% for inturrupt receive
+-export([digital_change_notify/1]).
+
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
 	 terminate/2, code_change/3]).
@@ -57,13 +60,13 @@
       Pull :: pull(),
       Pid :: pid(),
       Error :: term().
-start_link({PinNo, Mode}) when Mode =:= in orelse
-			       Mode =:= out ->
+start_link({PinNo, Mode}) when Mode =:= in;
+				    Mode =:= out ->
     start_link({PinNo, Mode, []});
 
-start_link({PinNo, Mode, Opts}) when Mode =:= in orelse 
-				     Mode =:= out ->
-    gen_server:start_link(?MODULE, [PinNo, Mode, Opts], []).
+start_link({PinNo, Mode, Opts}) when Mode =:= in; 
+					  Mode =:= out ->
+    gen_server:start_link(?MODULE, [{PinNo, Mode, Opts}], []).
 
 %%--------------------------------------------------------------------
 %% @doc set pin mode, in or out.
@@ -72,7 +75,7 @@ start_link({PinNo, Mode, Opts}) when Mode =:= in orelse
 -spec set_pin_mode(PinNo, Mode) -> ok when
       PinNo :: non_neg_integer(),
       Mode :: mode().
-set_pin_mode(PinNo, Mode) when Mode =:= in orelse 
+set_pin_mode(PinNo, Mode) when Mode =:= in; 
 			       Mode =:= out ->
     gen_server:call(get_child(PinNo), {set_pin_mode, Mode}).
 
@@ -173,6 +176,13 @@ all_digital([], Result) ->
 all_digital([{PinNo, _Mode, _Opts} | Tail], Result) ->
     all_digital(Tail, [rgpio:read(PinNo) | Result]).
 
+%%--------------------------------------------------------------------
+%% @doc receive digital state change notify from rgpio_port.
+%% @end
+%%--------------------------------------------------------------------
+digital_change_notify(PinNo) ->
+    rgpio_pin_db:update_digital_pin(PinNo, read(PinNo)).
+
 %%%===================================================================
 %%% gen_server callbacks
 %%%===================================================================
@@ -188,7 +198,7 @@ all_digital([{PinNo, _Mode, _Opts} | Tail], Result) ->
 %%                     {stop, Reason}
 %% @end
 %%--------------------------------------------------------------------
-init([PinNo, Mode, Opts]) ->
+init([{PinNo, Mode, Opts}]) ->
     Edge = proplists:get_value(edge, Opts, none), 
     Pull = proplists:get_value(pull, Opts, none),
     ActiveLow = proplists:get_value(active_low, Opts),

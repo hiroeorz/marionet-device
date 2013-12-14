@@ -4,18 +4,15 @@
 %%% @doc
 %%%
 %%% @end
-%%% Created : 18 Nov 2013 by HIROE Shin <shin@HIROE-no-MacBook-Pro.local>
+%%% Created : 14 Dec 2013 by HIROE Shin <shin@HIROE-no-MacBook-Pro.local>
 %%%-------------------------------------------------------------------
--module(rgpio_port).
+-module(rgpio_pin_db).
 
 -behaviour(gen_server).
 
 %% API
--export([start_link/0,
-	 start_poll/2,
-	 pullup/1,
-	 pulldown/1,
-	 pullnone/1]).
+-export([start_link/1,
+	 update_digital_pin/2]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -23,33 +20,39 @@
 
 -define(SERVER, ?MODULE).
 
--record(state, {pid_dict = dict:new() :: dict(),
-		c_node                :: atom(),
-		gpio                  :: [tuple()] }).
+-record(state, {digital_tid :: ets:tid(),
+		gpio        :: [tuple()] }).
 
 %%%===================================================================
 %%% API
 %%%===================================================================
 
 %%--------------------------------------------------------------------
-%% @doc Starts the server
+%% @doc
+%% Starts the server
+%%
 %% @end
 %%--------------------------------------------------------------------
--spec start_link() -> {ok, pid()} | ignore | {error, term()}.
-start_link() ->
-    gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
+-spec start_link(GpioList) -> {ok, pid()} | ignore | {error, term()} when
+      GpioList :: [tuple()].
+start_link(GpioList) ->
+    gen_server:start_link({local, ?SERVER}, ?MODULE, [GpioList], []).
 
-start_poll(PinNo, Mode) ->
-    gen_server:call(?SERVER, {start_poll, PinNo, Mode}).    
-
-pullup(PinNo) ->
-    gen_server:call(?SERVER, {pullup_down, PinNo, pullup}).
-
-pulldown(PinNo) ->
-    gen_server:call(?SERVER, {pullup_down, PinNo, pulldown}).
-
-pullnone(PinNo) ->
-    gen_server:call(?SERVER, {pullup_down, PinNo, none}).
+%%--------------------------------------------------------------------
+%% @doc update digital pin.
+%%
+%% GpioPinNo is No of total pin in RaspberryPi GPIO.
+%% @end
+%%--------------------------------------------------------------------
+-spec update_digital_pin(GpioPinNo, PinState) -> {ok, PortNo, Status} when
+      GpioPinNo :: non_neg_integer(),
+      PinState :: 0 | 1,
+      PortNo :: non_neg_integer(),
+      Status :: [0 | 1].
+update_digital_pin(GpioPinNo, PinState) when is_integer(GpioPinNo),
+					     (PinState =:= 0 orelse
+					      PinState =:= 1) ->
+    gen_server:cast(?SERVER, {update_digital_pin, GpioPinNo, PinState}).
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -66,14 +69,9 @@ pullnone(PinNo) ->
 %%                     {stop, Reason}
 %% @end
 %%--------------------------------------------------------------------
-init([]) ->
-    _Pid = spawn_link(fun() ->
-			      os:cmd("./priv/rgpio_lib"),
-			      erlang:error(port_process_down)
-		      end),
-
-    {ok, C_Node} = application:get_env(rgpio, c_node),
-    {ok, #state{c_node = C_Node}}.
+init([GpioList]) ->
+    Tid = ets:new(rgpio_digital, [ordered_set, private]),
+    {ok, #state{digital_tid = Tid, gpio = GpioList}}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -89,21 +87,9 @@ init([]) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_call({start_poll, PinNo, Mode}, From, State) ->
-    Ref = make_ref(),
-    C_Node = State#state.c_node,
-    {any, C_Node} ! {call, self(), Ref, {start_poll, PinNo, Mode}},
-
-    NewDict = dict:store(Ref, From, State#state.pid_dict),
-    {noreply, State#state{pid_dict = NewDict}};
-
-handle_call({pullup_down, PinNo, Mode}, From, State) ->
-    Ref = make_ref(),
-    C_Node = State#state.c_node,
-    {any, C_Node} ! {call, self(), Ref, {pullup_down, PinNo, Mode}},
-
-    NewDict = dict:store(Ref, From, State#state.pid_dict),
-    {noreply, State#state{pid_dict = NewDict}}.
+handle_call(_Request, _From, State) ->
+    Reply = ok,
+    {reply, Reply, State}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -115,8 +101,29 @@ handle_call({pullup_down, PinNo, Mode}, From, State) ->
 %%                                  {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_cast(_Msg, State) ->
-    {noreply, State}.
+handle_cast({update_digital_pin, GpioPinNo, PinState},
+	    #state{gpio = Gpio} = State) ->
+
+    Tid = State#state.digital_tid,
+
+    case get_pin_position(GpioPinNo, Gpio) of
+	noentry ->
+	    io:format("pin change report for no entry pin:~p~n", [GpioPinNo]),
+	    {noreply, State};
+	{PortNo, PinNo} ->
+	    OldPortStatus = case ets:lookup(Tid, PortNo) of
+				[] ->
+				    [0, 0, 0, 0, 0, 0, 0, 0];
+				[{PortNo, List}] ->
+				    List
+			    end,
+
+	    NewPortStatus = update_status(PinNo, PinState, OldPortStatus),
+	    true = ets:insert(Tid, {PortNo, NewPortStatus}),
+	    gen_event:notify(rgpio_event, {digital_port_changed, 
+					   PortNo, NewPortStatus}),
+	    {noreply, State}
+    end.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -128,18 +135,7 @@ handle_cast(_Msg, State) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_info({Ref, Reply}, State) ->
-    {ok, From} = dict:find(Ref, State#state.pid_dict),
-    NewDict = dict:erase(Ref, State#state.pid_dict),
-    gen_server:reply(From, Reply),
-    {noreply, State#state{pid_dict = NewDict}};
-
-handle_info({gpio_changed, PinNo, _Edge}, State) ->
-    rgpio_pin:digital_change_notify(PinNo),
-    {noreply, State};
-
-handle_info(Info, State) ->
-    io:format("unknown message recieved: ~p~n", [Info]),
+handle_info(_Info, State) ->
     {noreply, State}.
 
 %%--------------------------------------------------------------------
@@ -170,3 +166,45 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc update status of a port.
+%% @end
+%%--------------------------------------------------------------------
+-spec update_status(PinNo, State, List) -> [1 | 0] when
+      PinNo :: non_neg_integer(),
+      State :: 0 | 1,
+      List :: [0 | 1].
+update_status(PinNo, State, List) ->
+    L = lists:foldl(fun(_S, NewList) when PinNo =:= length(NewList) ->
+			    [State | NewList];
+		       (S, NewList) ->
+			    [S | NewList]
+		    end, [], List),
+    lists:reverse(L).
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc get pin position in a port. PinNo(in arguments) is total No of all pins.
+%% @end
+%%--------------------------------------------------------------------
+-spec get_pin_position(GpioPinNo, GpioList) -> {PortNo, PinNo} when
+      GpioPinNo :: non_neg_integer(),
+      GpioList :: [tuple()],
+      PortNo :: non_neg_integer(),
+      PinNo :: non_neg_integer().
+get_pin_position(GpioPinNo, GpioList) ->
+    GpioPinNoList = [Pin || {Pin, _, _} <- GpioList],
+    get_pin_position(GpioPinNo, GpioPinNoList, 0).
+
+get_pin_position(_GpioPinNo, [], _Pos) ->
+    noentry;
+
+get_pin_position(GpioPinNo, [GpioPinNo | _Tail], Pos) ->
+    PortNo = Pos div 8,
+    PinNo = Pos rem 8,
+    {PortNo, PinNo};
+
+get_pin_position(GpioPinNo, [_ | Tail], Pos) ->
+    get_pin_position(GpioPinNo, Tail, Pos + 1).
