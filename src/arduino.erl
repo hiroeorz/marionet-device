@@ -48,7 +48,6 @@
 %% @doc Starts the server
 %% @end
 %%--------------------------------------------------------------------
-
 -spec start_link() -> {ok, pid()} | ignore | {error, term()}.
 start_link() ->
     start_link([]).
@@ -78,6 +77,7 @@ cast(Bin) when is_binary(Bin) ->
 %% @doc get digital state.
 %% @end
 %%--------------------------------------------------------------------
+-spec all_digital() -> [0 | 1].
 all_digital() ->
     case ets:info(arduino_digital) of  %% for before init call.
 	undefined -> [];
