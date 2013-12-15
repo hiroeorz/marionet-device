@@ -6,7 +6,7 @@
 %%% @end
 %%% Created : 19 Nov 2013 by HIROE Shin <shin@HIROE-no-MacBook-Pro.local>
 %%%-------------------------------------------------------------------
--module(rgpio_event).
+-module(gpio_event).
 
 -behaviour(gen_event).
 
@@ -36,8 +36,7 @@
 start_link(Handlers) ->
     case gen_event:start_link({local, ?SERVER}) of
 	{ok, Pid} ->
-	    ok = lists:foreach(fun(H) -> add_handler(H) end,
-			       [?MODULE |  Handlers]),
+	    ok = lists:foreach(fun(H) -> add_handler(H) end, Handlers),
 	    {ok, Pid};
 	{error, Reason} ->
 	    {error, Reason}
@@ -85,12 +84,12 @@ init([]) ->
 
 %% receive digital port(8bit) changed message.
 handle_event({digital_port_changed, PortNo, Status}, State) ->
-    error_logger:info_msg("!digital_port_changed~n"),
+    io:format("digital port updated: ~w:~p~n", [PortNo, Status]),
     ok = rgpio_status:update_digital_port(PortNo, Status),
     {ok, State};
 
 handle_event({analog_recv, PinNo, Value}, State) ->
-    %%error_logger:info_msg("!analog_recv~n"),
+    %%io:format("analog: ~w:~p~n", [PinNo, Val]),
     ok = rgpio_status:update_analog_value(PinNo, Value),
     {ok, State}.
 

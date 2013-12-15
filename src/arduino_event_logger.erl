@@ -6,12 +6,9 @@
 %%% @end
 %%% Created : 19 Nov 2013 by HIROE Shin <shin@HIROE-no-MacBook-Pro.local>
 %%%-------------------------------------------------------------------
--module(rgpio_event).
+-module(arduino_event_logger).
 
 -behaviour(gen_event).
-
-%% API
--export([start_link/1, add_handler/1]).
 
 %% gen_event callbacks
 -export([init/1, handle_event/2, handle_call/2, 
@@ -20,38 +17,6 @@
 -define(SERVER, ?MODULE).
 
 -record(state, {}).
-
-%%%===================================================================
-%%% gen_event callbacks
-%%%===================================================================
-
-%%--------------------------------------------------------------------
-%% @doc Creates an event manager
-%% @end
-%%--------------------------------------------------------------------
--spec start_link(Handlers) -> {ok, Pid} | {error, Error} when
-      Handlers :: [atom()],
-      Pid :: pid(),
-      Error :: term().
-start_link(Handlers) ->
-    case gen_event:start_link({local, ?SERVER}) of
-	{ok, Pid} ->
-	    ok = lists:foreach(fun(H) -> add_handler(H) end,
-			       [?MODULE |  Handlers]),
-	    {ok, Pid};
-	{error, Reason} ->
-	    {error, Reason}
-    end.
-
-%%--------------------------------------------------------------------
-%% @doc Adds an event handler
-%% @end
-%%--------------------------------------------------------------------
--spec add_handler(Module) -> ok | {'EXIT', Reason} | term() when
-      Module :: atom(),
-      Reason :: term().
-add_handler(Module) ->
-    gen_event:add_handler(?SERVER, Module, []).
 
 %%%===================================================================
 %%% gen_event callbacks
@@ -85,13 +50,12 @@ init([]) ->
 
 %% receive digital port(8bit) changed message.
 handle_event({digital_port_changed, PortNo, Status}, State) ->
-    error_logger:info_msg("!digital_port_changed~n"),
-    ok = rgpio_status:update_digital_port(PortNo, Status),
+    io:format("digital port updated: ~w:~p~n", [PortNo, Status]),
+    error_logger:info_msg("digital port updated: ~w:~p~n", [PortNo, Status]),
     {ok, State};
 
-handle_event({analog_recv, PinNo, Value}, State) ->
-    %%error_logger:info_msg("!analog_recv~n"),
-    ok = rgpio_status:update_analog_value(PinNo, Value),
+handle_event({analog_recv, _PinNo, _Val}, State) ->
+    %%error_logger:info_msg("analog: ~w:~p~n", [PinNo, Val]),
     {ok, State}.
 
 %%--------------------------------------------------------------------

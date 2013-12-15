@@ -18,6 +18,7 @@ get-deps:
 
 compile:
 	@$(REBAR) compile
+	cp -r deps/erlang-serial/priv/bin ./priv/
 
 xref:
 	@$(REBAR) xref skip_deps=true

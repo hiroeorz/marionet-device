@@ -1,6 +1,6 @@
 
 
-# Module rgpio_firmata #
+# Module firmata #
 * [Description](#description)
 * [Function Index](#index)
 * [Function Details](#functions)

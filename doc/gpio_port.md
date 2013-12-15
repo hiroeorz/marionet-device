@@ -1,6 +1,6 @@
 
 
-# Module rgpio_port #
+# Module gpio_port #
 * [Description](#description)
 * [Function Index](#index)
 * [Function Details](#functions)

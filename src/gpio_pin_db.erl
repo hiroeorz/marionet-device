@@ -4,19 +4,15 @@
 %%% @doc
 %%%
 %%% @end
-%%% Created : 12 Dec 2013 by HIROE Shin <shin@HIROE-no-MacBook-Pro.local>
+%%% Created : 14 Dec 2013 by HIROE Shin <shin@HIROE-no-MacBook-Pro.local>
 %%%-------------------------------------------------------------------
--module(rgpio_status).
+-module(gpio_pin_db).
 
 -behaviour(gen_server).
 
 %% API
 -export([start_link/1,
-	 update_digital_port/2,
-	 digital/1,
-	 all_digital/0,
-	 update_analog_value/2,
-	 analog/1]).
+	 update_digital_pin/2]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -24,89 +20,39 @@
 
 -define(SERVER, ?MODULE).
 
--record(state, { gpio :: [tuple()] }).
+-record(state, {digital_tid :: ets:tid(),
+		gpio        :: [tuple()] }).
 
 %%%===================================================================
 %%% API
 %%%===================================================================
 
 %%--------------------------------------------------------------------
-%% @doc Starts the server
+%% @doc
+%% Starts the server
+%%
 %% @end
 %%--------------------------------------------------------------------
--spec start_link(Gpio) -> {ok, pid()} | ignore | {error, term()} when
-      Gpio :: [tuple()].
-start_link(Gpio) ->
-    gen_server:start_link({local, ?SERVER}, ?MODULE, [Gpio], []).
+-spec start_link(GpioList) -> {ok, pid()} | ignore | {error, term()} when
+      GpioList :: [tuple()].
+start_link(GpioList) ->
+    gen_server:start_link({local, ?SERVER}, ?MODULE, [GpioList], []).
 
 %%--------------------------------------------------------------------
-%% @doc update digital port(8bit).
+%% @doc update digital pin.
+%%
+%% GpioPinNo is No of total pin in RaspberryPi GPIO.
 %% @end
 %%--------------------------------------------------------------------
--spec update_digital_port(PortNo, Status) -> ok when
+-spec update_digital_pin(GpioPinNo, PinState) -> {ok, PortNo, Status} when
+      GpioPinNo :: non_neg_integer(),
+      PinState :: 0 | 1,
       PortNo :: non_neg_integer(),
       Status :: [0 | 1].
-update_digital_port(PortNo, Status) when is_integer(PortNo),
-					 is_list(Status) ->
-    gen_server:cast(?SERVER, {update_digital_port, PortNo, Status}).
-
-%%--------------------------------------------------------------------
-%% @doc get digital state of port.
-%% @end
-%%--------------------------------------------------------------------
--spec digital(PortNo) -> [0 | 1] | undefined when
-      PortNo :: non_neg_integer().
-digital(PortNo) ->
-    case ets:lookup(digital, PortNo) of
-	[]  -> undefined;
-	[S] -> S
-    end.    
-
-%%--------------------------------------------------------------------
-%% @doc get all digital state.
-%% @end
-%%--------------------------------------------------------------------
--spec all_digital() -> [0 | 1].
-all_digital() ->
-    case ets:first(digital) of 
-	'$end_of_table' ->
-	    [];
-	Key ->
-	    all_digital(Key, [])
-    end.
-
-all_digital('$end_of_table', Result) ->
-    lists:reverse(Result);
-
-all_digital(Key, Result) ->
-    [{_PortNo, [X0, X1, X2, X3, X4, X5, X6, X7]}] = 
-	ets:lookup(digital, Key),
-
-    NextKey = ets:next(digital, Key),
-    all_digital(NextKey, [X7, X6, X5, X4, X3, X2, X1, X0 | Result]).
-
-%%--------------------------------------------------------------------
-%% @doc update analog value(14bit).
-%% @end
-%%--------------------------------------------------------------------
--spec update_analog_value(PinNo, Value) -> ok when
-      PinNo :: non_neg_integer(),
-      Value :: non_neg_integer().
-update_analog_value(PinNo, Value) when is_integer(PinNo),
-				       is_integer(Value) ->
-    gen_server:cast(?SERVER, {update_analog_value, PinNo, Value}).
-
-%%--------------------------------------------------------------------
-%% @doc get digital state of port.
-%% @end
-%%--------------------------------------------------------------------
--spec analog(PinNo) -> [0 | 1] | undefined when
-      PinNo :: non_neg_integer().
-analog(PinNo) ->
-    case ets:lookup(analog, PinNo) of
-	[]  -> undefined;
-	[{PinNo, V}] -> V
-    end.
+update_digital_pin(GpioPinNo, PinState) when is_integer(GpioPinNo),
+					     (PinState =:= 0 orelse
+					      PinState =:= 1) ->
+    gen_server:cast(?SERVER, {update_digital_pin, GpioPinNo, PinState}).
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -123,11 +69,9 @@ analog(PinNo) ->
 %%                     {stop, Reason}
 %% @end
 %%--------------------------------------------------------------------
-init([Gpio]) ->
-    ets:new(digital, [ordered_set, protected, named_table]),
-    ets:new(analog,  [ordered_set, protected, named_table]),
-    ok = update_all_status(),
-    {ok, #state{gpio = Gpio}}.
+init([GpioList]) ->
+    Tid = ets:new(rgpio_digital, [ordered_set, private]),
+    {ok, #state{digital_tid = Tid, gpio = GpioList}}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -143,8 +87,9 @@ init([Gpio]) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_call(_Msg, _From, State) ->
-    {reply, ok, State}.
+handle_call(_Request, _From, State) ->
+    Reply = ok,
+    {reply, Reply, State}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -156,13 +101,29 @@ handle_call(_Msg, _From, State) ->
 %%                                  {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_cast({update_digital_port, PortNo, Status}, State) ->
-    true = ets:insert(digital, {PortNo, Status}),
-    {noreply, State};
+handle_cast({update_digital_pin, GpioPinNo, PinState},
+	    #state{gpio = Gpio} = State) ->
 
-handle_cast({update_analog_value, PinNo, Value}, State) ->
-    true = ets:insert(analog, {PinNo, Value}),
-    {noreply, State}.
+    Tid = State#state.digital_tid,
+
+    case get_pin_position(GpioPinNo, Gpio) of
+	noentry ->
+	    io:format("pin change report for no entry pin:~p~n", [GpioPinNo]),
+	    {noreply, State};
+	{PortNo, PinNo} ->
+	    OldPortStatus = case ets:lookup(Tid, PortNo) of
+				[] ->
+				    [0, 0, 0, 0, 0, 0, 0, 0];
+				[{PortNo, List}] ->
+				    List
+			    end,
+
+	    NewPortStatus = update_status(PinNo, PinState, OldPortStatus),
+	    true = ets:insert(Tid, {PortNo, NewPortStatus}),
+	    gen_event:notify(rgpio_event, {digital_port_changed, 
+					   PortNo, NewPortStatus}),
+	    {noreply, State}
+    end.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -208,36 +169,42 @@ code_change(_OldVsn, State, _Extra) ->
 
 %%--------------------------------------------------------------------
 %% @private
-%% @doc get all pin's status and store to ets.
+%% @doc update status of a port.
 %% @end
 %%--------------------------------------------------------------------
--spec update_all_status() -> ok.
-update_all_status() ->
-    get_raspberrypi_status(),
-    get_arduino_status().    
+-spec update_status(PinNo, State, List) -> [1 | 0] when
+      PinNo :: non_neg_integer(),
+      State :: 0 | 1,
+      List :: [0 | 1].
+update_status(PinNo, State, List) ->
+    L = lists:foldl(fun(_S, NewList) when PinNo =:= length(NewList) ->
+			    [State | NewList];
+		       (S, NewList) ->
+			    [S | NewList]
+		    end, [], List),
+    lists:reverse(L).
 
 %%--------------------------------------------------------------------
 %% @private
-%% @doc get all arduino pin's status and store to ets.
+%% @doc get pin position in a port. PinNo(in arguments) is total No of all pins.
 %% @end
 %%--------------------------------------------------------------------
-get_arduino_status() ->
-    AllStatus = arduino:all_digital(),
-    get_status(0, AllStatus).    
+-spec get_pin_position(GpioPinNo, GpioList) -> {PortNo, PinNo} when
+      GpioPinNo :: non_neg_integer(),
+      GpioList :: [tuple()],
+      PortNo :: non_neg_integer(),
+      PinNo :: non_neg_integer().
+get_pin_position(GpioPinNo, GpioList) ->
+    GpioPinNoList = [Pin || {Pin, _, _} <- GpioList],
+    get_pin_position(GpioPinNo, GpioPinNoList, 0).
 
-%%--------------------------------------------------------------------
-%% @private
-%% @doc get all RaspberryPi pin's status and store to ets.
-%% @end
-%%--------------------------------------------------------------------
-get_raspberrypi_status() ->
-    AllStatus = gpio_pin:all_digital(),
-    get_status(0, AllStatus).
+get_pin_position(_GpioPinNo, [], _Pos) ->
+    noentry;
 
-get_status(_PortNo, []) ->
-    ok;
+get_pin_position(GpioPinNo, [GpioPinNo | _Tail], Pos) ->
+    PortNo = Pos div 8,
+    PinNo = Pos rem 8,
+    {PortNo, PinNo};
 
-get_status(PortNo, [X1, X2, X3, X4, X5, X6, X7, X8 | Tail]) ->
-    true = ets:insert(digital, {PortNo, [X1, X2, X3, X4, X5, X6, X7, X8]}),
-    get_status(PortNo, Tail).
-
+get_pin_position(GpioPinNo, [_ | Tail], Pos) ->
+    get_pin_position(GpioPinNo, Tail, Pos + 1).

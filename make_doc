@@ -14,7 +14,7 @@ main([]) ->
 	    false -> Default;
 	    Str   -> Str
 	end,
-    TopURL = "http://github.com/" ++ U ++ "/rgpio",
+    TopURL = "http://github.com/" ++ U ++ "/RaspberryPiGPIO",
     io:fwrite("Making edown docs for [~s]...~n", [TopURL]),
     R = edoc:application(edown, ".",
 			 [{doclet, edown_doclet},

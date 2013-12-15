@@ -1,6 +1,6 @@
 
 
-# Module rgpio_arduino #
+# Module arduino #
 * [Description](#description)
 * [Function Index](#index)
 * [Function Details](#functions)

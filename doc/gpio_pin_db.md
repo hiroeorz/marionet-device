@@ -1,6 +1,6 @@
 
 
-# Module rgpio_pin_db #
+# Module gpio_pin_db #
 * [Description](#description)
 * [Function Index](#index)
 * [Function Details](#functions)
