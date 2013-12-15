@@ -343,7 +343,6 @@ handle_firmata({digital_io_message, {ArduinoPortNo, Status}}, State) ->
     State;
 
 handle_firmata({analog_io_message, {PinNo, Val}}, State) ->
-    %%io:format("analog: ~w:~w~n", [PinNo, Val]),
     gen_event:notify(arduino_event, {analog_recv, PinNo, Val}),
     true = ets:insert(arduino_analog, {PinNo, Val}),
     State;

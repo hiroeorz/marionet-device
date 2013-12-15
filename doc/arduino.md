@@ -41,7 +41,13 @@ get analog state.
 
 ### all_digital/0 ###
 
-`all_digital() -> any()`
+
+<pre><code>
+all_digital() -&gt; [0 | 1]
+</code></pre>
+
+<br></br>
+
 
 get digital state.
 <a name="cast-1"></a>

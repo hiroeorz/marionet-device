@@ -59,7 +59,7 @@ pull() = up | down | none
 ## Function Index ##
 
 
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#all_digital-0">all_digital/0</a></td><td>get status list.</td></tr><tr><td valign="top"><a href="#digital_change_notify-1">digital_change_notify/1</a></td><td>receive digital state change notify from gpio_port.</td></tr><tr><td valign="top"><a href="#get_active_low-1">get_active_low/1</a></td><td>get active low to from a pin.</td></tr><tr><td valign="top"><a href="#pulldown-1">pulldown/1</a></td><td>set pulldown to a pin.</td></tr><tr><td valign="top"><a href="#pullnone-1">pullnone/1</a></td><td>release pin mode from pullup pulldown.</td></tr><tr><td valign="top"><a href="#pullup-1">pullup/1</a></td><td>set pullup to a pin.</td></tr><tr><td valign="top"><a href="#read-1">read/1</a></td><td>read gpio value.</td></tr><tr><td valign="top"><a href="#set_active_low-2">set_active_low/2</a></td><td>set active low to a pin.</td></tr><tr><td valign="top"><a href="#set_int-2">set_int/2</a></td><td>set interrupt that fire when gpio's input or output status is chaned.</td></tr><tr><td valign="top"><a href="#set_pin_mode-2">set_pin_mode/2</a></td><td>set pin mode, in or out.</td></tr><tr><td valign="top"><a href="#start_link-1">start_link/1</a></td><td>Starts the server.</td></tr><tr><td valign="top"><a href="#write-2">write/2</a></td><td>write value to gpio.</td></tr></table>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#all_digital-0">all_digital/0</a></td><td>get status list.</td></tr><tr><td valign="top"><a href="#digital_change_notify-1">digital_change_notify/1</a></td><td>receive digital state change notify from gpio_port.</td></tr><tr><td valign="top"><a href="#get_active_low-1">get_active_low/1</a></td><td>get active low from a pin.</td></tr><tr><td valign="top"><a href="#pulldown-1">pulldown/1</a></td><td>set pulldown to a pin.</td></tr><tr><td valign="top"><a href="#pullnone-1">pullnone/1</a></td><td>release pin mode from pullup pulldown.</td></tr><tr><td valign="top"><a href="#pullup-1">pullup/1</a></td><td>set pullup to a pin.</td></tr><tr><td valign="top"><a href="#read-1">read/1</a></td><td>read gpio value.</td></tr><tr><td valign="top"><a href="#set_active_low-2">set_active_low/2</a></td><td>set active low to a pin.</td></tr><tr><td valign="top"><a href="#set_int-2">set_int/2</a></td><td>set interrupt that fire when gpio's input or output status is chaned.</td></tr><tr><td valign="top"><a href="#set_pin_mode-2">set_pin_mode/2</a></td><td>set pin mode, in or out.</td></tr><tr><td valign="top"><a href="#start_link-1">start_link/1</a></td><td>Starts the server.</td></tr><tr><td valign="top"><a href="#write-2">write/2</a></td><td>write value to gpio.</td></tr></table>
 
 
 <a name="functions"></a>
@@ -101,7 +101,12 @@ get_active_low(PinNo) -&gt; <a href="#type-mode">mode()</a>
 
 <ul class="definitions"><li><code>PinNo = non_neg_integer()</code></li></ul>
 
-get active low to from a pin.
+
+get active low from a pin.
+
+
+Mode=0: 通電時のread/1の結果は 通電->1 解放->0 (デフォルト)
+Mode=1: 通電時のread/1の結果は 通電->0 解放->1
 <a name="pulldown-1"></a>
 
 ### pulldown/1 ###
@@ -113,7 +118,12 @@ pulldown(PinNo) -&gt; ok
 
 <ul class="definitions"><li><code>PinNo = non_neg_integer()</code></li></ul>
 
+
 set pulldown to a pin.
+
+
+RaspberryPi内蔵のプルダウン抵抗を用いてpinをプルダウン有りに設定します
+入力無しの状態で常時GND接地の0.0Vとなり、3.3Vと短絡された場合のみ1となります
 <a name="pullnone-1"></a>
 
 ### pullnone/1 ###
@@ -125,7 +135,12 @@ pullnone(PinNo) -&gt; ok
 
 <ul class="definitions"><li><code>PinNo = non_neg_integer()</code></li></ul>
 
+
 release pin mode from pullup pulldown.
+
+
+RaspberryPi内蔵のプルアップ、プルダウン抵抗を用いません
+入力無しの状態では不安定な電圧となり、外部回路でプルアップまたはプルダウンが必要です
 <a name="pullup-1"></a>
 
 ### pullup/1 ###
@@ -137,7 +152,12 @@ pullup(PinNo) -&gt; ok
 
 <ul class="definitions"><li><code>PinNo = non_neg_integer()</code></li></ul>
 
+
 set pullup to a pin.
+
+
+RaspberryPi内蔵のプルアップ抵抗を用いてpinをプルアップ有りに設定します
+入力無しの状態で常時3.3Vの電圧がかかり、GNDと接地された場合のみ0となります
 <a name="read-1"></a>
 
 ### read/1 ###
