@@ -301,7 +301,6 @@ format(sysex, capability_query, {}) ->
 %--------------------------------------------------------------------
 format(sysex, extended_analog, {PinNo, Val, ByteSize}) ->
     BitSize = ByteSize * 8,
-    ValBin = <<Val:BitSize>>,
     ValBin = format_extended_analog(PinNo, ValBin, []),
 
     <<?SYSEX_START_CODE:8, 
