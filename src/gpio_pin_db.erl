@@ -120,8 +120,8 @@ handle_cast({update_digital_pin, GpioPinNo, PinState},
 
 	    NewPortStatus = update_status(PinNo, PinState, OldPortStatus),
 	    true = ets:insert(Tid, {PortNo, NewPortStatus}),
-	    gen_event:notify(gpio_event, {digital_port_changed, 
-					  PortNo, NewPortStatus}),
+	    gen_event:notify(gpio_pin_event, {digital_port_changed, 
+					      PortNo, NewPortStatus}),
 	    {noreply, State}
     end.
 

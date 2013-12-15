@@ -13,7 +13,6 @@
 <tr><td><a href="http://github.com/hiroeorz17/RaspberryPiGPIO/blob/marionet/doc/arduino_event_relay.md" class="module">arduino_event_relay</a></td></tr>
 <tr><td><a href="http://github.com/hiroeorz17/RaspberryPiGPIO/blob/marionet/doc/arduino_sup.md" class="module">arduino_sup</a></td></tr>
 <tr><td><a href="http://github.com/hiroeorz17/RaspberryPiGPIO/blob/marionet/doc/firmata.md" class="module">firmata</a></td></tr>
-<tr><td><a href="http://github.com/hiroeorz17/RaspberryPiGPIO/blob/marionet/doc/gpio_event.md" class="module">gpio_event</a></td></tr>
 <tr><td><a href="http://github.com/hiroeorz17/RaspberryPiGPIO/blob/marionet/doc/gpio_pin.md" class="module">gpio_pin</a></td></tr>
 <tr><td><a href="http://github.com/hiroeorz17/RaspberryPiGPIO/blob/marionet/doc/gpio_pin_db.md" class="module">gpio_pin_db</a></td></tr>
 <tr><td><a href="http://github.com/hiroeorz17/RaspberryPiGPIO/blob/marionet/doc/gpio_pin_event.md" class="module">gpio_pin_event</a></td></tr>
