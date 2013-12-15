@@ -124,7 +124,7 @@ parse(?SYSEX_START_CODE, Bin) ->
 %--------------------------------------------------------------------
 parse_sysex(<<?SYSEX_NAME_AND_VERSION_CODE:8,
 	    MeasureVer:8/integer, MinorVer:8/integer, Bin/binary>>) ->
-    Name = bit7_1b_to_bit8_2b(Bin),
+    Name = bit7_2b_to_bit8_1b(Bin),
     {name_and_version_report, {MeasureVer, MinorVer, Name}};
 
 %--------------------------------------------------------------------
@@ -352,19 +352,19 @@ format_extended_analog(PinNo, Bin, Result) ->
 %% 07654321 00000008 -> 87654321
 %% @end
 %%--------------------------------------------------------------------
--spec bit7_1b_to_bit8_2b(binary()) -> binary().
-bit7_1b_to_bit8_2b(Bin) ->
-    bit7_1b_to_bit8_2b(Bin, []).
+-spec bit7_2b_to_bit8_1b(binary()) -> binary().
+bit7_2b_to_bit8_1b(Bin) ->
+    bit7_2b_to_bit8_1b(Bin, []).
 
-bit7_1b_to_bit8_2b(<<>>, Result) ->
+bit7_2b_to_bit8_1b(<<>>, Result) ->
     list_to_binary(lists:reverse(Result));
 
-bit7_1b_to_bit8_2b(<<P1:1/binary, P2:1/binary, Tail/binary>>, Result) ->
+bit7_2b_to_bit8_1b(<<P1:1/binary, P2:1/binary, Tail/binary>>, Result) ->
     <<_:1, X6:1, X5:1, X4:1, X3:1, X2:1, X1:1, X0:1>> = P1,
     <<_:7, X7:1>> = P2,
 
     Byte = <<X7:1, X6:1, X5:1, X4:1, X3:1, X2:1, X1:1, X0:1>>,    
-    bit7_1b_to_bit8_2b(Tail, [Byte | Result]).
+    bit7_2b_to_bit8_1b(Tail, [Byte | Result]).
 
 %%--------------------------------------------------------------------
 %% @private
