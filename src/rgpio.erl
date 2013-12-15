@@ -35,9 +35,9 @@ start() ->
 %%--------------------------------------------------------------------
 -spec set_pin_mode(PinNo, Mode) -> ok when
       PinNo :: non_neg_integer(),
-      Mode :: rgpio_pin:edge().
+      Mode :: gpio_pin:edge().
 set_pin_mode(PinNo, Mode) ->
-    rgpio_pin:set_pin_mode(PinNo, Mode).
+    gpio_pin:set_pin_mode(PinNo, Mode).
 
 %%--------------------------------------------------------------------
 %% @doc read gpio value.
@@ -47,7 +47,7 @@ set_pin_mode(PinNo, Mode) ->
       PinNo :: non_neg_integer(),
       Val :: non_neg_integer().
 read(PinNo) when is_integer(PinNo) ->
-    rgpio_pin:read(PinNo).
+    gpio_pin:read(PinNo).
 
 %%--------------------------------------------------------------------
 %% @doc write value to gpio.
@@ -57,7 +57,7 @@ read(PinNo) when is_integer(PinNo) ->
       PinNo :: non_neg_integer(),
       Val :: non_neg_integer().      
 write(PinNo, Val) when is_integer(PinNo) andalso is_integer(Val) ->
-    rgpio_pin:write(PinNo, Val).
+    gpio_pin:write(PinNo, Val).
 
 %%--------------------------------------------------------------------
 %% @doc set interrupt that fire when gpio's input or output status is chaned.
@@ -65,10 +65,10 @@ write(PinNo, Val) when is_integer(PinNo) andalso is_integer(Val) ->
 %%--------------------------------------------------------------------
 -spec set_int(PinNo, Mode) -> ok | {error, Reason} when
       PinNo :: non_neg_integer(),
-      Mode :: rgpio_pin:edge(),
+      Mode :: gpio_pin:edge(),
       Reason :: term().
 set_int(PinNo, Mode) ->
-    rgpio_pin:set_int(PinNo, Mode).
+    gpio_pin:set_int(PinNo, Mode).
 
 %%--------------------------------------------------------------------
 %% @doc set pullup to a pin.
@@ -80,7 +80,7 @@ set_int(PinNo, Mode) ->
 -spec pullup(PinNo) -> ok when
       PinNo :: non_neg_integer().
 pullup(PinNo) ->
-    rgpio_pin:pullup(PinNo).
+    gpio_pin:pullup(PinNo).
 
 %%--------------------------------------------------------------------
 %% @doc set pulldown to a pin.
@@ -92,7 +92,7 @@ pullup(PinNo) ->
 -spec pulldown(PinNo) -> ok when
       PinNo :: non_neg_integer().
 pulldown(PinNo) ->
-    rgpio_pin:pulldown(PinNo).
+    gpio_pin:pulldown(PinNo).
 
 %%--------------------------------------------------------------------
 %% @doc release pin mode from pullup pulldown.
@@ -104,7 +104,7 @@ pulldown(PinNo) ->
 -spec pullnone(PinNo) -> ok when
       PinNo :: non_neg_integer().
 pullnone(PinNo) ->
-    rgpio_pin:pullnone(PinNo).
+    gpio_pin:pullnone(PinNo).
 
 %%--------------------------------------------------------------------
 %% @doc get active low from a pin.
@@ -116,7 +116,7 @@ pullnone(PinNo) ->
 -spec get_active_low(PinNo) -> ok when
       PinNo :: non_neg_integer().
 get_active_low(PinNo) ->
-    rgpio_pin:get_active_low(PinNo).
+    gpio_pin:get_active_low(PinNo).
 
 %%--------------------------------------------------------------------
 %% @doc set active low to a pin.
@@ -129,7 +129,7 @@ get_active_low(PinNo) ->
       PinNo :: non_neg_integer(),
       Mode :: rgpio_pin:mode().
 set_active_low(PinNo, Mode) ->
-    rgpio_pin:set_active_low(PinNo, Mode).
+    gpio_pin:set_active_low(PinNo, Mode).
 
 %%--------------------------------------------------------------------
 %% @doc add event handler to gen_event.

@@ -55,8 +55,7 @@ init([]) ->
     MaxSecondsBetweenRestarts = 3600,
 
     SupFlags = {RestartStrategy, MaxRestarts, MaxSecondsBetweenRestarts},
-    Specs = [rgpio_event_spec(), port_spec(), rgpio_pin_sup_spec(),
-	     rgpio_status_spec()],
+    Specs = [rgpio_event_spec(), rgpio_pin_sup_spec(), rgpio_status_spec()],
 
     {ok, ArduinoEnable} = application:get_env(arduino_enable),
 
@@ -77,28 +76,18 @@ arduino_spec() ->
 
     {ok, ArduinoConf} = application:get_env(arduino),
 
-    {rgpio_arduino, 
-     {rgpio_arduino, start_link, [ArduinoConf]},
-     Restart, Shutdown, Type, [rgpio_port]}.
-
-port_spec() ->
-    Restart = permanent,
-    Shutdown = 2000,
-    Type = worker,
-
-    {rgpio_port, 
-     {rgpio_port, start_link, []},
-     Restart, Shutdown, Type, [rgpio_port]}.
+    {arduino, {arduino, start_link, [ArduinoConf]},
+     Restart, Shutdown, Type, [arduino]}.
 
 rgpio_pin_sup_spec() ->
     Restart = permanent,
     Shutdown = 2000,
     Type = supervisor,
     {ok, GpioList} = application:get_env(gpio),
+    Handlers = [{gpio_pin_event_relay, [rgpio_event]}],
 
-    {rgpio_pin_sup, 
-     {rgpio_pin_sup, start_link, [GpioList]},
-     Restart, Shutdown, Type, [rgpio_pin_sup]}.
+    {gpio_pin_sup, {gpio_pin_sup, start_link, [GpioList, Handlers]},
+     Restart, Shutdown, Type, [gpio_pin_sup]}.
 
 rgpio_event_spec() ->
     Restart = permanent,
@@ -106,8 +95,7 @@ rgpio_event_spec() ->
     Type = supervisor,
     {ok, Handlers} = application:get_env(pin_event_handlers),
 
-    {rgpio_event, 
-     {rgpio_event, start_link, [Handlers]},
+    {rgpio_event, {rgpio_event, start_link, [Handlers]},
      Restart, Shutdown, Type, [rgpio_event]}.
 
 rgpio_status_spec() ->
@@ -116,6 +104,5 @@ rgpio_status_spec() ->
     Type = worker,
     {ok, GpioList} = application:get_env(gpio),
 
-    {rgpio_status, 
-     {rgpio_status, start_link, [GpioList]},
+    {rgpio_status, {rgpio_status, start_link, [GpioList]},
      Restart, Shutdown, Type, [rgpio_status]}.

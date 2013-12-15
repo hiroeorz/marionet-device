@@ -161,7 +161,7 @@ Mode=0: active_lowを0に設定して、通電->1 解放->0 となるように�
 set_int(PinNo, Mode) -&gt; ok | {error, Reason}
 </code></pre>
 
-<ul class="definitions"><li><code>PinNo = non_neg_integer()</code></li><li><code>Mode = <a href="rgpio_pin.md#type-edge">rgpio_pin:edge()</a></code></li><li><code>Reason = term()</code></li></ul>
+<ul class="definitions"><li><code>PinNo = non_neg_integer()</code></li><li><code>Mode = <a href="gpio_pin.md#type-edge">gpio_pin:edge()</a></code></li><li><code>Reason = term()</code></li></ul>
 
 set interrupt that fire when gpio's input or output status is chaned.
 <a name="set_pin_mode-2"></a>
@@ -173,7 +173,7 @@ set interrupt that fire when gpio's input or output status is chaned.
 set_pin_mode(PinNo, Mode) -&gt; ok
 </code></pre>
 
-<ul class="definitions"><li><code>PinNo = non_neg_integer()</code></li><li><code>Mode = <a href="rgpio_pin.md#type-edge">rgpio_pin:edge()</a></code></li></ul>
+<ul class="definitions"><li><code>PinNo = non_neg_integer()</code></li><li><code>Mode = <a href="gpio_pin.md#type-edge">gpio_pin:edge()</a></code></li></ul>
 
 set pin mode, in or out.
 <a name="start-0"></a>

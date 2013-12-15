@@ -1,5 +1,6 @@
 %% encoding: UTF-8
 {application,edown}.
 {packages,[]}.
-{modules,[rgpio,rgpio_app,rgpio_arduino,rgpio_event,rgpio_firmata,rgpio_pin,
-          rgpio_pin_db,rgpio_pin_sup,rgpio_port,rgpio_status,rgpio_sup]}.
+{modules,[arduino,firmata,gpio_event,gpio_pin,gpio_pin_db,gpio_pin_event,
+          gpio_pin_event_logger,gpio_pin_event_relay,gpio_pin_sup,gpio_port,
+          rgpio,rgpio_app,rgpio_event,rgpio_status,rgpio_sup]}.
