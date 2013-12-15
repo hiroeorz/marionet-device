@@ -30,6 +30,8 @@
 -define(SYSEX_START_CODE, 16#F0).
 -define(SYSEX_END_CODE,   16#F7).
 
+-type pin_mode() :: in | out | analog | pwm | servo.
+
 -record(state, {serial_pid                  :: pid(),
 		init_flag = true            :: boolean(),
 		recv_queue = <<>>           :: binary(),
@@ -396,22 +398,48 @@ has_sysex_end(<<_:8/integer, TailBin/binary>>, Size) ->
 %%% Internal functions
 %%%===================================================================
 
-%% send message to serial process.
+%%--------------------------------------------------------------------
+%% @private
+%% @doc send message to serial process.
+%% @end
+%%--------------------------------------------------------------------
+-spec send(Bin, SerialPid) -> ok when
+      Bin :: binary(),
+      SerialPid :: pid().
 send(Bin, SerialPid) ->
-    SerialPid ! {send, Bin}.
+    SerialPid ! {send, Bin},
+    ok.
 
-%% version report request
+%%--------------------------------------------------------------------
+%% @private
+%% @doc version report request.
+%% @end
+%%--------------------------------------------------------------------
+-spec version_report_request(State) -> ok when
+      State :: #state{}.
 version_report_request(State) ->
     SerialPid = State#state.serial_pid,
     send(firmata:format(version_report_request), SerialPid).
 
-%% reset arduino config.
+%%--------------------------------------------------------------------
+%% @private
+%% @doc reset arduino config.
+%% @end
+%%--------------------------------------------------------------------
+-spec reset_config(State) -> ok when
+      State :: #state{}.
 reset_config(State) ->
     SerialPid = State#state.serial_pid,
     send(firmata:format(syste_reset), SerialPid),
     ok.
 
-%% init all pins if init_flag is true.
+%%--------------------------------------------------------------------
+%% @private
+%% @doc init all pins if init_flag is true.
+%% @end
+%%--------------------------------------------------------------------
+-spec check_first_message(State) -> State when
+      State :: #state{}.
 check_first_message(#state{init_flag = true} = State) ->
     timer:sleep(1000),
     init_pin(State),
@@ -420,9 +448,17 @@ check_first_message(#state{init_flag = true} = State) ->
 check_first_message(#state{init_flag = false} = State) ->
     State.
 
+%%--------------------------------------------------------------------
+%% @private
+%% @doc initialize gpio pin.
+%%
 %% set digital pin mode(in or out or analog or pwm or servo).
 %% set digital pin reporting.
 %% set analog  pin reporting. 
+%% @end
+%%--------------------------------------------------------------------
+-spec init_pin(State) -> State when
+      State :: #state{}.
 init_pin(State) ->
     io:format("Arduino pin initializing "),
     ok = reset_config(State),
@@ -434,24 +470,74 @@ init_pin(State) ->
 
     SerialPid = State#state.serial_pid,
     ok = sampling_interval(SamplingInterval, SerialPid),
-    timer:sleep(3), %%一旦反映させる
     ok = init_pin_mode(DigitalList, SerialPid),
-    timer:sleep(3), %%一旦反映させる
+    ok = set_pullmode(DigitalList, SerialPid),
     ok = set_digital_port_reporting(0, DigitalPortReporting, SerialPid),
-    timer:sleep(3), %%一旦反映させる
     ok = set_analog_port_reporting(AnalogList, SerialPid),
     io:format("done.~n"),
     State.
 
-%% set all digital pin mode.
+%%--------------------------------------------------------------------
+%% @private
+%% @doc set all digital pin mode.
+%% @end
+%%--------------------------------------------------------------------
+-spec init_pin_mode(DigitalList, SerialPid) -> ok when
+      DigitalList :: [tuple()],
+      SerialPid :: pid().
 init_pin_mode([], _SerialPid) ->
     ok;
 
 init_pin_mode([{PinNo, Mode} | Tail], SerialPid) ->
+    init_pin_mode([{PinNo, Mode, []} | Tail], SerialPid);
+
+init_pin_mode([{PinNo, Mode, _} | Tail], SerialPid) ->
     set_digital_pin_mode(PinNo, Mode, SerialPid),
     init_pin_mode(Tail, SerialPid).
 
-%% set digital pin mode.
+%%--------------------------------------------------------------------
+%% @private
+%% @doc set digital pull mode. up -> pullup, none -> free.
+%% @end
+%%--------------------------------------------------------------------
+-spec set_pullmode(DigitalList, SerialPid) -> ok when
+      DigitalList :: [tuple()],
+      SerialPid :: pid().
+set_pullmode(DigitalList, SerialPid) ->
+    set_pullmode(DigitalList, SerialPid, 0, []).
+
+set_pullmode([], _SerialPid, _PortNo, _Bits) ->
+    ok;
+
+set_pullmode([{PinNo, Mode} | Tail], SerialPid, PortNo, Bits) ->
+    set_pullmode([{PinNo, Mode, []} | Tail], SerialPid, PortNo, Bits); 
+
+set_pullmode([{_PinNo, _, Opts} | Tail], SerialPid, PortNo, Bits) ->
+    NewBits = case proplists:get_value(pull, Opts) of
+		  undefined ->
+		      [0 | Bits];
+		  none ->
+		      [0 | Bits];
+		  up ->
+		      [1 | Bits]
+	      end,
+    
+    if length(NewBits) =:= 8 ->
+	    digital_write(PortNo, NewBits, SerialPid),
+	    set_pullmode(Tail, SerialPid, PortNo + 1, []);
+       true ->
+	    set_pullmode(Tail, SerialPid, PortNo, NewBits)
+    end.
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc set digital pin mode.
+%% @end
+%%--------------------------------------------------------------------
+-spec set_digital_pin_mode(PinNo, Mode, SerialPid) -> ok when
+      PinNo :: non_neg_integer(),
+      Mode :: pin_mode(),
+      SerialPid :: pid().
 set_digital_pin_mode(PinNo, Mode, SerialPid) ->
     ModeInt = case Mode of
 		  in     -> 0;
@@ -464,20 +550,34 @@ set_digital_pin_mode(PinNo, Mode, SerialPid) ->
     Command = firmata:format(set_pin_mode, {PinNo, ModeInt}),
     send(Command, SerialPid).
 
-%% set digital pin to reporting.
+%%--------------------------------------------------------------------
+%% @private
+%% @doc set digital pin to reporting.
+%% @end
+%%--------------------------------------------------------------------
+-spec set_digital_port_reporting(PortNo, ModeList, SerialPid) -> ok when
+      PortNo :: non_neg_integer(),
+      ModeList :: [pin_mode()],
+      SerialPid :: pid().
 set_digital_port_reporting(_, [],  _SerialPid) ->
     ok;
 
 set_digital_port_reporting(PortNo, [Mode | Tail], SerialPid) ->
-    Vals = [1, 1, 1, 1, 1, 1, 1, 1],
+    Vals = [0, 0, 0, 0, 0, 0, 0, 0],
     true = ets:insert(arduino_analog, {PortNo, Vals}),
     Command = firmata:format(set_digital_port_reporting, {PortNo, Mode}),
     send(Command, SerialPid),
-    digital_write(PortNo, Vals, SerialPid),
     io:format("."),
     set_digital_port_reporting(PortNo + 1, Tail, SerialPid).
 
-%% set analog pin to reporting.
+%%--------------------------------------------------------------------
+%% @private
+%% @doc set analog pin to reporting.
+%% @end
+%%--------------------------------------------------------------------
+-spec set_analog_port_reporting(PinNoList, SerialPid) -> ok when
+      PinNoList :: [non_neg_integer()],
+      SerialPid :: pid().
 set_analog_port_reporting([], _SerialPid) ->
     ok;
 
@@ -488,13 +588,28 @@ set_analog_port_reporting([PinNo | Tail], SerialPid) ->
     io:format("."),
     set_analog_port_reporting(Tail, SerialPid).
 
-%% write digital value(0 or 1).
+%%--------------------------------------------------------------------
+%% @private
+%% @doc write digital value(0 or 1).
+%% @end
+%%--------------------------------------------------------------------
+-spec digital_write(PortNo, Vals, SerialPid) -> ok when
+      PortNo :: non_neg_integer(),
+      Vals :: [0 | 1],
+      SerialPid :: pid().
 digital_write(PortNo, Vals, SerialPid) when is_list(Vals) andalso
 					    length(Vals) =:= 8 ->
     Command = firmata:format(digital_io_message, {PortNo, Vals}),
     send(Command, SerialPid).
 
-%% set analog sampling interval.
+%%--------------------------------------------------------------------
+%% @private
+%% @doc set analog sampling interval.
+%% @end
+%%--------------------------------------------------------------------
+-spec sampling_interval(Interval, SerialPid) -> ok when
+      Interval :: non_neg_integer(),
+      SerialPid :: pid().
 sampling_interval(Interval, SerialPid) ->
     Command = firmata:format(sysex, sampling_interval, Interval),
     send(Command, SerialPid),

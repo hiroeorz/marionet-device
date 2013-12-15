@@ -68,11 +68,11 @@ pullnone(PinNo) ->
 %%--------------------------------------------------------------------
 init([]) ->
     _Pid = spawn_link(fun() ->
-			      os:cmd("./priv/rgpio_lib"),
+			      os:cmd("./priv/gpio_lib"),
 			      erlang:error(port_process_down)
 		      end),
 
-    {ok, C_Node} = application:get_env(rgpio, c_node),
+    {ok, C_Node} = application:get_env(marionet_device, c_node),
     {ok, #state{c_node = C_Node}}.
 
 %%--------------------------------------------------------------------

@@ -179,7 +179,7 @@ set_active_low(PinNo, Mode) ->
 %%--------------------------------------------------------------------
 -spec all_digital() -> [ 1 | 0 ].
 all_digital() ->
-    {ok, GpioList} = application:get_env(rgpio, gpio),
+    {ok, GpioList} = application:get_env(marionet_device, gpio),
     all_digital(GpioList, []).
 
 all_digital([], Result) ->

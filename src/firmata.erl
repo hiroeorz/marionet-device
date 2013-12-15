@@ -301,10 +301,11 @@ format(sysex, capability_query, {}) ->
 %--------------------------------------------------------------------
 format(sysex, extended_analog, {PinNo, Val, ByteSize}) ->
     BitSize = ByteSize * 8,
-    ValBin = format_extended_analog(PinNo, ValBin, []),
+    ValBin = <<Val:BitSize/little-unsigned-integer>>,
+    ValBin1 = format_extended_analog(PinNo, ValBin, []),
 
     <<?SYSEX_START_CODE:8, 
-      ?SYSEX_EXTENDED_ANALOG:8, PinNo:8/integer, ValBin/binary,
+      ?SYSEX_EXTENDED_ANALOG:8, PinNo:8/integer, ValBin1/binary,
       ?SYSEX_END_CODE:8>>;
 
 %--------------------------------------------------------------------

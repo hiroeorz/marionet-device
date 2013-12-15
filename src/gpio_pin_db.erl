@@ -70,7 +70,7 @@ update_digital_pin(GpioPinNo, PinState) when is_integer(GpioPinNo),
 %% @end
 %%--------------------------------------------------------------------
 init([GpioList]) ->
-    Tid = ets:new(rgpio_digital, [ordered_set, private]),
+    Tid = ets:new(gpio_digital, [ordered_set, private]),
     {ok, #state{digital_tid = Tid, gpio = GpioList}}.
 
 %%--------------------------------------------------------------------
@@ -120,8 +120,8 @@ handle_cast({update_digital_pin, GpioPinNo, PinState},
 
 	    NewPortStatus = update_status(PinNo, PinState, OldPortStatus),
 	    true = ets:insert(Tid, {PortNo, NewPortStatus}),
-	    gen_event:notify(rgpio_event, {digital_port_changed, 
-					   PortNo, NewPortStatus}),
+	    gen_event:notify(gpio_event, {digital_port_changed, 
+					  PortNo, NewPortStatus}),
 	    {noreply, State}
     end.
 

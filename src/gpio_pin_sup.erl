@@ -93,7 +93,7 @@ db_child(IOList) ->
     Type = worker,
 
     {gpio_pin_db, {gpio_pin_db, start_link, [IOList]},
-     Restart, Shutdown, Type, [rgpio_pin_db]}.
+     Restart, Shutdown, Type, [gpio_pin_db]}.
 
 child_list(IOList) ->
     Restart = permanent,
@@ -104,7 +104,7 @@ child_list(IOList) ->
 	    Restart, Shutdown, Type, [gpio_pin]}
 	   || {PinNo, Mode, Opts} <- IOList ],
 
-    L2 = [ {{rgpio_pin, PinNo}, {rgpio_pin, start_link, [{PinNo, Mode, []}]},
+    L2 = [ {{gpio_pin, PinNo}, {gpio_pin, start_link, [{PinNo, Mode, []}]},
 	    Restart, Shutdown, Type, [gpio_pin]}
 	   || {PinNo, Mode} <- IOList ],
 
