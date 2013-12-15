@@ -97,9 +97,8 @@ rgpio_event_spec() ->
     Restart = permanent,
     Shutdown = 2000,
     Type = supervisor,
-    {ok, Handlers} = application:get_env(pin_event_handlers),
 
-    {rgpio_event, {rgpio_event, start_link, [Handlers]},
+    {rgpio_event, {rgpio_event, start_link, [[]]},
      Restart, Shutdown, Type, [rgpio_event]}.
 
 rgpio_status_spec() ->

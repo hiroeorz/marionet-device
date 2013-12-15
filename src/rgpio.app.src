@@ -30,9 +30,6 @@
                  {27, out, [{edge, both}, {pull, down}] }
                 ]},
 
-         %% your event handler module.
-         {pin_event_handlers, []},
-
          %% driver node node name
          %% c1@ is fixed. change your hostname part of 'raspberrypi'.
          {c_node, c1@raspberrypi},

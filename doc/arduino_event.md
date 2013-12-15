@@ -55,6 +55,6 @@ Delete an event handler
 start_link(Handlers) -&gt; {ok, Pid} | {error, Error}
 </code></pre>
 
-<ul class="definitions"><li><code>Handlers = [atom()]</code></li><li><code>Pid = pid()</code></li><li><code>Error = term()</code></li></ul>
+<ul class="definitions"><li><code>Handlers = [{atom(), list()}]</code></li><li><code>Pid = pid()</code></li><li><code>Error = term()</code></li></ul>
 
 Creates an event manager

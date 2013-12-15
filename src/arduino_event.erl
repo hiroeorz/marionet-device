@@ -22,7 +22,7 @@
 %% @end
 %%--------------------------------------------------------------------
 -spec start_link(Handlers) -> {ok, Pid} | {error, Error} when
-      Handlers :: [atom()],
+      Handlers :: [{atom(), list()}],
       Pid :: pid(),
       Error :: term().
 start_link(Handlers) ->
