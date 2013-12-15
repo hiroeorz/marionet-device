@@ -104,6 +104,7 @@ all_digital(Key, Result) ->
 %% @doc get analog state.
 %% @end
 %%--------------------------------------------------------------------
+-spec all_analog() -> [non_neg_integer()].
 all_analog() ->
     case ets:info(arduino_digital) of %% for before init call.
 	undefined -> [];
@@ -124,10 +125,22 @@ all_analog(Key, Result) ->
     NextKey = ets:next(arduino_analog, Key),
     all_analog(NextKey, [Val | Result]).
 
+%%--------------------------------------------------------------------
+%% @doc (re)initialize all pins.
+%% @end
+%%--------------------------------------------------------------------
+-spec initialize() -> ok.
 initialize() ->
     gen_server:cast(?SERVER, initialize).
 
-digital_write(PortNo, Vals) ->
+%%--------------------------------------------------------------------
+%% @doc write ON or OFF to a digital port (8 pins). 
+%% @end
+%%--------------------------------------------------------------------
+-spec digital_write(PortNo, Vals) -> ok when
+      PortNo :: non_neg_integer(),
+      Vals :: [0 | 1].
+digital_write(PortNo, Vals) when is_list(Vals), length(Vals) =:= 8 ->
     gen_server:cast(?SERVER, {digital_write, [PortNo, Vals]}).
 
 %%%===================================================================

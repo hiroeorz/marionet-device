@@ -17,7 +17,7 @@ __Authors:__ HIROE Shin ([`shin@HIROE-no-MacBook-Pro.local`](mailto:shin@HIROE-n
 ## Function Index ##
 
 
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#all_analog-0">all_analog/0</a></td><td>get analog state.</td></tr><tr><td valign="top"><a href="#all_digital-0">all_digital/0</a></td><td>get digital state.</td></tr><tr><td valign="top"><a href="#cast-1">cast/1</a></td><td>send request to arduino.</td></tr><tr><td valign="top"><a href="#digital_write-2">digital_write/2</a></td><td></td></tr><tr><td valign="top"><a href="#firmata_version_request-0">firmata_version_request/0</a></td><td>get firmata version from arduino.</td></tr><tr><td valign="top"><a href="#init_pin-1">init_pin/1</a></td><td></td></tr><tr><td valign="top"><a href="#initialize-0">initialize/0</a></td><td></td></tr><tr><td valign="top"><a href="#start_link-0">start_link/0</a></td><td>Starts the server.</td></tr><tr><td valign="top"><a href="#start_link-1">start_link/1</a></td><td></td></tr></table>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#all_analog-0">all_analog/0</a></td><td>get analog state.</td></tr><tr><td valign="top"><a href="#all_digital-0">all_digital/0</a></td><td>get digital state.</td></tr><tr><td valign="top"><a href="#cast-1">cast/1</a></td><td>send request to arduino.</td></tr><tr><td valign="top"><a href="#digital_write-2">digital_write/2</a></td><td>write ON or OFF to a digital port (8 pins).</td></tr><tr><td valign="top"><a href="#firmata_version_request-0">firmata_version_request/0</a></td><td>get firmata version from arduino.</td></tr><tr><td valign="top"><a href="#init_pin-1">init_pin/1</a></td><td></td></tr><tr><td valign="top"><a href="#initialize-0">initialize/0</a></td><td>(re)initialize all pins.</td></tr><tr><td valign="top"><a href="#start_link-0">start_link/0</a></td><td>Starts the server.</td></tr><tr><td valign="top"><a href="#start_link-1">start_link/1</a></td><td></td></tr></table>
 
 
 <a name="functions"></a>
@@ -28,7 +28,13 @@ __Authors:__ HIROE Shin ([`shin@HIROE-no-MacBook-Pro.local`](mailto:shin@HIROE-n
 
 ### all_analog/0 ###
 
-`all_analog() -> any()`
+
+<pre><code>
+all_analog() -&gt; [non_neg_integer()]
+</code></pre>
+
+<br></br>
+
 
 get analog state.
 <a name="all_digital-0"></a>
@@ -55,9 +61,14 @@ send request to arduino
 
 ### digital_write/2 ###
 
-`digital_write(PortNo, Vals) -> any()`
 
+<pre><code>
+digital_write(PortNo, Vals) -&gt; ok
+</code></pre>
 
+<ul class="definitions"><li><code>PortNo = non_neg_integer()</code></li><li><code>Vals = [0 | 1]</code></li></ul>
+
+write ON or OFF to a digital port (8 pins).
 <a name="firmata_version_request-0"></a>
 
 ### firmata_version_request/0 ###
@@ -82,9 +93,15 @@ get firmata version from arduino.
 
 ### initialize/0 ###
 
-`initialize() -> any()`
+
+<pre><code>
+initialize() -&gt; ok
+</code></pre>
+
+<br></br>
 
 
+(re)initialize all pins.
 <a name="start_link-0"></a>
 
 ### start_link/0 ###
