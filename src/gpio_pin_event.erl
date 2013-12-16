@@ -56,4 +56,3 @@ add_handler(Module, Args) ->
       Reason :: term().
 delete_handler(Module) ->
     gen_event:delete_handler(?SERVER, Module, []).
-

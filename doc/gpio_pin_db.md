@@ -45,10 +45,10 @@ Starts the server
 
 
 <pre><code>
-update_digital_pin(GpioPinNo, PinState) -&gt; {ok, PortNo, Status}
+update_digital_pin(GpioPinNo, PinState) -&gt; ok
 </code></pre>
 
-<ul class="definitions"><li><code>GpioPinNo = non_neg_integer()</code></li><li><code>PinState = 0 | 1</code></li><li><code>PortNo = non_neg_integer()</code></li><li><code>Status = [0 | 1]</code></li></ul>
+<ul class="definitions"><li><code>GpioPinNo = non_neg_integer()</code></li><li><code>PinState = 0 | 1</code></li></ul>
 
 
 update digital pin.

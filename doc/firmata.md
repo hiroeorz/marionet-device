@@ -66,7 +66,7 @@ create binary data that formatted by firmata protocol format.
 
 
 <pre><code>
-size(Code) -&gt; non_neg_integer() | in_sysex
+size(Code) -&gt; non_neg_integer() | in_sysex | unknown
 </code></pre>
 
 <ul class="definitions"><li><code>Code = non_neg_integer()</code></li></ul>

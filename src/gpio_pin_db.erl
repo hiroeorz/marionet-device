@@ -44,11 +44,9 @@ start_link(GpioList) ->
 %% GpioPinNo is No of total pin in RaspberryPi GPIO.
 %% @end
 %%--------------------------------------------------------------------
--spec update_digital_pin(GpioPinNo, PinState) -> {ok, PortNo, Status} when
+-spec update_digital_pin(GpioPinNo, PinState) -> ok when
       GpioPinNo :: non_neg_integer(),
-      PinState :: 0 | 1,
-      PortNo :: non_neg_integer(),
-      Status :: [0 | 1].
+      PinState :: 0 | 1.
 update_digital_pin(GpioPinNo, PinState) when is_integer(GpioPinNo),
 					     (PinState =:= 0 orelse
 					      PinState =:= 1) ->
@@ -189,7 +187,7 @@ update_status(PinNo, State, List) ->
 %% @doc get pin position in a port. PinNo(in arguments) is total No of all pins.
 %% @end
 %%--------------------------------------------------------------------
--spec get_pin_position(GpioPinNo, GpioList) -> {PortNo, PinNo} when
+-spec get_pin_position(GpioPinNo, GpioList) -> {PortNo, PinNo} | noentry when
       GpioPinNo :: non_neg_integer(),
       GpioList :: [tuple()],
       PortNo :: non_neg_integer(),

@@ -34,7 +34,7 @@
 %%%===================================================================
 %%% API
 %%%===================================================================
--spec size(Code) -> non_neg_integer() | in_sysex when
+-spec size(Code) -> non_neg_integer() | in_sysex | unknown when
       Code :: non_neg_integer().
 
 %% digital message
@@ -107,7 +107,7 @@ parse(?SYSEX_START_CODE, Bin) ->
 %% @doc parse sysex data
 %% @end
 %%--------------------------------------------------------------------
--spec parse_sysex(binary()) -> {sysex, {Name, term()}} when
+-spec parse_sysex(binary()) -> {Name, term()} when
       Name :: atom().
 
 %--------------------------------------------------------------------

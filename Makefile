@@ -33,7 +33,7 @@ edoc:
 	@$(EDOWN)
 
 dialyzer: compile
-	@$(DIALYZER) -I include ebin
+	@$(DIALYZER) ebin deps/erlang-serial/ebin
 
 setup-dialyzer:
 	@$(DIALYZER) --build_plt \

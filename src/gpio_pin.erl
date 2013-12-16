@@ -50,22 +50,21 @@
 %% @doc Starts the server
 %% @end
 %%--------------------------------------------------------------------
--spec start_link({PinNo, Mode} | {PinNo, Mode, Edge, Pull}) -> 
+-spec start_link({PinNo, Mode} | {PinNo, Mode, Opts}) -> 
 			{ok, Pid} |
 			ignore    |
 			{error, Error} when
       PinNo :: non_neg_integer(),
       Mode :: mode(),
-      Edge :: edge(),
-      Pull :: pull(),
+      Opts :: [tuple()],
       Pid :: pid(),
       Error :: term().
-start_link({PinNo, Mode}) when Mode =:= in;
-				    Mode =:= out ->
+start_link({PinNo, Mode}) when is_integer(PinNo),
+			       (Mode =:= in orelse Mode =:= out) ->
     start_link({PinNo, Mode, []});
 
-start_link({PinNo, Mode, Opts}) when Mode =:= in; 
-					  Mode =:= out ->
+start_link({PinNo, Mode, Opts}) when is_integer(PinNo),
+				     (Mode =:= in orelse Mode =:= out) ->
     gen_server:start_link(?MODULE, [{PinNo, Mode, Opts}], []).
 
 %%--------------------------------------------------------------------
@@ -85,7 +84,7 @@ set_pin_mode(PinNo, Mode) when Mode =:= in;
 %%--------------------------------------------------------------------
 -spec read(PinNo) -> Val when
       PinNo :: non_neg_integer(),
-      Val :: mode().
+      Val :: 0 | 1.
 read(PinNo) when is_integer(PinNo) ->
     gen_server:call(get_child(PinNo), read).
 
@@ -95,7 +94,7 @@ read(PinNo) when is_integer(PinNo) ->
 %%--------------------------------------------------------------------
 -spec write(PinNo, Val) -> ok when
       PinNo :: non_neg_integer(),
-      Val :: mode().      
+      Val :: 0 | 1.      
 write(PinNo, Val) when is_integer(PinNo) andalso is_integer(Val) ->
     gen_server:call(get_child(PinNo), {write, Val}).
 
@@ -153,7 +152,7 @@ pullnone(PinNo) ->
 %% Mode=1: 通電時のread/1の結果は 通電->0 解放->1
 %% @end
 %%--------------------------------------------------------------------
--spec get_active_low(PinNo) -> mode() when
+-spec get_active_low(PinNo) -> 0 | 1 when
       PinNo :: non_neg_integer().
 get_active_low(PinNo) ->
     gen_server:call(get_child(PinNo), get_active_low).
@@ -167,7 +166,7 @@ get_active_low(PinNo) ->
 %%--------------------------------------------------------------------
 -spec set_active_low(PinNo, Mode) -> ok when
       PinNo :: non_neg_integer(),
-      Mode :: mode().
+      Mode :: 0 | 1.
 set_active_low(PinNo, Mode) ->
     gen_server:call(get_child(PinNo), {set_active_low, Mode}).
 
@@ -402,13 +401,13 @@ read_row(FileIO) ->
       Mode :: mode(),
       Reason :: term().
 open(PinNo, Mode) ->
-    OpenMode = case Mode of
-		   out -> read_write;
-		   in  -> read
+    OpenModes = case Mode of
+		   out -> [read, write];
+		   in  -> [read]
 	       end,
 
-    FileName = io_lib:format("/sys/class/gpio/gpio~w/value", [PinNo]),
-    file:open(FileName, OpenMode).
+    FileName = gpio_filename(PinNo, "value"),
+    file:open(FileName, OpenModes).
 
 %%--------------------------------------------------------------------
 %% @private
@@ -418,7 +417,7 @@ open(PinNo, Mode) ->
 -spec unexport(PinNo) -> ok when
       PinNo :: non_neg_integer().
 unexport(PinNo) ->
-    {ok, FileIO} = file:open("/sys/class/gpio/unexport", write),
+    {ok, FileIO} = file:open("/sys/class/gpio/unexport", [write]),
     case file:write(FileIO, io_lib:format("~w", [PinNo])) of
 	ok -> ok;
 	{error, einval} -> ok %% not exported.
@@ -433,7 +432,7 @@ unexport(PinNo) ->
 -spec export(PinNo) -> ok when
       PinNo :: non_neg_integer().
 export(PinNo) ->
-    {ok, FileIO} = file:open("/sys/class/gpio/export", write),
+    {ok, FileIO} = file:open("/sys/class/gpio/export", [write]),
     ok = file:write(FileIO, io_lib:format("~w", [PinNo])),
     ok = file:close(FileIO).
 
@@ -447,8 +446,8 @@ export(PinNo) ->
       Mode :: mode().
 set_mode(PinNo, Mode) when Mode =:= in orelse
 			   Mode =:= out ->
-    FileName = io_lib:format("/sys/class/gpio/gpio~w/direction", [PinNo]),
-    {ok, FileIO} = file:open(FileName, write),
+    FileName = gpio_filename(PinNo, "direction"),
+    {ok, FileIO} = file:open(FileName, [write]),
     ok = file:write(FileIO, atom_to_list(Mode)),
     ok = file:close(FileIO).    
 
@@ -474,8 +473,8 @@ set_interrupt(PinNo, Mode) ->
       PinNo :: non_neg_integer(),
       Mode :: edge().
 set_int_mode(PinNo, Mode) ->
-    FileName = io_lib:format("/sys/class/gpio/gpio~w/edge", [PinNo]),
-    {ok, FileIO} = file:open(FileName, write),
+    FileName = gpio_filename(PinNo, "edge"),
+    {ok, FileIO} = file:open(FileName, [write]),
     ok = file:write(FileIO, atom_to_list(Mode)),
     ok = file:close(FileIO).
 
@@ -484,14 +483,17 @@ set_int_mode(PinNo, Mode) ->
 %% @doc read active low mode to device file.
 %% @end
 %%--------------------------------------------------------------------
--spec read_active_low(PinNo) -> mode() when
+-spec read_active_low(PinNo) -> 0 | 1 when
       PinNo :: non_neg_integer().
 read_active_low(PinNo) ->
-    FileName = io_lib:format("/sys/class/gpio/gpio~w/active_low", [PinNo]),
-    {ok, FileIO} = file:open(FileName, read),
-    Reply = file:read(FileIO, 1),
+    FileName = gpio_filename(PinNo, "active_low"),
+    {ok, FileIO} = file:open(FileName, [read]),
+    {ok, ActiveLowStr} = file:read(FileIO, 1),
     ok = file:close(FileIO),
-    Reply.
+    case string:to_integer(ActiveLowStr) of
+	{0, []} -> 0;
+	{1, []} -> 1
+    end.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -500,9 +502,21 @@ read_active_low(PinNo) ->
 %%--------------------------------------------------------------------
 -spec write_active_low(PinNo, Mode) -> ok when
       PinNo :: non_neg_integer(),
-      Mode :: mode().
+      Mode :: 0 | 1.
 write_active_low(PinNo, Mode) ->
-    FileName = io_lib:format("/sys/class/gpio/gpio~w/active_low", [PinNo]),
-    {ok, FileIO} = file:open(FileName, write),
-    ok = file:write(FileIO, io_lib:format("~w", [Mode])),
-    ok = file:close(FileIO).
+    FileName = gpio_filename(PinNo, "active_low"),
+    {ok, FileIO} = file:open(FileName, [write]),
+    ok = file:write(FileIO, integer_to_list(Mode)),
+    ok = file:close(FileIO),
+    ok.
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc gpio device file name.
+%% @end
+%%--------------------------------------------------------------------
+-spec gpio_filename(non_neg_integer(), string()) -> string().
+gpio_filename(PinNo, FileName) ->
+    string:join(["/sys/class/gpio/gpio", integer_to_list(PinNo), 
+		 "/", FileName], "").
+    

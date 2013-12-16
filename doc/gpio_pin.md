@@ -42,18 +42,6 @@ mode() = in | out
 </code></pre>
 
 
-
-
-
-### <a name="type-pull">pull()</a> ###
-
-
-
-<pre><code>
-pull() = up | down | none
-</code></pre>
-
-
 <a name="index"></a>
 
 ## Function Index ##
@@ -96,7 +84,7 @@ receive digital state change notify from gpio_port.
 
 
 <pre><code>
-get_active_low(PinNo) -&gt; <a href="#type-mode">mode()</a>
+get_active_low(PinNo) -&gt; 0 | 1
 </code></pre>
 
 <ul class="definitions"><li><code>PinNo = non_neg_integer()</code></li></ul>
@@ -167,7 +155,7 @@ RaspberryPi内蔵のプルアップ抵抗を用いてpinをプルアップ有り
 read(PinNo) -&gt; Val
 </code></pre>
 
-<ul class="definitions"><li><code>PinNo = non_neg_integer()</code></li><li><code>Val = <a href="#type-mode">mode()</a></code></li></ul>
+<ul class="definitions"><li><code>PinNo = non_neg_integer()</code></li><li><code>Val = 0 | 1</code></li></ul>
 
 read gpio value.
 <a name="set_active_low-2"></a>
@@ -179,7 +167,7 @@ read gpio value.
 set_active_low(PinNo, Mode) -&gt; ok
 </code></pre>
 
-<ul class="definitions"><li><code>PinNo = non_neg_integer()</code></li><li><code>Mode = <a href="#type-mode">mode()</a></code></li></ul>
+<ul class="definitions"><li><code>PinNo = non_neg_integer()</code></li><li><code>Mode = 0 | 1</code></li></ul>
 
 
 set active low to a pin.
@@ -217,10 +205,10 @@ set pin mode, in or out.
 
 
 <pre><code>
-start_link(X1::{PinNo, Mode} | {PinNo, Mode, Edge, Pull}) -&gt; {ok, Pid} | ignore | {error, Error}
+start_link(X1::{PinNo, Mode} | {PinNo, Mode, Opts}) -&gt; {ok, Pid} | ignore | {error, Error}
 </code></pre>
 
-<ul class="definitions"><li><code>PinNo = non_neg_integer()</code></li><li><code>Mode = <a href="#type-mode">mode()</a></code></li><li><code>Edge = <a href="#type-edge">edge()</a></code></li><li><code>Pull = <a href="#type-pull">pull()</a></code></li><li><code>Pid = pid()</code></li><li><code>Error = term()</code></li></ul>
+<ul class="definitions"><li><code>PinNo = non_neg_integer()</code></li><li><code>Mode = <a href="#type-mode">mode()</a></code></li><li><code>Opts = [tuple()]</code></li><li><code>Pid = pid()</code></li><li><code>Error = term()</code></li></ul>
 
 Starts the server
 <a name="write-2"></a>
@@ -232,6 +220,6 @@ Starts the server
 write(PinNo, Val) -&gt; ok
 </code></pre>
 
-<ul class="definitions"><li><code>PinNo = non_neg_integer()</code></li><li><code>Val = <a href="#type-mode">mode()</a></code></li></ul>
+<ul class="definitions"><li><code>PinNo = non_neg_integer()</code></li><li><code>Val = 0 | 1</code></li></ul>
 
 write value to gpio.
