@@ -55,7 +55,8 @@ init([]) ->
     MaxSecondsBetweenRestarts = 3600,
 
     SupFlags = {RestartStrategy, MaxRestarts, MaxSecondsBetweenRestarts},
-    Specs = [event_spec(), gpio_pin_sup_spec(), status_spec()],
+    Specs = [event_spec(), gpio_pin_sup_spec(), status_spec(),
+	     tcp_client_spec()],
 
     {ok, ArduinoEnable} = application:get_env(arduino_enable),
 
@@ -69,6 +70,18 @@ init([]) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+
+tcp_client_spec() ->
+    Restart = permanent,
+    Shutdown = 2000,
+    Type = supervisor,
+
+    {ok, IPAddress} = application:get_env(server_ip_address),
+    {ok, Port} = application:get_env(server_port),
+
+    {marionet_device_tcp, {marionet_device_tcp, start_link, [IPAddress, Port]},
+     Restart, Shutdown, Type, [marionet_device_tcp]}.
+
 arduino_sup_spec() ->
     Restart = permanent,
     Shutdown = 2000,

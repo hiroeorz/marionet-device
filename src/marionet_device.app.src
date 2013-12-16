@@ -12,6 +12,9 @@
                  ]},
   {mod, { marionet_device_app, []}},
   {env, [
+         {server_ip_address, "127.0.0.1"},
+         {server_port, 9810},
+
          %% {PinNo, ReadWriteMode, [Options]}
          %% PinNo         :: 2 .. 27
          %% ReadWriteMode :: in      | out
