@@ -4,5 +4,5 @@
 {modules,[arduino,arduino_event,arduino_event_logger,arduino_event_relay,
           arduino_sup,firmata,gpio_pin,gpio_pin_db,gpio_pin_event,
           gpio_pin_event_logger,gpio_pin_event_relay,gpio_pin_sup,gpio_port,
-          marionet_device,marionet_device_app,marionet_device_event,
-          marionet_device_status,marionet_device_sup]}.
+          iopack,marionet_device,marionet_device_app,marionet_device_event,
+          marionet_device_status,marionet_device_sup,marionet_device_tcp]}.
