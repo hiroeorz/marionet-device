@@ -1,4 +1,4 @@
 #!/bin/sh
 
-sudo erl -pa ebin deps/*/ebin -boot start_sasl -sname gpio \
+sudo erl -pa ebin deps/*/ebin -boot start_sasl -sname marionet_device \
          -setcookie marionet -s marionet_device start

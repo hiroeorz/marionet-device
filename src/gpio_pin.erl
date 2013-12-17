@@ -12,23 +12,23 @@
 
 %% API
 -export([start_link/1,
-	 set_pin_mode/2,
-	 read/1,
-	 write/2,
-	 set_int/2,
-	 pullup/1,
-	 pulldown/1,
-	 pullnone/1,
-	 get_active_low/1,
-	 set_active_low/2,
-	 all_digital/0]).
+         set_pin_mode/2,
+         read/1,
+         write/2,
+         set_int/2,
+         pullup/1,
+         pulldown/1,
+         pullnone/1,
+         get_active_low/1,
+         set_active_low/2,
+         all_digital/0]).
 
 %% fort receive inturrupt
 -export([digital_change_notify/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
-	 terminate/2, code_change/3]).
+         terminate/2, code_change/3]).
 
 -type mode() :: in | out.
 -type edge() :: falling | rising | both | none.
@@ -37,10 +37,10 @@
 -define(SERVER, ?MODULE).
 
 -record(state, {pin_no      :: non_neg_integer(),
-		file_io     :: file:io_device(),
-		edge        :: edge(),
-		mode        :: mode(),
-		pull        :: pull() }).
+                file_io     :: file:io_device(),
+                edge        :: edge(),
+                mode        :: mode(),
+                pull        :: pull() }).
 
 %%%===================================================================
 %%% API

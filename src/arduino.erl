@@ -12,16 +12,16 @@
 
 %% API
 -export([start_link/0, start_link/1,
-	 cast/1,
-	 firmata_version_request/0,
-	 initialize/0,
-	 all_digital/0,
-	 all_analog/0,
-	 digital_write/2]).
+         cast/1,
+         firmata_version_request/0,
+         initialize/0,
+         all_digital/0,
+         all_analog/0,
+         digital_write/2]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
-	 terminate/2, code_change/3]).
+         terminate/2, code_change/3]).
 
 %% timer use function
 -export([init_pin/1]).
@@ -33,14 +33,14 @@
 -type pin_mode() :: in | out | analog | pwm | servo.
 
 -record(state, {serial_pid                  :: pid(),
-		init_flag = true            :: boolean(),
-		recv_queue = <<>>           :: binary(),
-		digital_conf                :: [tuple()],
-		analog_conf                 :: [non_neg_integer()],
-		sampling_interval = 19      :: non_neg_integer(),
-		digital_port_reporting_conf :: [non_neg_integer()],
-		digital_port_offset = 0     :: non_neg_integer(),
-		analog_offset = 0           :: non_neg_integer()}).
+                init_flag = true            :: boolean(),
+                recv_queue = <<>>           :: binary(),
+                digital_conf                :: [tuple()],
+                analog_conf                 :: [non_neg_integer()],
+                sampling_interval = 19      :: non_neg_integer(),
+                digital_port_reporting_conf :: [non_neg_integer()],
+                digital_port_offset = 0     :: non_neg_integer(),
+                analog_offset = 0           :: non_neg_integer()}).
 
 %%%===================================================================
 %%% API

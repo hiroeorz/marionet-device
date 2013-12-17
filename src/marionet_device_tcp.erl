@@ -77,8 +77,12 @@ init([IPAddress, Port]) ->
 %%--------------------------------------------------------------------
 
 closed(timeout, State) ->
-    {ok, Socket} = open_connection(State),
-    {next_state, connected, State#state{socket = Socket}};
+    case open_connection(State) of
+        {ok, Socket} ->
+            {next_state, connected, State#state{socket = Socket}};
+        {error, _Reason} ->
+            {next_state, closed, State, ?RECONNECT_INTERVAL}
+    end;
 
 closed({send_message, Bin}, State) when is_binary(Bin) ->
     {next_state, closed, State}.

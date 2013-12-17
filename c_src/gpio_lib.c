@@ -71,12 +71,12 @@ isr_handler (void *isr);
 
 int
 main(int argc, char **argv) {
-  int loop = 1;                         /* Loop flag                       */
-  int got;                              /* Result of receive               */
-  unsigned char buf[BUFSIZE];           /* Buffer for incomming message    */
-  ErlMessage emsg;                      /* Incoming message                */
-  char hostname[255];                   /* Node hostname                   */
-  char erlang_nodename[255] = "gpio@";  /* Node name                       */
+  int loop = 1;                                   /* Loop flag                */
+  int got;                                        /* Result of receive        */
+  unsigned char buf[BUFSIZE];                     /* Buffer for incomming msg */
+  ErlMessage emsg;                                 /* Incoming message        */
+  char hostname[255];                              /* Node hostname           */
+  char erlang_nodename[255] = "marionet_device@";  /* Node name               */
 
   /* initialize memory map */
   gpio_init();
