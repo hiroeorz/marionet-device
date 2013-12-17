@@ -17,7 +17,7 @@ __Authors:__ HIROE Shin ([`shin@HIROE-no-MacBook-Pro.local`](mailto:shin@HIROE-n
 ## Function Index ##
 
 
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#connected-2">connected/2</a></td><td></td></tr><tr><td valign="top"><a href="#connected-3">connected/3</a></td><td></td></tr><tr><td valign="top"><a href="#start_link-2">start_link/2</a></td><td>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#connected-2">connected/2</a></td><td></td></tr><tr><td valign="top"><a href="#connected-3">connected/3</a></td><td></td></tr><tr><td valign="top"><a href="#open_connection-0">open_connection/0</a></td><td>reconnect function called by timer.</td></tr><tr><td valign="top"><a href="#send_message-1">send_message/1</a></td><td>cast data to server.</td></tr><tr><td valign="top"><a href="#start_link-2">start_link/2</a></td><td>
 Creates a gen_fsm process which calls Module:init/1 to
 initialize.</td></tr></table>
 
@@ -40,6 +40,32 @@ initialize.</td></tr></table>
 `connected(X1, From, State) -> any()`
 
 
+<a name="open_connection-0"></a>
+
+### open_connection/0 ###
+
+
+<pre><code>
+open_connection() -&gt; ok
+</code></pre>
+
+<br></br>
+
+
+reconnect function called by timer.
+<a name="send_message-1"></a>
+
+### send_message/1 ###
+
+
+<pre><code>
+send_message(Bin::binary()) -&gt; ok
+</code></pre>
+
+<br></br>
+
+
+cast data to server.
 <a name="start_link-2"></a>
 
 ### start_link/2 ###

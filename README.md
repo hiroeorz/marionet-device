@@ -61,6 +61,7 @@ and start MarioNetDevice in erl shell.
 ```erl-sh
 1> application:start(marionet_device).
 ```
+-------
 
 MarioNetDevice will connect to a TCP server when start up Application.
 (Default server IP address is '127.0.0.1')

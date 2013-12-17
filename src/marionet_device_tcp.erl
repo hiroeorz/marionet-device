@@ -11,21 +11,23 @@
 -behaviour(gen_fsm).
 
 %% API
--export([start_link/2]).
+-export([start_link/2,
+         send_message/1,
+         open_connection/0]).
 
 -export([closed/2, closed/3,
-	 connected/2, connected/3]).
+         connected/2, connected/3]).
 
 %% gen_fsm callbacks
 -export([init/1, handle_event/3,
-	 handle_sync_event/4, handle_info/3, terminate/3, code_change/4]).
+         handle_sync_event/4, handle_info/3, terminate/3, code_change/4]).
 
 -define(SERVER, ?MODULE).
 -define(RECONNECT_INTERVAL, 10000).
 
 -record(state, {ip_address :: inet:ip_address(),
-		port       :: inet:port_number(),
-		socket     :: gen_tcp:socket()}).
+                port       :: inet:port_number(),
+                socket     :: gen_tcp:socket()}).
 
 %%%===================================================================
 %%% API
@@ -43,6 +45,22 @@
 							   {error, term()}.
 start_link(IPAddress, Port) ->
     gen_fsm:start_link({local, ?SERVER}, ?MODULE, [IPAddress, Port], []).
+
+%%--------------------------------------------------------------------
+%% @doc cast data to server.
+%% @end
+%%--------------------------------------------------------------------
+-spec send_message(binary()) -> ok.
+send_message(Bin) ->
+    gen_fsm:send_event(?SERVER, {send_message, Bin}).
+
+%%--------------------------------------------------------------------
+%% @doc reconnect function called by timer.
+%% @end
+%%--------------------------------------------------------------------
+-spec open_connection() -> ok.
+open_connection() ->
+    gen_fsm:send_all_state_event(?SERVER, reconnect).
 
 %%%===================================================================
 %%% gen_fsm callbacks
@@ -62,8 +80,8 @@ start_link(IPAddress, Port) ->
 %% @end
 %%--------------------------------------------------------------------
 init([IPAddress, Port]) ->
-    State = #state{ip_address = IPAddress, port = Port},
-    {ok, closed, State, ?RECONNECT_INTERVAL}.
+    ok = spawn_reconnect_timer(),
+    {ok, closed, #state{ip_address = IPAddress, port = Port}}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -75,27 +93,23 @@ init([IPAddress, Port]) ->
 %% the event. It is also called if a timeout occurs.
 %% @end
 %%--------------------------------------------------------------------
-
-closed(timeout, State) ->
-    case open_connection(State) of
-        {ok, Socket} ->
-            {next_state, connected, State#state{socket = Socket}};
-        {error, _Reason} ->
-            {next_state, closed, State, ?RECONNECT_INTERVAL}
-    end;
-
 closed({send_message, Bin}, State) when is_binary(Bin) ->
+    error_logger:error_msg("state is closed.: ~p~n", [Bin]),
     {next_state, closed, State}.
 
 connected({send_message, Bin}, State) when is_binary(Bin) ->
-    error_logger:info_msg("send: ~p", [Bin]),
-    {next_state, connected, State}.
+    error_logger:info_msg("send: ~p~n", [Bin]),
+    case gen_tcp:send(State#state.socket, Bin) of
+        ok ->
+            {next_state, connected, State};
+        {error, closed} ->
+            ok = spawn_reconnect_timer(),
+            {next_state, closed, State}
+    end.
 
 %%--------------------------------------------------------------------
 %% @private
-%% @doc 接続クローズフェーズ。100ミリ秒後に接続待機フェーズに自動的に移行します。
-%%
-%% 接続待機フェーズに移行した後は、hibernateします。
+%% @doc
 %% There should be one instance of this function for each possible
 %% state name. Whenever a gen_fsm receives an event sent using
 %% gen_fsm:sync_send_event/[2,3], the instance of this function with
@@ -110,8 +124,7 @@ closed(open, _From, State) ->
 
 closed(shutdown, _From, State) ->
     error_logger:info_msg("already closed session to server.~n"),
-    Reply = ok,
-    {reply, Reply, state_name, State}.
+    {reply, ok, closed, State}.
 
 connected(open, _From, State) ->
     error_logger:info_msg("already opend session to a server~n"),
@@ -119,8 +132,8 @@ connected(open, _From, State) ->
 
 connected(shutdown, _From, State) ->
     error_logger:info_msg("shutting down session.~n"),
-    Reply = ok,
-    {reply, Reply, state_name, State}.
+    gen_tcp:close(State#state.socket),
+    {reply, ok, closed, State}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -135,6 +148,27 @@ connected(shutdown, _From, State) ->
 %%                   {stop, Reason, NewState}
 %% @end
 %%--------------------------------------------------------------------
+handle_event(reconnect, _StateName, State) ->
+    IPAddress = State#state.ip_address,
+    Port = State#state.port,
+
+    Opts = [binary, {packet, 0},
+            {reuseaddr, true},
+            {nodelay, true},
+            {active, true},
+            {send_timeout, 3000}],
+
+    case gen_tcp:connect(IPAddress, Port, Opts) of
+        {ok, Socket} ->
+            error_logger:info_msg("connected to server: ~p:~p~n",
+                                  [IPAddress, Port]),
+            {next_state, connected, State#state{socket = Socket}};
+        {error, Reason} ->
+            error_logger:error_msg("connection failure: ~p~n", [Reason]),
+            ok = spawn_reconnect_timer(),
+            {next_state, closed, State}
+    end;
+
 handle_event(_Event, StateName, State) ->
     {next_state, StateName, State}.
 
@@ -171,10 +205,11 @@ handle_sync_event(_Event, _From, StateName, State) ->
 %%                   {stop, Reason, NewState}
 %% @end
 %%--------------------------------------------------------------------
-handle_info({tcp_closed, ClosedSocket} = Info, StateName, State) ->
-    error_logger:info_msg("info: ~p recv from state:~p: ~n", [Info, StateName]),
-    ok = gen_tcp:close(ClosedSocket),
-    {next_state, closed, State, ?RECONNECT_INTERVAL};
+handle_info({tcp_closed, _} = Info, StateName, State) ->
+    error_logger:error_msg("TCP session closed: ~p from ~p~n", 
+                           [StateName, Info]),
+    ok = spawn_reconnect_timer(),
+    {next_state, closed, State};
 
 handle_info(Info, StateName, State) ->
     error_logger:info_msg("~p: unknown info: ~p~n", [StateName, Info]),
@@ -209,17 +244,10 @@ code_change(_OldVsn, StateName, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
--spec open_connection(#state{}) -> {ok, Socket} | {error, Reason} when
-      Socket :: gen_tcp:socket(),
-      Reason :: term().
-open_connection(State) when is_record(State, state) ->
-    IPAddress = State#state.ip_address,
-    Port = State#state.port,
 
-    Opts = [binary, {packet, 0},
-	    {reuseaddr, true},
-	    {nodelay, true},
-	    {active, true},
-	    {send_timeout, 3000}],
+spawn_reconnect_timer() ->
+    {ok, _TRef} = timer:apply_after(?RECONNECT_INTERVAL, ?MODULE, 
+                                    open_connection, []),
+    ok.
 
-    gen_tcp:connect(IPAddress, Port, Opts).    
+

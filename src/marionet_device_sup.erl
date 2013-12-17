@@ -111,7 +111,9 @@ event_spec() ->
     Shutdown = 2000,
     Type = supervisor,
 
-    {marionet_device_event, {marionet_device_event, start_link, [[]]},
+    Handlers = [marionet_log_sender],
+
+    {marionet_device_event, {marionet_device_event, start_link, [Handlers]},
      Restart, Shutdown, Type, [marionet_device_event]}.
 
 status_spec() ->

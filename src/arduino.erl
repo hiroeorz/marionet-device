@@ -166,7 +166,7 @@ init([Conf]) ->
     Digital = proplists:get_value(digital, Conf, 
 				  [{PinNo, in} || PinNo <- lists:seq(0, 13)] ),
     Analog = proplists:get_value(analog, Conf, [0, 1, 2, 3, 4, 5]),
-    SamplingInterval = proplists:get_value(analog_offset, Conf, 19),
+    SamplingInterval = proplists:get_value(sampling_interval, Conf, 1000),
     AnalogOffset = proplists:get_value(analog_offset, Conf, 0),
     DiPortReporting = proplists:get_value(digital_port_reporting, Conf, [1, 1]),
     DiPortOffset = proplists:get_value(digital_port_offset, Conf, 0),

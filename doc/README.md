@@ -26,5 +26,6 @@
 <tr><td><a href="http://github.com/hiroeorz17/RaspberryPiGPIO/blob/tcp/doc/marionet_device_event.md" class="module">marionet_device_event</a></td></tr>
 <tr><td><a href="http://github.com/hiroeorz17/RaspberryPiGPIO/blob/tcp/doc/marionet_device_status.md" class="module">marionet_device_status</a></td></tr>
 <tr><td><a href="http://github.com/hiroeorz17/RaspberryPiGPIO/blob/tcp/doc/marionet_device_sup.md" class="module">marionet_device_sup</a></td></tr>
-<tr><td><a href="http://github.com/hiroeorz17/RaspberryPiGPIO/blob/tcp/doc/marionet_device_tcp.md" class="module">marionet_device_tcp</a></td></tr></table>
+<tr><td><a href="http://github.com/hiroeorz17/RaspberryPiGPIO/blob/tcp/doc/marionet_device_tcp.md" class="module">marionet_device_tcp</a></td></tr>
+<tr><td><a href="http://github.com/hiroeorz17/RaspberryPiGPIO/blob/tcp/doc/marionet_log_sender.md" class="module">marionet_log_sender</a></td></tr></table>
 

@@ -41,7 +41,7 @@
          {arduino_enable, true},
          {arduino, [{speed, 57600},
                     {device, "/dev/ttyACM0"},
-                    {sampling_interval, 100},
+                    {sampling_interval, 290},
                     {digital_port_reporting, [1, 0]},
                     {digital_port_offset, 1},
                     {analog_offset, 0},
