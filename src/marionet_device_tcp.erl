@@ -98,7 +98,7 @@ closed({send_message, Bin}, State) when is_binary(Bin) ->
     {next_state, closed, State}.
 
 connected({send_message, Bin}, State) when is_binary(Bin) ->
-    error_logger:info_msg("send: ~p~n", [Bin]),
+    %%error_logger:info_msg("send: ~p~n", [Bin]),
     case gen_tcp:send(State#state.socket, Bin) of
         ok ->
             {next_state, connected, State};
