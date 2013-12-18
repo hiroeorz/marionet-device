@@ -15,7 +15,7 @@ Now, MarioNetDevice supported RaspberryPi (and Arduino extension) only, I will s
 Log in your RaspberryPi and fetch the latest version of MarioNetDevice using git.
 
 ```
-$ git clone https://github.com/hiroeorz/MarioNetDevice.git
+$ git clone https://github.com/hiroeorz/marionet-device.git
 $ cd MarioNetDevice
 $ make
 ```
@@ -23,7 +23,7 @@ $ make
 Or add "deps" line to your app's rebar.conf.
 
 ```erlang
-{marionet_device, ".*", {git, "https://github.com/hiroeorz/marionet_device.git",
+{marionet_device, ".*", {git, "https://github.com/hiroeorz/marionet-device.git",
    {branch, "master"}}},
 
 ```
@@ -36,7 +36,7 @@ $ ./rebar get-deps
 
 ## Running
 
-check [default setting of marionet_device](blob/master/src/marionet_device.app.src).
+check [default setting of marionet_device](blob/master/src/marionet-device.app.src).
 
 In default setting, gpio 25,27 is output pin, other is input pin.
 

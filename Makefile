@@ -37,4 +37,4 @@ dialyzer: compile
 
 setup-dialyzer:
 	@$(DIALYZER) --build_plt \
-                     --apps kernel stdlib mnesia eunit erts crypto
+                 --apps kernel stdlib mnesia eunit erts crypto
