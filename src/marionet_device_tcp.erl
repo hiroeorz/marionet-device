@@ -11,12 +11,8 @@
 -behaviour(gen_fsm).
 
 %% API
--export([start_link/2,
-         send_message/1,
-         open_connection/0]).
-
--export([closed/2, closed/3,
-         connected/2, connected/3]).
+-export([start_link/4, send_message/1, open_connection/0]).
+-export([closed/2, opened/2, connected/2]).
 
 %% gen_fsm callbacks
 -export([init/1, handle_event/3,
@@ -25,8 +21,14 @@
 -define(SERVER, ?MODULE).
 -define(RECONNECT_INTERVAL, 10000).
 
+-define(AUTH_SUCCESS_CODE,              16#02).
+-define(ANALOG_IO_PUB_MESSAGE_CODE,     16#E1).
+-define(DIGITAL_IO_PUB_MESSAGE_CODE,    16#91).
+
 -record(state, {ip_address :: inet:ip_address(),
                 port       :: inet:port_number(),
+		device_id  :: pos_integer(),
+		token      :: binary(),
                 socket     :: gen_tcp:socket()}).
 
 %%%===================================================================
@@ -40,11 +42,13 @@
 %% function does not return until Module:init/1 has returned.
 %% @end
 %%--------------------------------------------------------------------
--spec start_link(inet:ip_address(), inet:port_number()) -> {ok, pid()}    |
+-spec start_link(pos_integer(), binary(), 
+		 inet:ip_address(), inet:port_number()) -> {ok, pid()}    |
 							   ignore         |
 							   {error, term()}.
-start_link(IPAddress, Port) ->
-    gen_fsm:start_link({local, ?SERVER}, ?MODULE, [IPAddress, Port], []).
+start_link(DeviceId, Token, IPAddress, Port) ->
+    gen_fsm:start_link({local, ?SERVER}, ?MODULE, 
+		       [DeviceId, Token, IPAddress, Port], []).
 
 %%--------------------------------------------------------------------
 %% @doc cast data to server.
@@ -79,9 +83,10 @@ open_connection() ->
 %%                     {stop, StopReason}
 %% @end
 %%--------------------------------------------------------------------
-init([IPAddress, Port]) ->
+init([DeviceId, Token, IPAddress, Port]) ->
     ok = spawn_reconnect_timer(),
-    {ok, closed, #state{ip_address = IPAddress, port = Port}}.
+    {ok, closed, #state{ip_address = IPAddress, port = Port,
+			device_id = DeviceId, token = Token}}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -97,6 +102,10 @@ closed({send_message, Bin}, State) when is_binary(Bin) ->
     error_logger:error_msg("state is closed.: ~p~n", [Bin]),
     {next_state, closed, State}.
 
+opened({send_message, Bin}, State) when is_binary(Bin) ->
+    error_logger:error_msg("state is not authenticated.: ~p~n", [Bin]),
+    {next_state, opened, State}.
+
 connected({send_message, Bin}, State) when is_binary(Bin) ->
     %%error_logger:info_msg("send: ~p~n", [Bin]),
     case gen_tcp:send(State#state.socket, Bin) of
@@ -106,34 +115,6 @@ connected({send_message, Bin}, State) when is_binary(Bin) ->
             ok = spawn_reconnect_timer(),
             {next_state, closed, State}
     end.
-
-%%--------------------------------------------------------------------
-%% @private
-%% @doc
-%% There should be one instance of this function for each possible
-%% state name. Whenever a gen_fsm receives an event sent using
-%% gen_fsm:sync_send_event/[2,3], the instance of this function with
-%% the same name as the current state name StateName is called to
-%% handle the event.
-%% @end
-%%--------------------------------------------------------------------
-
-closed(open, _From, State) ->
-    error_logger:info_msg("open session to a server~n"),
-    {reply, ok, connected, State};
-
-closed(shutdown, _From, State) ->
-    error_logger:info_msg("already closed session to server.~n"),
-    {reply, ok, closed, State}.
-
-connected(open, _From, State) ->
-    error_logger:info_msg("already opend session to a server~n"),
-    {reply, ok, connected, State};
-
-connected(shutdown, _From, State) ->
-    error_logger:info_msg("shutting down session.~n"),
-    gen_tcp:close(State#state.socket),
-    {reply, ok, closed, State}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -151,18 +132,29 @@ connected(shutdown, _From, State) ->
 handle_event(reconnect, _StateName, State) ->
     IPAddress = State#state.ip_address,
     Port = State#state.port,
+    DeviceId = State#state.device_id,
+    Token = State#state.token,
 
-    Opts = [binary, {packet, 0},
+    Opts = [binary, {packet, 1},
             {reuseaddr, true},
             {nodelay, true},
-            {active, true},
+            {active, once},
             {send_timeout, 3000}],
 
     case gen_tcp:connect(IPAddress, Port, Opts) of
         {ok, Socket} ->
             error_logger:info_msg("connected to server: ~p:~p~n",
                                   [IPAddress, Port]),
-            {next_state, connected, State#state{socket = Socket}};
+
+	    AuthBin = iopack:format(auth_request, {DeviceId, Token}),
+	    case gen_tcp:send(Socket, AuthBin) of
+		ok ->
+		    ok = inet:setopts(Socket, [{active, once}]),
+		    {next_state, opened, State#state{socket = Socket}};
+		{error, closed} ->
+		    ok = spawn_reconnect_timer(),
+		    {next_state, closed, State}
+	    end;
         {error, Reason} ->
             error_logger:error_msg("connection failure: ~p~n", [Reason]),
             ok = spawn_reconnect_timer(),
@@ -205,14 +197,54 @@ handle_sync_event(_Event, _From, StateName, State) ->
 %%                   {stop, Reason, NewState}
 %% @end
 %%--------------------------------------------------------------------
+
+%%--------------------------------------------------------------
+%% tcp message in opened
+%%--------------------------------------------------------------
+
+%% authenticate success response from server.
+handle_info({tcp, Socket, <<?AUTH_SUCCESS_CODE:8>>}, opened, State) ->
+    error_logger:info_msg("authentication success, session connected.~n"),
+    ok = inet:setopts(Socket, [{active, once}]),
+    {next_state, connected, State};
+
+%%--------------------------------------------------------------
+%% tcp message in connected
+%%--------------------------------------------------------------
+
+%% analog io message from other device.
+handle_info({tcp, Socket, <<?ANALOG_IO_PUB_MESSAGE_CODE:8, _/binary>> = Data},
+	    connected, State) ->
+    {analog_io_pub_message, {DeviceId, PinNo, Value}} = iopack:parse(Data),
+    error_logger:info_msg("sub! analog device_id:~p: pin:~p val:~p~n",
+			  [DeviceId, PinNo, Value]),
+    ok = inet:setopts(Socket, [{active, once}]),
+    {next_state, connected, State};
+
+%% digital io message from other device.
+handle_info({tcp, Socket, <<?DIGITAL_IO_PUB_MESSAGE_CODE:8, _/binary>> = Data},
+	    connected, State) ->
+    {digital_io_pub_message, {DeviceId, PortNo, List}} = iopack:parse(Data),
+    error_logger:info_msg("sub! digital device_id:~p: pin:~p val:~p~n",
+			  [DeviceId, PortNo, List]),
+    ok = inet:setopts(Socket, [{active, once}]),
+    {next_state, connected, State};
+
+%%--------------------------------------------------------------
+%% close tcp session
+%%--------------------------------------------------------------
 handle_info({tcp_closed, _} = Info, StateName, State) ->
     error_logger:error_msg("TCP session closed: ~p from ~p~n", 
                            [StateName, Info]),
     ok = spawn_reconnect_timer(),
     {next_state, closed, State};
 
+%%--------------------------------------------------------------
+%% another message
+%%--------------------------------------------------------------
 handle_info(Info, StateName, State) ->
     error_logger:info_msg("~p: unknown info: ~p~n", [StateName, Info]),
+    ok = inet:setopts(State#state.socket, [{active, once}]),
     {next_state, StateName, State}.
 
 %%--------------------------------------------------------------------

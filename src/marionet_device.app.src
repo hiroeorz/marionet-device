@@ -13,8 +13,10 @@
                  ]},
   {mod, { marionet_device_app, []}},
   {env, [
-         {server_ip_address, "127.0.0.1"},
-         {server_port, 9810},
+         {device_id, 1},
+         {token, <<"12345678901234567890123456789012">>},
+         {server_ip_address, "marionet.io"}, %% address set in your /etc/hosts
+         {server_port, 8765},
 
          %% {PinNo, ReadWriteMode, [Options]}
          %% PinNo         :: 2 .. 27
