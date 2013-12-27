@@ -99,15 +99,15 @@ init([DeviceId, Token, IPAddress, Port]) ->
 %% @end
 %%--------------------------------------------------------------------
 closed({send_message, Bin}, State) when is_binary(Bin) ->
-    error_logger:error_msg("state is closed.: ~p~n", [Bin]),
+    lager:error("state is closed.: ~p", [Bin]),
     {next_state, closed, State}.
 
 opened({send_message, Bin}, State) when is_binary(Bin) ->
-    error_logger:error_msg("state is not authenticated.: ~p~n", [Bin]),
+    lager:error("state is not authenticated.: ~p", [Bin]),
     {next_state, opened, State}.
 
 connected({send_message, Bin}, State) when is_binary(Bin) ->
-    %%error_logger:info_msg("send: ~p~n", [Bin]),
+    %%lager:info("send: ~p", [Bin]),
     case gen_tcp:send(State#state.socket, Bin) of
         ok ->
             {next_state, connected, State};
@@ -143,9 +143,7 @@ handle_event(reconnect, _StateName, State) ->
 
     case gen_tcp:connect(IPAddress, Port, Opts) of
         {ok, Socket} ->
-            error_logger:info_msg("connected to server: ~p:~p~n",
-                                  [IPAddress, Port]),
-
+            lager:info("connected to server: ~p:~p", [IPAddress, Port]),
 	    AuthBin = iopack:format(auth_request, {DeviceId, Token}),
 	    case gen_tcp:send(Socket, AuthBin) of
 		ok ->
@@ -156,7 +154,7 @@ handle_event(reconnect, _StateName, State) ->
 		    {next_state, closed, State}
 	    end;
         {error, Reason} ->
-            error_logger:error_msg("connection failure: ~p~n", [Reason]),
+            lager:error("connection failure: ~p", [Reason]),
             ok = spawn_reconnect_timer(),
             {next_state, closed, State}
     end;
@@ -204,7 +202,7 @@ handle_sync_event(_Event, _From, StateName, State) ->
 
 %% authenticate success response from server.
 handle_info({tcp, Socket, <<?AUTH_SUCCESS_CODE:8>>}, opened, State) ->
-    error_logger:info_msg("authentication success, session connected.~n"),
+    lager:info("authentication success, session connected."),
     ok = inet:setopts(Socket, [{active, once}]),
     {next_state, connected, State};
 
@@ -216,7 +214,7 @@ handle_info({tcp, Socket, <<?AUTH_SUCCESS_CODE:8>>}, opened, State) ->
 handle_info({tcp, Socket, <<?ANALOG_IO_PUB_MESSAGE_CODE:8, _/binary>> = Data},
 	    connected, State) ->
     {analog_io_pub_message, {DeviceId, PinNo, Value}} = iopack:parse(Data),
-    error_logger:info_msg("sub! analog device_id:~p: pin:~p val:~p~n",
+    lager:info("sub! analog device_id:~p: pin:~p val:~p",
 			  [DeviceId, PinNo, Value]),
     ok = inet:setopts(Socket, [{active, once}]),
     {next_state, connected, State};
@@ -225,7 +223,7 @@ handle_info({tcp, Socket, <<?ANALOG_IO_PUB_MESSAGE_CODE:8, _/binary>> = Data},
 handle_info({tcp, Socket, <<?DIGITAL_IO_PUB_MESSAGE_CODE:8, _/binary>> = Data},
 	    connected, State) ->
     {digital_io_pub_message, {DeviceId, PortNo, List}} = iopack:parse(Data),
-    error_logger:info_msg("sub! digital device_id:~p: pin:~p val:~p~n",
+    lager:info("sub! digital device_id:~p: pin:~p val:~p",
 			  [DeviceId, PortNo, List]),
     ok = inet:setopts(Socket, [{active, once}]),
     {next_state, connected, State};
@@ -234,8 +232,7 @@ handle_info({tcp, Socket, <<?DIGITAL_IO_PUB_MESSAGE_CODE:8, _/binary>> = Data},
 %% close tcp session
 %%--------------------------------------------------------------
 handle_info({tcp_closed, _} = Info, StateName, State) ->
-    error_logger:error_msg("TCP session closed: ~p from ~p~n", 
-                           [StateName, Info]),
+    lager:error("TCP/IP session closed: ~p from ~p", [StateName, Info]),
     ok = spawn_reconnect_timer(),
     {next_state, closed, State};
 
@@ -243,7 +240,7 @@ handle_info({tcp_closed, _} = Info, StateName, State) ->
 %% another message
 %%--------------------------------------------------------------
 handle_info(Info, StateName, State) ->
-    error_logger:info_msg("~p: unknown info: ~p~n", [StateName, Info]),
+    lager:info("~p: unknown info: ~p", [StateName, Info]),
     ok = inet:setopts(State#state.socket, [{active, once}]),
     {next_state, StateName, State}.
 

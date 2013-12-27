@@ -49,12 +49,10 @@ init([]) ->
 %%--------------------------------------------------------------------
 
 %% receive digital port(8bit) changed message.
-handle_event({digital_port_changed, PortNo, Status}, State) ->
-    error_logger:info_msg("digital port updated: ~w:~p~n", [PortNo, Status]),
+handle_event({digital_port_changed, _PortNo, _Status}, State) ->
     {ok, State};
 
-handle_event({analog_recv, PinNo, Val}, State) ->
-    error_logger:info_msg("analog: ~w:~p~n", [PinNo, Val]),
+handle_event({analog_recv, _PinNo, _Val}, State) ->
     {ok, State}.
 
 %%--------------------------------------------------------------------

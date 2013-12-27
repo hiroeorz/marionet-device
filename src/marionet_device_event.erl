@@ -85,12 +85,10 @@ init([]) ->
 
 %% receive digital port(8bit) changed message.
 handle_event({digital_port_changed, PortNo, Status}, State) ->
-    %%error_logger:info_msg("!digital_port_changed~n"),
     ok = marionet_device_status:update_digital_port(PortNo, Status),
     {ok, State};
 
 handle_event({analog_recv, PinNo, Value}, State) ->
-    %%error_logger:info_msg("!analog_recv~n"),
     ok = marionet_device_status:update_analog_value(PinNo, Value),
     {ok, State}.
 

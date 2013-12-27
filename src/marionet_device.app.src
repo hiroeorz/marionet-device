@@ -9,7 +9,8 @@
   {applications, [
                   kernel,
                   stdlib,
-                  'erlang-serial'
+                  'erlang-serial',
+                  lager
                  ]},
   {mod, { marionet_device_app, []}},
   {env, [
