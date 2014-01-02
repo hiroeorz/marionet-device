@@ -15,7 +15,7 @@
   {mod, { marionet_device_app, []}},
   {env, [
          {device_id, 1},
-         {token, <<"12345678901234567890123456789012">>},
+         {token, "68A6338A95F5020C1A1C532D14E20C77"},
          {server_ip_address, "marionet.io"}, %% address set in your /etc/hosts
          {server_port, 8765},
 

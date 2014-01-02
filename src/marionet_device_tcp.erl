@@ -21,15 +21,19 @@
 -define(SERVER, ?MODULE).
 -define(RECONNECT_INTERVAL, 10000).
 
--define(AUTH_SUCCESS_CODE,              16#02).
+-define(AES_ENCRYPTED_CODE,             16#01).
+-define(CHALLENGE_REQUEST_CODE,         16#11).
 -define(ANALOG_IO_PUB_MESSAGE_CODE,     16#E1).
 -define(DIGITAL_IO_PUB_MESSAGE_CODE,    16#91).
 
--record(state, {ip_address :: inet:ip_address(),
-                port       :: inet:port_number(),
-		device_id  :: pos_integer(),
-		token      :: binary(),
-                socket     :: gen_tcp:socket()}).
+-record(state, {ip_address      :: inet:ip_address(),
+                port            :: inet:port_number(),
+		device_id       :: pos_integer(),
+		token           :: binary(),
+                socket          :: gen_tcp:socket(),
+		aes_ivec        :: binary(),
+		aes_send_state  :: crypto:opaque(),
+		aes_recv_state  :: crypto:opaque()}).
 
 %%%===================================================================
 %%% API
@@ -85,8 +89,9 @@ open_connection() ->
 %%--------------------------------------------------------------------
 init([DeviceId, Token, IPAddress, Port]) ->
     ok = spawn_reconnect_timer(),
+    TokenBin = decode(Token),
     {ok, closed, #state{ip_address = IPAddress, port = Port,
-			device_id = DeviceId, token = Token}}.
+			device_id = DeviceId, token = TokenBin}}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -107,13 +112,13 @@ opened({send_message, Bin}, State) when is_binary(Bin) ->
     {next_state, opened, State}.
 
 connected({send_message, Bin}, State) when is_binary(Bin) ->
-    %%lager:info("send: ~p", [Bin]),
-    case gen_tcp:send(State#state.socket, Bin) of
-        ok ->
-            {next_state, connected, State};
-        {error, closed} ->
+    lager:info("send: ~p", [Bin]),
+    case send_encrypted_data(State#state.socket, Bin, State) of
+	{ok, NewState} ->
+            {next_state, connected, NewState};
+	{error, NewState} ->
             ok = spawn_reconnect_timer(),
-            {next_state, closed, State}
+            {next_state, closed, NewState}
     end.
 
 %%--------------------------------------------------------------------
@@ -132,8 +137,6 @@ connected({send_message, Bin}, State) when is_binary(Bin) ->
 handle_event(reconnect, _StateName, State) ->
     IPAddress = State#state.ip_address,
     Port = State#state.port,
-    DeviceId = State#state.device_id,
-    Token = State#state.token,
 
     Opts = [binary, {packet, 1},
             {reuseaddr, true},
@@ -144,15 +147,7 @@ handle_event(reconnect, _StateName, State) ->
     case gen_tcp:connect(IPAddress, Port, Opts) of
         {ok, Socket} ->
             lager:info("connected to server: ~p:~p", [IPAddress, Port]),
-	    AuthBin = iopack:format(auth_request, {DeviceId, Token}),
-	    case gen_tcp:send(Socket, AuthBin) of
-		ok ->
-		    ok = inet:setopts(Socket, [{active, once}]),
-		    {next_state, opened, State#state{socket = Socket}};
-		{error, closed} ->
-		    ok = spawn_reconnect_timer(),
-		    {next_state, closed, State}
-	    end;
+	    {next_state, opened, State#state{socket = Socket}};
         {error, Reason} ->
             lager:error("connection failure: ~p", [Reason]),
             ok = spawn_reconnect_timer(),
@@ -200,11 +195,40 @@ handle_sync_event(_Event, _From, StateName, State) ->
 %% tcp message in opened
 %%--------------------------------------------------------------
 
+%%--------------------------------------------------------------
+%% AES encrypted message.
+%% Encrypted data is decrypted and call handle_info/3 again.
+%%--------------------------------------------------------------
+handle_info({tcp, Socket, <<?AES_ENCRYPTED_CODE:8, Encoded/binary>> = _Data},
+	    StateName, State) ->
+    %%lager:info("encrypted data received: ~p", [Data]),
+    AESRecvState = State#state.aes_recv_state,
+    {AESRecvState1, Plain} = bulletio_crypto:decrypt(Encoded, AESRecvState),
+    NewState = State#state{aes_recv_state = AESRecvState1},
+    handle_info({tcp, Socket, Plain}, StateName, NewState);
+
 %% authenticate success response from server.
-handle_info({tcp, Socket, <<?AUTH_SUCCESS_CODE:8>>}, opened, State) ->
-    lager:info("authentication success, session connected."),
+handle_info({tcp, Socket, <<?CHALLENGE_REQUEST_CODE:8, _/binary>> = Data},
+	    opened, State) ->
+    {challenge_request, {IVec, Challenge}} = iopack:parse(Data),
+
+    AESKey = State#state.token,
+    DeviceId = State#state.device_id,
+    AESSendState = bulletio_crypto:init(AESKey, IVec),
+    AESRecvState = bulletio_crypto:init(AESKey, IVec),
+    {AESSendState1, Encoded} = bulletio_crypto:encrypt(Challenge, AESSendState),
+
+    lager:info("plain     challenge: ~s", [Challenge]),
+    lager:info("encrypted challenge: ~s", [Encoded]),
+
+    Bin = iopack:format(challenge_response, {Encoded, DeviceId}),
+    ok = gen_tcp:send(State#state.socket, Bin),
+    NewState = State#state{aes_ivec = IVec,
+			   aes_send_state = AESSendState1,
+			   aes_recv_state = AESRecvState},
+	
     ok = inet:setopts(Socket, [{active, once}]),
-    {next_state, connected, State};
+    {next_state, connected, NewState};
 
 %%--------------------------------------------------------------
 %% tcp message in connected
@@ -279,4 +303,44 @@ spawn_reconnect_timer() ->
                                     open_connection, []),
     ok.
 
+%%--------------------------------------------------------------------
+%% @private
+%% @doc Encrypted data send to device.
+%% @end
+%%--------------------------------------------------------------------
+-spec send_encrypted_data(Socket, Plain, State) -> {ok, #state{}}    |
+						   {error, #state{}} when
+      Socket :: gen_tcp:socket(),
+      Plain :: binary(),
+      State :: #state{}.
+send_encrypted_data(Socket, Plain, State) ->
+    AESSendState = State#state.aes_send_state,
+    {AESSendState1, Encrypted} = bulletio_crypto:encrypt(Plain, AESSendState),
+    SendData = iopack:format(aes_encrypt, {Encrypted}),
+    case gen_tcp:send(Socket, SendData) of
+	ok ->
+	    {ok, State#state{aes_send_state = AESSendState1}};
+	{error, _Reason} ->
+	    {error, State}
+    end.
 
+%%--------------------------------------------------------------------
+%% @private
+%% @doc 文字列バイナリを数値バイナリにして返す。
+%% @end
+%%--------------------------------------------------------------------
+-spec decode(list() | binary()) -> binary().
+decode(Bin) when is_binary(Bin) ->
+    decode(binary_to_list(Bin));
+
+decode(Str) when is_list(Str) ->
+    decode(Str, []).
+
+decode(Str, List) ->
+    case string:substr(Str, 1, 2) of
+	[] ->
+	    IntList = [list_to_integer(Unit, 16) || Unit <- List],
+	    list_to_binary(lists:reverse(IntList));
+	Part -> 
+	    decode(string:substr(Str, 3, length(Str)), [Part | List])
+    end.

@@ -239,5 +239,11 @@ get_status(_PortNo, []) ->
 
 get_status(PortNo, [X1, X2, X3, X4, X5, X6, X7, X8 | Tail]) ->
     true = ets:insert(digital, {PortNo, [X1, X2, X3, X4, X5, X6, X7, X8]}),
-    get_status(PortNo, Tail).
+    get_status(PortNo, Tail);
+
+get_status(PortNo, List) when length(List) < 8 ->
+    AddCount = 8 - length(List),
+    NewList = List ++ lists:map(fun(_) -> 0 end, lists:seq(1, AddCount)),
+    get_status(PortNo, NewList).
+
 

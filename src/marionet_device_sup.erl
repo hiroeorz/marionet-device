@@ -76,10 +76,10 @@ tcp_client_spec() ->
     Shutdown = 2000,
     Type = supervisor,
 
-    {ok, DeviceId} = application:get_env(device_id),
-    {ok, Token} = application:get_env(token),
-    {ok, IPAddress} = application:get_env(server_ip_address),
-    {ok, Port} = application:get_env(server_port),
+    {ok, DeviceId} = application:get_env(marionet_device, device_id),
+    {ok, Token} = application:get_env(marionet_device, token),
+    {ok, IPAddress} = application:get_env(marionet_device, server_ip_address),
+    {ok, Port} = application:get_env(marionet_device, server_port),
 
     {marionet_device_tcp, 
      {marionet_device_tcp, start_link, [DeviceId, Token, IPAddress, Port]},

@@ -14,8 +14,9 @@
 -define(MEASURE_VERSION, 0).
 -define(MINOR_VERSION,   1).
 
--define(AUTH_REQUEST_CODE,               16#01).
--define(AUTH_SUCCESS_CODE,               16#02).
+-define(AES_ENCRYPTED_CODE,              16#01).
+-define(CHALLENGE_REQUEST_CODE,          16#11).
+-define(CHALLENGE_RESPONSE_CODE,         16#12).
 -define(DIGITAL_IO_MESSAGE_CODE,         16#90).
 -define(ANALOG_IO_MESSAGE_CODE,          16#E0).
 -define(ANALOG_IO_PUB_MESSAGE_CODE,      16#E1).
@@ -35,13 +36,45 @@
 %--------------------------------------------------------------------
 % 1 byte digital data format, 
 %--------------------------------------------------------------------
-% 0      auth request, 0x01
-% 1 -  4 device_id 
-% 5 - 37 token
+% 0  encrypted data, 0x01
+% 1  data
+% 2
+% .
+% .
+% n
 %--------------------------------------------------------------------
-format(auth_request, {DeviceId, Token}) when is_integer(DeviceId),
-					     is_binary(Token) ->
-    <<?AUTH_REQUEST_CODE:8, DeviceId:32/unsigned-integer, Token:32/binary>>;
+format(aes_encrypt, {Encrypted}) when is_binary(Encrypted) ->
+    <<?AES_ENCRYPTED_CODE:8, Encrypted/binary>>;
+
+%--------------------------------------------------------------------
+% challenge request 
+%--------------------------------------------------------------------
+% 0    challenge request, 0x11
+% 1 -  16 ivec 
+% 17 - 81 challenge
+%--------------------------------------------------------------------
+format(challenge_request, {IVec, Challenge}) when is_binary(Challenge),
+						  is_binary(IVec) ->
+    <<?CHALLENGE_REQUEST_CODE:8, IVec:16/binary, Challenge:64/binary>>;
+
+%--------------------------------------------------------------------
+% challenge response
+%--------------------------------------------------------------------
+% 0 challenge response, 0x12
+% 1 AES encoded challenge (0)
+% 2 AES encoded challenge (1)
+% .
+% .
+% 65 AES encoded challenge (63)
+% 66 device id most  significant 8 bits
+% 67 device id       significant 8 bits
+% 68 device id       significant 8 bits
+% 69 device id least significant 8 bits
+%--------------------------------------------------------------------
+format(challenge_response, {Encoded, DeviceId}) when is_binary(Encoded),
+						     is_integer(DeviceId) ->
+    <<?CHALLENGE_RESPONSE_CODE:8, 
+      Encoded:64/binary, DeviceId:32/big-unsigned-integer>>;
 
 %--------------------------------------------------------------------
 % 1 byte digital data format, 
@@ -52,7 +85,6 @@ format(auth_request, {DeviceId, Token}) when is_integer(DeviceId),
 %--------------------------------------------------------------------
 format(digital_io_message, {Port, [X0, X1, X2, X3, X4, X5, X6, X7]})
   when is_integer(Port) ->
-    
     <<?DIGITAL_IO_MESSAGE_CODE:8,
       Port:8/unsigned-integer,
       X7:1, X6:1, X5:1, X4:1, X3:1, X2:1, X1:1, X0:1>>;
@@ -116,24 +148,30 @@ format(digital_io_pub_message,
 -spec parse(binary()) -> {FormatName, tuple()} when
       FormatName :: atom().
 
-parse(<<?AUTH_REQUEST_CODE:8, 
-	DeviceId:32/unsigned-integer, Token:32/binary>>) ->
-    {auth_request, DeviceId, Token};
+parse(<<?CHALLENGE_REQUEST_CODE:8, IVec:16/binary, Challenge:64/binary>>) ->
+    {challenge_request, {IVec, Challenge}};
 
-parse(<<?AUTH_SUCCESS_CODE:8>>) ->
-    {auth_success};
+parse(<<?ANALOG_IO_MESSAGE_CODE:8,
+	PinNo:8/unsigned-integer, Value:16/unsigned-integer >>) ->
+    {analog_io_message, {PinNo, Value}};
 
 parse(<<?ANALOG_IO_PUB_MESSAGE_CODE:8,
 	DeviceId:32/unsigned-integer,
 	PinNo:8/unsigned-integer, Value:16/unsigned-integer >>) ->
     {analog_io_pub_message, {DeviceId, PinNo, Value}};
 
+parse(<<?DIGITAL_IO_MESSAGE_CODE:8,
+	Port:8/unsigned-integer,
+	X7:1, X6:1, X5:1, X4:1, X3:1, X2:1, X1:1, X0:1>>) ->
+    DigitalList = [X0, X1, X2, X3, X4, X5, X6, X7],
+    {digital_io_message, {Port, DigitalList}};
+
 parse(<<?DIGITAL_IO_PUB_MESSAGE_CODE:8,
 	DeviceId:32/unsigned-integer,
 	Port:8/unsigned-integer,
 	X7:1, X6:1, X5:1, X4:1, X3:1, X2:1, X1:1, X0:1>>) ->
-    List = [X0, X1, X2, X3, X4, X5, X6, X7],
-    {digital_io_pub_message, {DeviceId, Port, List}}.
+    DigitalList = [X0, X1, X2, X3, X4, X5, X6, X7],
+    {digital_io_pub_message, {DeviceId, Port, DigitalList}}.
 
 %%%===================================================================
 %%% Internal functions

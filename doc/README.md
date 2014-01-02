@@ -12,6 +12,7 @@
 <tr><td><a href="http://github.com/hiroeorz17/marionet-device/blob/master/doc/arduino_event_logger.md" class="module">arduino_event_logger</a></td></tr>
 <tr><td><a href="http://github.com/hiroeorz17/marionet-device/blob/master/doc/arduino_event_relay.md" class="module">arduino_event_relay</a></td></tr>
 <tr><td><a href="http://github.com/hiroeorz17/marionet-device/blob/master/doc/arduino_sup.md" class="module">arduino_sup</a></td></tr>
+<tr><td><a href="http://github.com/hiroeorz17/marionet-device/blob/master/doc/bulletio_crypto.md" class="module">bulletio_crypto</a></td></tr>
 <tr><td><a href="http://github.com/hiroeorz17/marionet-device/blob/master/doc/firmata.md" class="module">firmata</a></td></tr>
 <tr><td><a href="http://github.com/hiroeorz17/marionet-device/blob/master/doc/gpio_pin.md" class="module">gpio_pin</a></td></tr>
 <tr><td><a href="http://github.com/hiroeorz17/marionet-device/blob/master/doc/gpio_pin_db.md" class="module">gpio_pin_db</a></td></tr>
