@@ -3,6 +3,7 @@
 ERL=erl
 BEAMDIR=./deps/*/ebin ./ebin
 REBAR=./rebar
+REBAR_GEN=../../rebar
 DIALYZER=dialyzer
 EDOWN=./make_doc
 
@@ -18,7 +19,6 @@ get-deps:
 
 compile:
 	@$(REBAR) compile
-	cp -r deps/erlang-serial/priv/bin ./priv/
 
 xref:
 	@$(REBAR) xref skip_deps=true
@@ -31,6 +31,9 @@ test:
 
 edoc:
 	@$(EDOWN)
+
+generate:
+	cd rel/marionet-device-001 && $(REBAR_GEN) generate
 
 dialyzer: compile
 	@$(DIALYZER) ebin deps/erlang-serial/ebin

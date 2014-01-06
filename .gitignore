@@ -13,3 +13,4 @@ _build
 eunit.coverage.xml
 priv/rgpio_lib
 c_src/*.o
+rel/marionet-device-001/marionet-device-001

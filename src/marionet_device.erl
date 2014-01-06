@@ -17,6 +17,6 @@
 
 start() ->
     lager:start(),
-    application:start('erlang-serial'),
+    application:start(serial),
     application:start(marionet_device).
 

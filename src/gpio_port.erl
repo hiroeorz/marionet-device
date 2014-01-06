@@ -68,7 +68,9 @@ pullnone(PinNo) ->
 %%--------------------------------------------------------------------
 init([]) ->
     _Pid = spawn_link(fun() ->
-			      os:cmd("./priv/gpio_lib"),
+			      CmdPass = priv_dir() ++ "/gpio_lib",
+			      lager:info("cmd pass: ~p", [CmdPass]),
+			      os:cmd(CmdPass),
 			      erlang:error(port_process_down)
 		      end),
 
@@ -170,3 +172,11 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+
+priv_dir() ->
+    case code:priv_dir(marionet_device) of
+	{error, bad_name} ->
+	    "./priv";
+	D ->
+	    D
+    end.
