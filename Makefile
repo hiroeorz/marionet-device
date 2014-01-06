@@ -24,7 +24,7 @@ xref:
 	@$(REBAR) xref skip_deps=true
 
 clean:
-	@$(REBAR) clean; rm -rf build/html; 
+	@$(REBAR) clean
 
 test:
 	@$(REBAR) skip_deps=true eunit
@@ -36,7 +36,7 @@ generate:
 	cd rel/marionet-device-001 && $(REBAR_GEN) generate
 
 dialyzer: compile
-	@$(DIALYZER) ebin deps/erlang-serial/ebin
+	@$(DIALYZER) ebin deps/serial/ebin
 
 setup-dialyzer:
 	@$(DIALYZER) --build_plt \
