@@ -25,6 +25,8 @@ xref:
 
 clean:
 	@$(REBAR) clean
+	rm -rf  ./rel/marionet-device-001/marionet-device-001
+	rm -rf  ./rel/marionet-device-002/marionet-device-002
 
 test:
 	@$(REBAR) skip_deps=true eunit
@@ -34,6 +36,14 @@ edoc:
 
 generate:
 	cd rel/marionet-device-001 && $(REBAR_GEN) generate
+	cd ../../
+	cd rel/marionet-device-002 && $(REBAR_GEN) generate
+
+generate-001:
+	cd rel/marionet-device-001 && $(REBAR_GEN) generate
+
+generate-002:
+	cd rel/marionet-device-002 && $(REBAR_GEN) generate
 
 dialyzer: compile
 	@$(DIALYZER) ebin deps/serial/ebin

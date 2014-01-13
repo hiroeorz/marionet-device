@@ -15,7 +15,7 @@
   {mod, { marionet_device_app, []}},
   {env, [
          {device_id, 1},
-         {token, "YOUR TOKEN"},
+         {token, "0A49FC883014791A7B964B544DC27152"},
          {server_ip_address, "marionet.io"}, %% address set in your /etc/hosts
          {server_port, 8765},
 
@@ -27,14 +27,14 @@
          %%    pull       :: up      | down   | none
          %%    active_low :: true    | false  | undefined
          {gpio, [
-                 { 4, in,  [{edge, both}, {pull, up}, {active_low, true}] }
-                 %{17, in,  [{edge, both}, {pull, up}, {active_low, true}] },
-                 %{18, in,  [{edge, both}, {pull, up}, {active_low, true}] },
-                 %{22, in,  [{edge, both}, {pull, up}, {active_low, true}] },
-                 %{23, in,  [{edge, both}, {pull, up}, {active_low, true}] },
-                 %{24, in,  [{edge, both}, {pull, up}, {active_low, true}] },
-                 %{25, out, [{edge, both}, {pull, down}] },
-                 %{27, out, [{edge, both}, {pull, down}] }
+                 { 4, in,  [{edge, both}, {pull, up}, {active_low, true}] },
+                 {17, in,  [{edge, both}, {pull, up}, {active_low, true}] },
+                 {18, in,  [{edge, both}, {pull, up}, {active_low, true}] },
+                 {22, in,  [{edge, both}, {pull, up}, {active_low, true}] },
+                 {23, in,  [{edge, both}, {pull, up}, {active_low, true}] },
+                 {24, in,  [{edge, both}, {pull, up}, {active_low, true}] },
+                 {25, out, [{edge, both}, {pull, down}] },
+                 {27, out, [{edge, both}, {pull, down}] }
                 ]},
 
          %% driver node node name

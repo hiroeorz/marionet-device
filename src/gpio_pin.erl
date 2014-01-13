@@ -215,16 +215,7 @@ init([{PinNo, Mode, Opts}]) ->
     ActiveLow = proplists:get_value(active_low, Opts),
     ok = unexport(PinNo), timer:sleep(300), %% waiting for file deleted...
     ok = export(PinNo),   timer:sleep(300), %% waiting for file created...
-    ok = set_mode(PinNo, Mode),
-    {ok, FileIO} = open(PinNo, Mode),
-
-    case Edge of
-	none -> undefined;
-	Edge when Edge =:= rising orelse
-		  Edge =:= falling orelse
-		  Edge =:= both ->
-	    ok  = set_interrupt(PinNo, Edge)
-    end,
+    ok = set_mode(PinNo, Mode), 
 
     case Pull of
 	up   -> gpio_port:pullup(PinNo);
@@ -238,6 +229,15 @@ init([{PinNo, Mode, Opts}]) ->
 	undefined -> ok
     end,
 
+    case Edge of
+	none -> undefined;
+	Edge when Edge =:= rising orelse
+		  Edge =:= falling orelse
+		  Edge =:= both ->
+	    ok  = set_interrupt(PinNo, Edge)
+    end,
+
+    {ok, FileIO} = open(PinNo, Mode),
     {ok, #state{pin_no = PinNo, file_io = FileIO, edge = Edge, 
 		mode = Mode, pull = Pull}}.
 

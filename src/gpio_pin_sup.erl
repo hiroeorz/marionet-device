@@ -61,8 +61,8 @@ init([IOList, EventHandlers]) ->
     MaxSecondsBetweenRestarts = 3600,
 
     Childs = 
-	[port_spec()] ++ child_list(IOList) ++
-	[db_child(IOList), event_spec(EventHandlers)],
+	[port_spec()] ++ [db_child(IOList), event_spec(EventHandlers)] ++
+	child_list(IOList),
 
     SupFlags = {RestartStrategy, MaxRestarts, MaxSecondsBetweenRestarts},
     {ok, {SupFlags, Childs}}.
