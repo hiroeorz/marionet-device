@@ -85,11 +85,13 @@ init([]) ->
 
 %% receive digital port(8bit) changed message.
 handle_event({digital_port_changed, PortNo, Status}, State) ->
+    lager:info("digital changed(port:~w): ~p", [PortNo, Status]),
     ok = marionet_device_status:update_digital_port(PortNo, Status),
     {ok, State};
 
-handle_event({analog_recv, PinNo, Value}, State) ->
-    ok = marionet_device_status:update_analog_value(PinNo, Value),
+handle_event({analog_recv, PinNo, Val}, State) ->
+    lager:info("analog recv(PinNo:~w): ~w", [PinNo, Val]),
+    ok = marionet_device_status:update_analog_value(PinNo, Val),
     {ok, State}.
 
 %%--------------------------------------------------------------------

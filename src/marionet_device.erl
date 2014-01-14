@@ -17,6 +17,7 @@
 
 start() ->
     lager:start(),
+    application:load(gpio),
+    application:load(arduino),
     application:start(serial),
     application:start(marionet_device).
-

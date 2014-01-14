@@ -55,7 +55,7 @@ init([]) ->
     MaxSecondsBetweenRestarts = 3600,
 
     SupFlags = {RestartStrategy, MaxRestarts, MaxSecondsBetweenRestarts},
-    Specs = [event_spec(), gpio_pin_sup_spec(), status_spec(),
+    Specs = [event_spec(), gpio_sup_spec(), status_spec(),
 	     tcp_client_spec()],
 
     {ok, ArduinoEnable} = application:get_env(arduino_enable),
@@ -91,23 +91,21 @@ arduino_sup_spec() ->
     Type = supervisor,
 
     {ok, Config} = application:get_env(arduino),
-    Handlers = [{arduino_event_relay,  [marionet_device_event]},
-		{arduino_event_logger, [] }],
-    
+    Handlers = [ {marionet_device_event,  []} ],
 
     {arduino_sup, {arduino_sup, start_link, [Config, Handlers]},
      Restart, Shutdown, Type, [arduino_sup]}.
 
-gpio_pin_sup_spec() ->
+gpio_sup_spec() ->
     Restart = permanent,
     Shutdown = 2000,
     Type = supervisor,
-    {ok, GpioList} = application:get_env(gpio),
-    Handlers = [{gpio_pin_event_relay,  [marionet_device_event]},
-		{gpio_pin_event_logger, [] }],
 
-    {gpio_pin_sup, {gpio_pin_sup, start_link, [GpioList, Handlers]},
-     Restart, Shutdown, Type, [gpio_pin_sup]}.
+    {ok, GpioList} = application:get_env(gpio),
+    Handlers = [ {marionet_device_event,  []} ],
+
+    {gpio_sup, {gpio_sup, start_link, [GpioList, Handlers]},
+     Restart, Shutdown, Type, [gpio_sup]}.
 
 event_spec() ->
     Restart = permanent,
