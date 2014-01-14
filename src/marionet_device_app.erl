@@ -10,6 +10,8 @@
 %% ===================================================================
 
 start(_StartType, _StartArgs) ->
+    application:load(arduino),
+    application:load(gpio),
     marionet_device_sup:start_link().
 
 stop(_State) ->
