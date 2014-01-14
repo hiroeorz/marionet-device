@@ -87,11 +87,15 @@ init([]) ->
 handle_event({digital_port_changed, PortNo, Status}, State) ->
     lager:info("digital changed(port:~w): ~p", [PortNo, Status]),
     ok = marionet_device_status:update_digital_port(PortNo, Status),
+    Bin = iopack:format(digital_io_message, {PortNo, Status}),
+    ok = marionet_device_tcp:send_message(Bin),
     {ok, State};
 
 handle_event({analog_recv, PinNo, Val}, State) ->
     lager:info("analog recv(PinNo:~w): ~w", [PinNo, Val]),
     ok = marionet_device_status:update_analog_value(PinNo, Val),
+    Bin = iopack:format(analog_io_message, {PinNo, Val}),
+    ok = marionet_device_tcp:send_message(Bin),
     {ok, State}.
 
 %%--------------------------------------------------------------------
