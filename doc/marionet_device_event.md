@@ -30,10 +30,10 @@ __Authors:__ HIROE Shin ([`shin@HIROE-no-MacBook-Pro.local`](mailto:shin@HIROE-n
 
 
 <pre><code>
-add_handler(Module) -&gt; ok | {'EXIT', Reason} | term()
+add_handler(X1::{Module, Args}) -&gt; ok | {'EXIT', Reason} | term()
 </code></pre>
 
-<ul class="definitions"><li><code>Module = atom()</code></li><li><code>Reason = term()</code></li></ul>
+<ul class="definitions"><li><code>Module = atom()</code></li><li><code>Args = [term()]</code></li><li><code>Reason = term()</code></li></ul>
 
 Adds an event handler
 <a name="start_link-1"></a>

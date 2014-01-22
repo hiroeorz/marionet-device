@@ -1,6 +1,6 @@
 %% encoding: UTF-8
 {application,edown}.
 {packages,[]}.
-{modules,[bulletio_crypto,iopack,marionet_device,marionet_device_app,
+{modules,[marionet_data,marionet_device,marionet_device_app,
           marionet_device_event,marionet_device_status,marionet_device_sup,
-          marionet_device_tcp,marionet_log_sender]}.
+          marionet_log_sender,marionet_sub_event_handler]}.
