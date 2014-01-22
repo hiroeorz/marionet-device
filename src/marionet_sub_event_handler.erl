@@ -1,17 +1,14 @@
 %%%-------------------------------------------------------------------
 %%% @author HIROE Shin <shin@HIROE-no-MacBook-Pro.local>
-%%% @copyright (C) 2013, HIROE Shin
+%%% @copyright (C) 2014, HIROE Shin
 %%% @doc
 %%%
 %%% @end
-%%% Created : 19 Nov 2013 by HIROE Shin <shin@HIROE-no-MacBook-Pro.local>
+%%% Created : 20 Jan 2014 by HIROE Shin <shin@HIROE-no-MacBook-Pro.local>
 %%%-------------------------------------------------------------------
--module(marionet_device_event).
+-module(marionet_sub_event_handler).
 
 -behaviour(gen_event).
-
-%% API
--export([start_link/1, add_handler/1]).
 
 %% gen_event callbacks
 -export([init/1, handle_event/2, handle_call/2, 
@@ -19,41 +16,7 @@
 
 -define(SERVER, ?MODULE).
 
--record(state, {}).
-
-%%%===================================================================
-%%% gen_event callbacks
-%%%===================================================================
-
-%%--------------------------------------------------------------------
-%% @doc Creates an event manager
-%% @end
-%%--------------------------------------------------------------------
--spec start_link(Handlers) -> {ok, Pid} | {error, Error} when
-      Handlers :: [atom()],
-      Pid :: pid(),
-      Error :: term().
-start_link(Handlers) ->
-    case gen_event:start_link({local, ?SERVER}) of
-	{ok, Pid} ->
-	    ok = lists:foreach(fun(H) -> add_handler(H) end,
-			       [{?MODULE, []} |  Handlers]),
-	    {ok, Pid};
-	{error, Reason} ->
-	    {error, Reason}
-    end.
-
-%%--------------------------------------------------------------------
-%% @doc Adds an event handler
-%% @end
-%%--------------------------------------------------------------------
--spec add_handler({Module, Args}) -> ok | {'EXIT', Reason} | term() when
-      Module :: atom(),
-      Args   :: [term()],
-      Reason :: term().
-add_handler({Module, Args}) ->
-    lager:info("========= ~p: ~p", [Module, Args]),
-    gen_event:add_handler(?SERVER, Module, Args).
+-record(state, {subs :: list()}).
 
 %%%===================================================================
 %%% gen_event callbacks
@@ -68,8 +31,8 @@ add_handler({Module, Args}) ->
 %% @spec init(Args) -> {ok, State}
 %% @end
 %%--------------------------------------------------------------------
-init([]) ->
-    {ok, #state{}}.
+init([Subscribes]) ->
+    {ok, #state{subs = Subscribes}}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -84,16 +47,22 @@ init([]) ->
 %%                          remove_handler
 %% @end
 %%--------------------------------------------------------------------
-
-%% receive digital port(8bit) changed message.
-handle_event({digital_port_changed, PortNo, Status}, State) ->
-    lager:info("digital changed(port:~w): ~p", [PortNo, Status]),
-    ok = marionet_device_status:update_digital_port(PortNo, Status),
+handle_event({connack_accept}, State=#state{subs=Subscribes}) ->
+    ok = emqttc:subscribe(emqttc, Subscribes),
     {ok, State};
 
-handle_event({analog_recv, PinNo, Val}, State) ->
-    lager:info("analog recv(PinNo:~w): ~w", [PinNo, Val]),
-    ok = marionet_device_status:update_analog_value(PinNo, Val),
+handle_event({publish, Topic, Payload}, State) ->
+    lager:info("publish: topic:~p~n", [Topic]),
+    lager:info("publish: payload:~p~n", [Payload]),
+    {ok, State};
+
+handle_event({publish, Topic, Payload, 1, MsgId}, State) ->
+    lager:info("publish: topic(id:~p):~p~n", [MsgId, Topic]),
+    lager:info("publish: payload:~p~n", [Payload]),
+    emqttc:puback(emqttc, MsgId),
+    {ok, State};
+
+handle_event(_Event, State) ->
     {ok, State}.
 
 %%--------------------------------------------------------------------

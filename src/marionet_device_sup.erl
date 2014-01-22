@@ -55,10 +55,12 @@ init([]) ->
     MaxSecondsBetweenRestarts = 3600,
 
     SupFlags = {RestartStrategy, MaxRestarts, MaxSecondsBetweenRestarts},
-    Specs = [event_spec(), gpio_sup_spec(), status_spec(),
-	     tcp_client_spec()],
 
     {ok, ArduinoEnable} = application:get_env(arduino_enable),
+    {ok, Subscribes} = application:get_env(subscribes),
+
+    emqttc_event:add_handler(marionet_sub_event_handler, [[Subscribes]]),
+    Specs = [mqtt_spec(), gpio_sup_spec(), status_spec()],
 
     Specs1 = case ArduinoEnable of
 		 true  -> Specs ++ [arduino_sup_spec()];
@@ -71,19 +73,14 @@ init([]) ->
 %%% Internal functions
 %%%===================================================================
 
-tcp_client_spec() ->
+mqtt_spec() ->
     Restart = permanent,
     Shutdown = 2000,
-    Type = supervisor,
+    Type = worker,
 
-    {ok, DeviceId} = application:get_env(marionet_device, device_id),
-    {ok, Token} = application:get_env(marionet_device, token),
-    {ok, IPAddress} = application:get_env(marionet_device, server_ip_address),
-    {ok, Port} = application:get_env(marionet_device, server_port),
-
-    {marionet_device_tcp, 
-     {marionet_device_tcp, start_link, [DeviceId, Token, IPAddress, Port]},
-     Restart, Shutdown, Type, [marionet_device_tcp]}.
+    {ok, MqttBroker} = application:get_env(mqtt_broker),
+    {emqttc, {emqttc, start_link, [MqttBroker]},
+     Restart, Shutdown, Type, [emqttc]}.
 
 arduino_sup_spec() ->
     Restart = permanent,
@@ -91,7 +88,9 @@ arduino_sup_spec() ->
     Type = supervisor,
 
     {ok, Config} = application:get_env(arduino),
-    Handlers = [ {marionet_device_event,  []} ],
+    {ok, DeviceId} = application:get_env(device_id),
+    Handlers = [ {marionet_device_event,  []},
+		 {marionet_log_sender, [DeviceId]} ],
 
     {arduino_sup, {arduino_sup, start_link, [Config, Handlers]},
      Restart, Shutdown, Type, [arduino_sup]}.
@@ -102,20 +101,12 @@ gpio_sup_spec() ->
     Type = supervisor,
 
     {ok, GpioList} = application:get_env(gpio),
-    Handlers = [ {marionet_device_event,  []} ],
+    {ok, DeviceId} = application:get_env(device_id),
+    Handlers = [ {marionet_device_event,  []},
+		 {marionet_log_sender, [DeviceId]} ],
 
     {gpio_sup, {gpio_sup, start_link, [GpioList, Handlers]},
      Restart, Shutdown, Type, [gpio_sup]}.
-
-event_spec() ->
-    Restart = permanent,
-    Shutdown = 2000,
-    Type = supervisor,
-
-    Handlers = [marionet_log_sender],
-
-    {marionet_device_event, {marionet_device_event, start_link, [Handlers]},
-     Restart, Shutdown, Type, [marionet_device_event]}.
 
 status_spec() ->
     Restart = permanent,

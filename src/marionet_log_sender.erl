@@ -16,7 +16,7 @@
 
 -define(SERVER, ?MODULE).
 
--record(state, {}).
+-record(state, {device_id :: non_neg_integer()}).
 
 %%%===================================================================
 %%% gen_event callbacks
@@ -31,8 +31,9 @@
 %% @spec init(Args) -> {ok, State}
 %% @end
 %%--------------------------------------------------------------------
-init([]) ->
-    {ok, #state{}}.
+init([DeviceId]) ->
+    lager:info("=== marionet_log_sender:init/1(DeviceId:~p)", [DeviceId]),
+    {ok, #state{device_id = DeviceId}}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -49,14 +50,22 @@ init([]) ->
 %%--------------------------------------------------------------------
 
 %% receive digital port(8bit) changed message.
-handle_event({digital_port_changed, PortNo, Status}, State) ->
-    Bin = iopack:format(digital_io_message, {PortNo, Status}),
-    ok = marionet_device_tcp:send_message(Bin),
+handle_event({digital_port_changed, PortNo, Status},
+	     State=#state{device_id=DeviceId}) ->
+    lager:info("digital sent mqtt broker(port:~w): ~p", [PortNo, Status]),
+    Payload = marionet_data:pack([16#01, PortNo, Status]),
+    Topic = <<"marionet/", (integer_to_binary(DeviceId))/binary,
+	      "/digital/", (integer_to_binary(PortNo))/binary >>,
+    emqttc:publish(emqttc, Topic, Payload, 1),
     {ok, State};
 
-handle_event({analog_recv, PinNo, Value}, State) ->
-    Bin = iopack:format(analog_io_message, {PinNo, Value}),
-    ok = marionet_device_tcp:send_message(Bin),
+handle_event({analog_recv, PinNo, Val},
+	     State=#state{device_id=DeviceId}) ->
+    lager:info("analog send mqtt broker(PinNo:~w): ~w", [PinNo, Val]),
+    Payload = marionet_data:pack([16#02, PinNo, Val]),
+    Topic = <<"marionet/", (integer_to_binary(DeviceId))/binary,
+	      "/analog/",  (integer_to_binary(PinNo))/binary >>,
+    emqttc:publish(emqttc, Topic, Payload),
     {ok, State}.
 
 %%--------------------------------------------------------------------

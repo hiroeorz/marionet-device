@@ -10,14 +10,21 @@
                   kernel,
                   stdlib,
                   serial,
+                  emqttc,
                   lager
                  ]},
   {mod, { marionet_device_app, []}},
   {env, [
          {device_id, 1},
-         {token, "0A49FC883014791A7B964B544DC27152"},
-         {server_ip_address, "marionet.io"}, %% address set in your /etc/hosts
-         {server_port, 8765},
+         {mqtt_broker, [{host, "test.mosquitto.org"},
+                        {port, 1883},
+                        {username, undefined},
+                        {password, undefined}
+                       ]},
+
+         {subscribes, [{<<"marionet/1/analog/0">>,  0},
+                       {<<"marionet/1/digital/0">>, 1}
+                      ]},
 
          %% {PinNo, ReadWriteMode, [Options]}
          %% PinNo         :: 2 .. 27
