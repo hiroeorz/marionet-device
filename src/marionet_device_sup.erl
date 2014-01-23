@@ -60,7 +60,7 @@ init([]) ->
     {ok, OmronFinsEnable} = application:get_env(omron_fins_enable),
     {ok, Subscribes} = application:get_env(subscribes),
 
-    emqttc_event:add_handler(marionet_sub_event_handler, [[Subscribes]]),
+    emqttc_event:add_handler(marionet_sub_event_handler, [Subscribes]),
     Specs = [mqtt_spec(), gpio_sup_spec(), status_spec()],
 
     Specs1 = case ArduinoEnable of
