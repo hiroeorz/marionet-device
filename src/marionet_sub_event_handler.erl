@@ -49,6 +49,7 @@ init([Subscribes]) ->
 %%--------------------------------------------------------------------
 handle_event({connack_accept}, State=#state{subs=Subscribes}) ->
     ok = emqttc:subscribe(emqttc, Subscribes),
+    io:format("sent subscribe request: ~p~n", [Subscribes]),
     {ok, State};
 
 handle_event({publish, Topic, Payload}, State) ->
