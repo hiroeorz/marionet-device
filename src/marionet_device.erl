@@ -21,4 +21,5 @@ start() ->
     application:load(arduino),
     application:start(emqttc),
     application:start(serial),
+    application:start(omron_fins),
     application:start(marionet_device).

@@ -11,6 +11,7 @@
                   stdlib,
                   serial,
                   emqttc,
+                  omron_fins,
                   lager
                  ]},
   {mod, { marionet_device_app, []}},
@@ -73,8 +74,19 @@
                                {11, pwm},
                                {12, servo},
                                {13, servo}
-                              ]
-                    }
-                   ]}
+                              ]}
+                   ]},
+
+         %% omron PLC extend setting.
+         {omron_fins_enable, false},
+         {omron_fins, [{ip_address,  {192,168,0,5}},
+                       {dst_address, {192,168,0,6}},
+                       {port, 9600},
+                       {check_interval, 2900},
+                       {analog_offset, 1},
+                       {digital_port_offset, 3},
+                       {analog, [0, 1, 2, 3, 4, 5]},
+                       {digital, [11, 12, 13, 14]}
+                      ]}
   ]}
  ]}.

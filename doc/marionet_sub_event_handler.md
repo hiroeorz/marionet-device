@@ -1,11 +1,11 @@
 
 
-# Module marionet_device_event #
+# Module marionet_sub_event_handler #
 * [Description](#description)
 
 
 .
-Copyright (c) (C) 2013, HIROE Shin
+Copyright (c) (C) 2014, HIROE Shin
 
 __Behaviours:__ [`gen_event`](gen_event.md).
 
