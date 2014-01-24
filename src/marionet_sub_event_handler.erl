@@ -52,6 +52,20 @@ handle_event({connack_accept}, State=#state{subs=Subscribes}) ->
     io:format("sent subscribe request: ~p~n", [Subscribes]),
     {ok, State};
 
+handle_event({publish, <<"marionet/1/digital/0">> = Topic, Payload}, State) ->
+    lager:info("publish: topic:~p~n", [Topic]),
+    [16#01, _PortNo, StateList] = marionet_data:unpack(Payload),
+    [_, _, _, _, _, _, State, _] = StateList,
+    gpio_pin:write(25, State),
+    {ok, State};
+
+handle_event({publish, <<"marionet/2/digital/0">> = Topic, Payload}, State) ->
+    lager:info("publish: topic:~p~n", [Topic]),
+    [16#01, _PortNo, StateList] = marionet_data:unpack(Payload),
+    [_, _, _, _, _, _, State, _] = StateList,
+    gpio_pin:write(25, State),
+    {ok, State};
+
 handle_event({publish, Topic, Payload}, State) ->
     lager:info("publish: topic:~p~n", [Topic]),
     lager:info("publish: payload:~p~n", [Payload]),

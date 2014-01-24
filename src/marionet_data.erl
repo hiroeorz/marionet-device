@@ -9,7 +9,7 @@
 -module(marionet_data).
 
 %% API
--export([pack/1]).
+-export([pack/1, unpack/1]).
 
 %%%===================================================================
 %%% API
@@ -22,6 +22,10 @@
 -spec pack(term()) -> binary().
 pack(Obj) ->
     msgpack:pack(Obj, [{format, jsx}]).
+
+-spec unpack(binary) -> term().
+unpack(Bin) ->
+    msgpack:unpack(Bin, [{format, jsx}]).
 
 %%%===================================================================
 %%% Internal functions
