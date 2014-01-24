@@ -62,10 +62,10 @@ handle_event({digital_port_changed, PortNo, Status},
 handle_event({analog_recv, PinNo, Val},
 	     State=#state{device_id=DeviceId}) ->
     %%lager:info("analog send mqtt broker(PinNo:~w): ~w", [PinNo, Val]),
-    Payload = marionet_data:pack([16#02, PinNo, Val]),
-    Topic = <<"marionet/", (integer_to_binary(DeviceId))/binary,
-	      "/analog/",  (integer_to_binary(PinNo))/binary >>,
-    emqttc:publish(emqttc, Topic, Payload),
+    _Payload = marionet_data:pack([16#02, PinNo, Val]),
+    _Topic = <<"marionet/", (integer_to_binary(DeviceId))/binary,
+	       "/analog/",  (integer_to_binary(PinNo))/binary >>,
+    %emqttc:publish(emqttc, Topic, Payload),
     {ok, State}.
 
 %%--------------------------------------------------------------------
