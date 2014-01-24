@@ -59,6 +59,7 @@ handle_event({publish, <<"marionet/1/digital/0">> = Topic, Payload, 1, MsgId},
     lager:info("publish: state:~p~n", [StateList]),
     [_, _, _, _, S, _, _, _] = StateList,
     gpio_pin:write(25, S),
+    emqttc:puback(emqttc, MsgId),
     {ok, State};
 
 handle_event({publish, <<"marionet/2/digital/0">> = Topic, Payload, 1, MsgId},
@@ -68,6 +69,7 @@ handle_event({publish, <<"marionet/2/digital/0">> = Topic, Payload, 1, MsgId},
     lager:info("publish: state:~p~n", [StateList]),
     [_, _, _, _, S, _, _, _] = StateList,
     gpio_pin:write(25, S),
+    emqttc:puback(emqttc, MsgId),
     {ok, State};
 
 handle_event({publish, Topic, Payload}, State) ->
