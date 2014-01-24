@@ -55,7 +55,7 @@ handle_event({connack_accept}, State=#state{subs=Subscribes}) ->
 handle_event({publish, <<"marionet/1/digital/0">> = Topic, Payload, 1, MsgId},
 	     State) ->
     lager:info("publish: topic(id:~p):~p~n", [MsgId, Topic]),
-    [16#01, _PortNo, StateList] = marionet_data:unpack(Payload),
+    {ok, [16#01, _PortNo, StateList]} = marionet_data:unpack(Payload),
     lager:info("publish: state:~p~n", [StateList]),
     [_, State, _, _, _, _, _, _] = StateList,
     gpio_pin:write(25, State),
@@ -64,7 +64,7 @@ handle_event({publish, <<"marionet/1/digital/0">> = Topic, Payload, 1, MsgId},
 handle_event({publish, <<"marionet/2/digital/0">> = Topic, Payload, 1, MsgId},
 	     State) ->
     lager:info("publish: topic(id:~p):~p~n", [MsgId, Topic]),
-    [16#01, _PortNo, StateList] = marionet_data:unpack(Payload),
+    {ok, [16#01, _PortNo, StateList]} = marionet_data:unpack(Payload),
     lager:info("publish: state:~p~n", [StateList]),
     [_, State, _, _, _, _, _, _] = StateList,
     gpio_pin:write(25, State),
