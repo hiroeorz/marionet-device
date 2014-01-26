@@ -52,8 +52,10 @@ handle_event({connack_accept}, State=#state{subs=Subscribes}) ->
     io:format("sent subscribe request: ~p~n", [Subscribes]),
     {ok, State};
 
-handle_event({publish, <<"marionet/1/digital/0">> = Topic, Payload, 1, MsgId},
-	     State) ->
+%% digital(QoS=1)
+handle_event({publish, 
+	      <<"marionet/", _DeviceId:1/binary, "/digital/0">> = Topic,
+	      Payload, 1, MsgId}, State) ->
     lager:info("publish: topic(id:~p):~p~n", [MsgId, Topic]),
     {ok, [16#01, _PortNo, StateList]} = marionet_data:unpack(Payload),
     lager:info("publish: state:~p~n", [StateList]),
@@ -62,14 +64,15 @@ handle_event({publish, <<"marionet/1/digital/0">> = Topic, Payload, 1, MsgId},
     emqttc:puback(emqttc, MsgId),
     {ok, State};
 
-handle_event({publish, <<"marionet/2/digital/0">> = Topic, Payload, 1, MsgId},
-	     State) ->
-    lager:info("publish: topic(id:~p):~p~n", [MsgId, Topic]),
+%% digital(QoS=0)
+handle_event({publish, 
+	      <<"marionet/", _DeviceId:1/binary, "/digital/0">> = Topic,
+	      Payload}, State) ->
+    lager:info("publish: topic(id:~p):~p~n", [Topic]),
     {ok, [16#01, _PortNo, StateList]} = marionet_data:unpack(Payload),
     lager:info("publish: state:~p~n", [StateList]),
     [_, _, _, _, S, _, _, _] = StateList,
     gpio_pin:write(25, S),
-    emqttc:puback(emqttc, MsgId),
     {ok, State};
 
 handle_event({publish, Topic, Payload}, State) ->

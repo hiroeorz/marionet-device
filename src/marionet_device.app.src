@@ -24,7 +24,7 @@
                        ]},
 
          {subscribes, [{<<"marionet/2/analog/0">>,  0},
-                       {<<"marionet/2/digital/0">>, 1}
+                       {<<"marionet/2/digital/0">>, 0}
                       ]},
 
          %% {PinNo, ReadWriteMode, [Options]}
