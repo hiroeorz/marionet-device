@@ -68,7 +68,7 @@ handle_event({publish,
 handle_event({publish, 
 	      <<"marionet/", _DeviceId:1/binary, "/digital/0">> = Topic,
 	      Payload}, State) ->
-    lager:info("publish: topic(id:~p):~p~n", [Topic]),
+    lager:info("publish: topic:~p~n", [Topic]),
     {ok, [16#01, _PortNo, StateList]} = marionet_data:unpack(Payload),
     lager:info("publish: state:~p~n", [StateList]),
     [_, _, _, _, S, _, _, _] = StateList,
@@ -79,7 +79,7 @@ handle_event({publish,
 handle_event({publish, 
 	      <<"marionet/", _DeviceId:1/binary, "/analog/0">> = Topic,
 	      Payload}, State) ->
-    lager:info("publish: topic(id:~p):~p~n", [Topic]),
+    lager:info("publish: topic:~p~n", [Topic]),
     {ok, [16#02, PinNo, Val]} = marionet_data:unpack(Payload),
     lager:info("publish: pin=:~p val=~p~n", [PinNo, Val]),
 
