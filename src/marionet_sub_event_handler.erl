@@ -57,7 +57,7 @@ handle_event({publish,
 	      <<"marionet/", _DeviceId:1/binary, "/digital/0">> = Topic,
 	      Payload, 1, MsgId}, State) ->
     lager:info("publish: topic(id:~p):~p~n", [MsgId, Topic]),
-    {ok, [16#01, _PortNo, StateList]} = marionet_data:unpack(Payload),
+    [16#01, _PortNo, StateList] = marionet_data:unpack(Payload),
     lager:info("publish: state:~p~n", [StateList]),
     [_, _, _, _, S, _, _, _] = StateList,
     gpio_pin:write(25, S),
@@ -69,7 +69,7 @@ handle_event({publish,
 	      <<"marionet/", _DeviceId:1/binary, "/digital/0">> = Topic,
 	      Payload}, State) ->
     lager:info("publish: topic:~p~n", [Topic]),
-    {ok, [16#01, _PortNo, StateList]} = marionet_data:unpack(Payload),
+    [16#01, _PortNo, StateList] = marionet_data:unpack(Payload),
     lager:info("publish: state:~p~n", [StateList]),
     [_, _, _, _, S, _, _, _] = StateList,
     gpio_pin:write(25, S),
@@ -77,11 +77,11 @@ handle_event({publish,
 
 %% analog(QoS=0)
 handle_event({publish, 
-	      <<"marionet/", _DeviceId:1/binary, "/analog/0">> = Topic,
+	      <<"marionet/", _DeviceId:1/binary, "/analog/0">> = _Topic,
 	      Payload}, State) ->
-    lager:info("publish: topic:~p~n", [Topic]),
-    lager:info("payload: ~p~n", [Payload]),
-    {ok, [16#02, PinNo, Val]} = marionet_data:unpack(Payload),
+    %%lager:info("publish: topic:~p~n", [Topic]),
+    %%lager:info("payload: ~p~n", [Payload]),
+    [16#02, PinNo, Val] = marionet_data:unpack(Payload),
     lager:info("publish: pin=:~p val=~p~n", [PinNo, Val]),
 
     if Val > 512 -> gpio_pin:write(25, 1);

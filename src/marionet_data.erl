@@ -21,11 +21,14 @@
 %%--------------------------------------------------------------------
 -spec pack(term()) -> binary().
 pack(Obj) ->
-    msgpack:pack(Obj, [{format, jsx}]).
+    %%msgpack:pack(Obj, [{format, jsx}]).
+    jsx:encode(Obj).
 
 -spec unpack(binary) -> term().
 unpack(Bin) ->
-    msgpack:unpack(Bin, [{format, jsx}]).
+    %%{ok, Val} = msgpack:unpack(Bin, [{format, jsx}]),
+    %%Val.
+    jsx:decode(Bin).
 
 %%%===================================================================
 %%% Internal functions
