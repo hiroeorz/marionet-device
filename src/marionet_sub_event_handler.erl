@@ -15,8 +15,8 @@
 	 handle_info/2, terminate/2, code_change/3]).
 
 -define(SERVER, ?MODULE).
--define(ANALOG_CODE, 2).
 -define(DIGITAL_CODE, 1).
+-define(ANALOG_CODE, 2).
 
 -record(state, {subs :: list()}).
 
@@ -55,8 +55,7 @@ handle_event({connack_accept}, State=#state{subs=Subscribes}) ->
     {ok, State};
 
 %% digital(QoS=1)
-handle_event({publish, 
-	      <<"marionet/", _DeviceId:1/binary, "/digital/0">> = Topic,
+handle_event({publish, <<"marionet/", _:1/binary, "/digital/0">> = Topic,
 	      Payload, 1, MsgId}, State) ->
     lager:info("publish: topic(id:~p):~p~n", [MsgId, Topic]),
 
@@ -70,8 +69,7 @@ handle_event({publish,
     {ok, State};
 
 %% digital(QoS=0)
-handle_event({publish, 
-	      <<"marionet/", _DeviceId:1/binary, "/digital/0">> = Topic,
+handle_event({publish, <<"marionet/", _:1/binary, "/digital/0">> = Topic,
 	      Payload}, State) ->
     lager:info("publish: topic:~p~n", [Topic]),
 
@@ -85,17 +83,13 @@ handle_event({publish,
 
 %% analog(QoS=0)
 handle_event({publish, 
-	      <<"marionet/", _DeviceId:1/binary,
-		"/analog/", _PinNoBin/binary>> = Topic, Payload}, State) ->
+	      <<"marionet/", _:1/binary, "/analog/", _/binary>> = Topic,
+	      Payload}, State) ->
     lager:info("publish: topic:~p~n", [Topic]),
     lager:info("payload: ~p~n", [Payload]),
-    [?ANALOG_CODE, _DeviceId, PinNo, Val] = marionet_data:unpack(Payload),
+    [?ANALOG_CODE, DeviceId, PinNo, Val] = marionet_data:unpack(Payload),
     lager:info("publish: pin=~p val=~p~n", [PinNo, Val]),
-
-    if Val > 512 -> gpio_pin:write(24, 1);
-       true      -> gpio_pin:write(24, 0)
-    end,
-
+    control_led(DeviceId, PinNo, Val),
     {ok, State};
 
 %% other(QoS=0)
@@ -174,3 +168,12 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+
+control_led(2, 0, Val) when Val > 512 ->
+    gpio_pin:write(24, 1);
+
+control_led(2, 0, Val) when Val =< 512 ->
+    gpio_pin:write(24, 0);
+
+control_led(_DeviceId, _PinNo, _Val) ->
+    ok.
