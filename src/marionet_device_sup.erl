@@ -58,10 +58,12 @@ init([]) ->
 
     {ok, ArduinoEnable} = application:get_env(arduino_enable),
     {ok, OmronFinsEnable} = application:get_env(omron_fins_enable),
-    {ok, Subscribes} = application:get_env(subscribes),
 
-    emqttc_event:add_handler(marionet_sub_event_handler, [Subscribes]),
-    Specs = [mqtt_spec(), gpio_sup_spec(), status_spec()],
+    %%emqttc_event:add_handler(marionet_sub_event_handler, [Subscribes]),
+    %%gen_event:add_handler(emqttc_event, 
+    %%			  marionet_sub_event_handler, [Subscribes]),
+
+    Specs = [event_manager_spec(), mqtt_spec(), gpio_sup_spec(), status_spec()],
 
     Specs1 = case ArduinoEnable of
 		 true  -> Specs ++ [arduino_sup_spec()];
@@ -79,6 +81,17 @@ init([]) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+
+event_manager_spec() ->
+    Restart = permanent,
+    Shutdown = 2000,
+    Type = worker,
+
+    {ok, Subscribes} = application:get_env(subscribes),
+    Handler = {emqttc_event, marionet_sub_event_handler, [Subscribes]},
+
+    {marionet_event_manager, {marionet_event_manager, start_link, [Handler]},
+     Restart, Shutdown, Type, [marionet_event_manager]}.
 
 fins_port_spec() ->
     Restart = permanent,

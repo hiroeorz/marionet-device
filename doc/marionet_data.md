@@ -15,7 +15,7 @@ __Authors:__ HIROE Shin ([`shin@HIROE-no-MacBook-Pro.local`](mailto:shin@HIROE-n
 ## Function Index ##
 
 
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#pack-1">pack/1</a></td><td>format using msgpack.</td></tr></table>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#pack-1">pack/1</a></td><td>format using msgpack.</td></tr><tr><td valign="top"><a href="#unpack-1">unpack/1</a></td><td></td></tr></table>
 
 
 <a name="functions"></a>
@@ -35,3 +35,16 @@ pack(Obj::term()) -&gt; binary()
 
 
 format using msgpack
+<a name="unpack-1"></a>
+
+### unpack/1 ###
+
+
+<pre><code>
+unpack(Bin::binary) -&gt; term()
+</code></pre>
+
+<br></br>
+
+
+
