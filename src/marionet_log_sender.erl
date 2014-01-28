@@ -15,6 +15,8 @@
          handle_info/2, terminate/2, code_change/3]).
 
 -define(SERVER, ?MODULE).
+-define(ANALOG_CODE, 2).
+-define(DIGITAL_CODE, 1).
 
 -record(state, {device_id :: non_neg_integer()}).
 
@@ -53,7 +55,7 @@ init([DeviceId]) ->
 handle_event({digital_port_changed, PortNo, Status},
 	     State=#state{device_id=DeviceId}) ->
     lager:info("digital sent mqtt broker(port:~w): ~p", [PortNo, Status]),
-    Payload = marionet_data:pack([16#01, PortNo, Status]),
+    Payload = marionet_data:pack([?DIGITAL_CODE, DeviceId, PortNo, Status]),
     Topic = <<"marionet/", (integer_to_binary(DeviceId))/binary,
 	      "/digital/", (integer_to_binary(PortNo))/binary >>,
     emqttc:publish(emqttc, Topic, Payload, 0),
@@ -62,7 +64,7 @@ handle_event({digital_port_changed, PortNo, Status},
 handle_event({analog_recv, PinNo, Val},
 	     State=#state{device_id=DeviceId}) ->
     %%lager:info("analog send mqtt broker(PinNo:~w): ~w", [PinNo, Val]),
-    Payload = marionet_data:pack([16#02, PinNo, Val]),
+    Payload = marionet_data:pack([?ANALOG_CODE, DeviceId, PinNo, Val]),
     Topic = <<"marionet/", (integer_to_binary(DeviceId))/binary,
 	      "/analog/",  (integer_to_binary(PinNo))/binary >>,
     emqttc:publish(emqttc, Topic, Payload),
