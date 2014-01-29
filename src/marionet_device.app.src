@@ -24,7 +24,7 @@
                        ]},
 
          {subscribes, [{<<"marionet/+/analog/#">>,  0},
-                       {<<"marionet/+/digital/#">>, 0}
+                       {<<"marionet/+/digital/#">>, 1}
                       ]},
 
          %% {PinNo, ReadWriteMode, [Options]}
