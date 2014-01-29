@@ -58,7 +58,7 @@ handle_event({digital_port_changed, PortNo, Status},
     Payload = marionet_data:pack([?DIGITAL_CODE, DeviceId, PortNo, Status]),
     Topic = <<"marionet/", (integer_to_binary(DeviceId))/binary,
 	      "/digital/", (integer_to_binary(PortNo))/binary >>,
-    emqttc:publish(emqttc, Topic, Payload, 0),
+    emqttc:publish(emqttc, Topic, Payload, 1),
     {ok, State};
 
 handle_event({analog_recv, PinNo, Val},
