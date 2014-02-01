@@ -23,8 +23,8 @@
                         {password, undefined}
                        ]},
 
-         {subscribes, [{<<"marionet/+/analog/#">>,  0},
-                       {<<"marionet/+/digital/#">>, 1}
+         {subscribes, [{<<"marionet/2/analog/#">>,  0},
+                       {<<"marionet/2/digital/#">>, 1}
                       ]},
 
          %% {PinNo, ReadWriteMode, [Options]}
@@ -68,9 +68,9 @@
                                { 7, in, [{pull, up} ]},
 
                                { 8, out},
-                               { 9, out},
-                               {10, pwm},
-                               {11, pwm},
+                               { 9, servo},
+                               {10, out},
+                               {11, out},
                                {12, servo},
                                {13, servo}
                               ]}

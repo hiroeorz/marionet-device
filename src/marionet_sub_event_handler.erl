@@ -17,6 +17,7 @@
 -define(SERVER, ?MODULE).
 -define(DIGITAL_CODE, 1).
 -define(ANALOG_CODE, 2).
+-define(SERVO_PINNO, 9).
 
 -record(state, {subs :: list()}).
 
@@ -34,6 +35,7 @@
 %% @end
 %%--------------------------------------------------------------------
 init([Subscribes]) ->
+    arduino:servo_config(?SERVO_PINNO, 0, 180), %% Servoモータの初期設定。
     {ok, #state{subs = Subscribes}}.
 
 %%--------------------------------------------------------------------
@@ -90,6 +92,7 @@ handle_event({publish,
     [?ANALOG_CODE, DeviceId, PinNo, Val] = marionet_data:unpack(Payload),
     lager:info("publish: pin=~p val=~p~n", [PinNo, Val]),
     control_led(DeviceId, PinNo, Val),
+    control_servo(DeviceId, PinNo, Val),
     {ok, State};
 
 %% other(QoS=0)
@@ -176,4 +179,11 @@ control_led(2, 0, Val) when Val =< 512 ->
     gpio_pin:write(24, 0);
 
 control_led(_DeviceId, _PinNo, _Val) ->
+    ok.
+
+control_servo(2, 0, Val) ->
+    Angle = Val * 180 div 1024,
+    arduino:analog_write(?SERVO_PINNO, Angle);
+
+control_servo(_DeviceId, _PinNo, _Val) ->
     ok.
