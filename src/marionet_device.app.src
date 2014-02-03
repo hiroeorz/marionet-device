@@ -23,11 +23,11 @@
                         {password, undefined}
                        ]},
 
-         {subscribes, [{<<"marionet/+/analog/#">>,  0},
-                       {<<"marionet/+/digital/#">>, 1}
+         {subscribes, [{<<"marionet/2/analog/#">>,  0},
+                       {<<"marionet/2/digital/#">>, 1}
                       ]},
 
-         {io_event_handler, sample_io_event_handler},
+         {io_event_handler,        sample_io_event_handler},
          {subscribe_event_handler, sample_sub_handler},
 
          %% {PinNo, ReadWriteMode, [Options]}
@@ -70,12 +70,12 @@
                                { 6, in, [{pull, up} ]},
                                { 7, in, [{pull, up} ]},
 
-                               { 8, out},
+                               { 8, servo},
                                { 9, servo},
                                {10, pwm},
                                {11, pwm},
-                               {12, servo},
-                               {13, servo}
+                               {12, out},
+                               {13, out}
                               ]}
                    ]},
 
