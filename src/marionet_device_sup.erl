@@ -59,20 +59,24 @@ init([]) ->
     {ok, ArduinoEnable} = application:get_env(arduino_enable),
     {ok, OmronFinsEnable} = application:get_env(omron_fins_enable),
 
-    %%emqttc_event:add_handler(marionet_sub_event_handler, [Subscribes]),
-    %%gen_event:add_handler(emqttc_event, 
-    %%			  marionet_sub_event_handler, [Subscribes]),
+    {ok, IOEventHandler} = application:get_env(io_event_handler),
+    {ok, SubEventHandler} = application:get_env(subscribe_event_handler),
 
-    Specs = [event_manager_spec(), mqtt_spec(), gpio_sup_spec(), status_spec()],
+    Specs = [event_manager_spec(SubEventHandler),
+	     mqtt_spec(),
+	     gpio_sup_spec(IOEventHandler),
+	     status_spec()],
 
     Specs1 = case ArduinoEnable of
-		 true  -> Specs ++ [arduino_sup_spec()];
+		 true  -> Specs ++ [arduino_sup_spec(IOEventHandler)];
 		 false -> Specs
 	     end,
 
     Specs2 = case OmronFinsEnable of
-		 true  -> Specs1 ++ [fins_port_spec(),
-				     fins_event_spec(), fins_watcher_spec()];
+		 true  -> 
+		     Specs1 ++ [fins_port_spec(),
+				fins_event_spec(IOEventHandler),
+				fins_watcher_spec()];
 		 false -> Specs1
 	     end,
 
@@ -82,13 +86,13 @@ init([]) ->
 %%% Internal functions
 %%%===================================================================
 
-event_manager_spec() ->
+event_manager_spec(SubEventHandler) ->
     Restart = permanent,
     Shutdown = 2000,
     Type = worker,
 
     {ok, Subscribes} = application:get_env(subscribes),
-    Handler = {emqttc_event, marionet_sub_event_handler, [Subscribes]},
+    Handler = {emqttc_event, SubEventHandler, [Subscribes]},
 
     {marionet_event_manager, {marionet_event_manager, start_link, [Handler]},
      Restart, Shutdown, Type, [marionet_event_manager]}.
@@ -105,14 +109,14 @@ fins_port_spec() ->
     {omron_fins_port, {omron_fins, start_port, [IPAddress, Port]},
      Restart, Shutdown, Type, [omron_fins_port]}.
 
-fins_event_spec() ->
+fins_event_spec(IOEventHandler) ->
     Restart = permanent,
     Shutdown = 2000,
     Type = worker,
 
     {ok, DeviceId} = application:get_env(device_id),
     Handlers = [ {marionet_device_event,  []},
-		 {marionet_log_sender, [DeviceId]} ],
+		 {IOEventHandler, [DeviceId]} ],
 
     {omron_fins_event, {omron_fins_event, start_link, [Handlers]},
      Restart, Shutdown, Type, [omron_fins_event]}.
@@ -136,7 +140,7 @@ mqtt_spec() ->
     {emqttc, {emqttc, start_link, [MqttBroker]},
      Restart, Shutdown, Type, [emqttc]}.
 
-arduino_sup_spec() ->
+arduino_sup_spec(IOEventHandler) ->
     Restart = permanent,
     Shutdown = 2000,
     Type = supervisor,
@@ -144,12 +148,12 @@ arduino_sup_spec() ->
     {ok, Config} = application:get_env(arduino),
     {ok, DeviceId} = application:get_env(device_id),
     Handlers = [ {marionet_device_event,  []},
-		 {marionet_log_sender, [DeviceId]} ],
+		 {IOEventHandler, [DeviceId]} ],
 
     {arduino_sup, {arduino_sup, start_link, [Config, Handlers]},
      Restart, Shutdown, Type, [arduino_sup]}.
 
-gpio_sup_spec() ->
+gpio_sup_spec(IOEventHandler) ->
     Restart = permanent,
     Shutdown = 2000,
     Type = supervisor,
@@ -157,7 +161,7 @@ gpio_sup_spec() ->
     {ok, GpioList} = application:get_env(gpio),
     {ok, DeviceId} = application:get_env(device_id),
     Handlers = [ {marionet_device_event,  []},
-		 {marionet_log_sender, [DeviceId]} ],
+		 {IOEventHandler, [DeviceId]} ],
 
     {gpio_sup, {gpio_sup, start_link, [GpioList, Handlers]},
      Restart, Shutdown, Type, [gpio_sup]}.

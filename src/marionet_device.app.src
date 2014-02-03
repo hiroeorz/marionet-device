@@ -27,6 +27,9 @@
                        {<<"marionet/+/digital/#">>, 1}
                       ]},
 
+         {io_event_handler, sample_io_event_handler},
+         {subscribe_event_handler, sample_sub_handler},
+
          %% {PinNo, ReadWriteMode, [Options]}
          %% PinNo         :: 2 .. 27
          %% ReadWriteMode :: in      | out
@@ -68,7 +71,7 @@
                                { 7, in, [{pull, up} ]},
 
                                { 8, out},
-                               { 9, out},
+                               { 9, servo},
                                {10, pwm},
                                {11, pwm},
                                {12, servo},
