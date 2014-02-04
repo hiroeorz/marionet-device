@@ -6,7 +6,7 @@
 %%% @end
 %%% Created : 20 Jan 2014 by HIROE Shin <shin@HIROE-no-MacBook-Pro.local>
 %%%-------------------------------------------------------------------
--module(sample_sub_handler).
+-module(sample_sub_event_handler).
 
 -behaviour(gen_event).
 
@@ -85,10 +85,10 @@ handle_event({publish, <<"/marionet/2/digital/0">> = Topic,
 handle_event({publish, 
 	      <<"/marionet/", _:1/binary, "/analog/", _/binary>> = Topic,
 	      Payload}, State) ->
-    lager:info("publish: topic:~p~n", [Topic]),
-    lager:info("payload: ~p~n", [Payload]),
+    lager:debug("publish: topic:~p~n", [Topic]),
+    lager:debug("payload: ~p~n", [Payload]),
     [?ANALOG_CODE, DeviceId, PinNo, Val] = marionet_data:unpack(Payload),
-    lager:info("publish: pin=~p val=~p~n", [PinNo, Val]),
+    lager:debug("publish: pin=~p val=~p~n", [PinNo, Val]),
     control_led(DeviceId, PinNo, Val),
     {ok, State};
 
