@@ -61,6 +61,7 @@ init([]) ->
     {ok, IOEventHandler} = application:get_env(io_event_handler),
     {ok, SubEventHandler} = application:get_env(subscribe_event_handler),
     {ok, Subscribes} = application:get_env(subscribes),
+    {ok, GroupId} = application:get_env(group_id),
     {ok, DeviceId} = application:get_env(device_id),
 
     Specs = [gpio_sup_spec(),
@@ -68,7 +69,7 @@ init([]) ->
 	     status_spec(),
 	     event_sup_spec(emqttc_event, SubEventHandler, Subscribes),
 	     event_sup_spec(gpio_pin_event, marionet_device_event, []),
-	     event_sup_spec(gpio_pin_event, IOEventHandler, DeviceId)
+	     event_sup_spec(gpio_pin_event, IOEventHandler, [GroupId, DeviceId])
 	    ],
 
     Specs1 = 
@@ -79,7 +80,7 @@ init([]) ->
 			  event_sup_spec(arduino_event,
 					 marionet_device_event, []),
 			  event_sup_spec(arduino_event,
-					 IOEventHandler, DeviceId) ];
+					 IOEventHandler, [GroupId, DeviceId]) ];
 		 false -> 
 		     Specs
 	     end,
@@ -104,7 +105,7 @@ event_sup_spec(EventManager, EventHandler, Args) ->
     Shutdown = 2000,
     Type = worker,
 
-    Handler = {EventManager, EventHandler, [Args]},
+    Handler = {EventManager, EventHandler, Args},
 
     {{marionet_event_sup, Handler},
      {marionet_event_sup, start_link, [Handler]},

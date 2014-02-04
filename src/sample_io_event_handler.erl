@@ -34,7 +34,8 @@
 %% @spec init(Args) -> {ok, State}
 %% @end
 %%--------------------------------------------------------------------
-init([GroupId, DeviceId]) ->
+init([GroupId, DeviceId] = Args) ->
+    lager:info("Start I/O event handler: ~p, ~p", [?MODULE, Args]),
     {ok, #state{group_id = GroupId, device_id = DeviceId}}.
 
 %%--------------------------------------------------------------------
@@ -64,7 +65,7 @@ handle_event({digital_port_changed, PortNo, Status},
 
 handle_event({analog_recv, PinNo, Val},
 	     State=#state{device_id=DeviceId}) ->
-    %%lager:info("analog send mqtt broker(PinNo:~w): ~w", [PinNo, Val]),
+    lager:info("analog send mqtt broker(PinNo:~w): ~w", [PinNo, Val]),
     Payload = marionet_data:pack([?ANALOG_CODE, DeviceId, PinNo, Val]),
     GroupId = State#state.group_id,
     Topic = <<GroupId/binary, (integer_to_binary(DeviceId))/binary,
