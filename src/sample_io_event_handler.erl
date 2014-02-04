@@ -58,8 +58,12 @@ handle_event({digital_port_changed, PortNo, Status},
     lager:info("digital sent mqtt broker(port:~w): ~p", [PortNo, Status]),
     Payload = marionet_data:pack([?DIGITAL_CODE, DeviceId, PortNo, Status]),
     GroupId = State#state.group_id,
-    Topic = <<GroupId/binary, (integer_to_binary(DeviceId))/binary,
-	      "/digital/",    (integer_to_binary(PortNo))/binary >>,
+
+    Topic = <<"/", GroupId/binary, "/", (integer_to_binary(DeviceId))/binary,
+	      "/digital/",              (integer_to_binary(PortNo))/binary >>,
+
+    lager:debug("Send Topic  : ~p", [Topic]),
+    lager:debug("Send Payload: ~p", [Payload]),
     emqttc:publish(emqttc, Topic, Payload, [{qos, 0}, {retain, 1}]),
     {ok, State};
 
@@ -68,8 +72,12 @@ handle_event({analog_recv, PinNo, Val},
     lager:info("analog send mqtt broker(PinNo:~w): ~w", [PinNo, Val]),
     Payload = marionet_data:pack([?ANALOG_CODE, DeviceId, PinNo, Val]),
     GroupId = State#state.group_id,
-    Topic = <<GroupId/binary, (integer_to_binary(DeviceId))/binary,
-	      "/analog/",     (integer_to_binary(PinNo))/binary >>,
+
+    Topic = <<"/", GroupId/binary, "/", (integer_to_binary(DeviceId))/binary,
+	      "/analog/",               (integer_to_binary(PinNo))/binary >>,
+
+    lager:debug("Send Topic  : ~p", [Topic]),
+    lager:debug("Send Payload: ~p", [Payload]),
     emqttc:publish(emqttc, Topic, Payload),
     {ok, State}.
 

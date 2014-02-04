@@ -67,7 +67,7 @@ init([]) ->
     Specs = [gpio_sup_spec(),
 	     mqtt_spec(),
 	     status_spec(),
-	     event_sup_spec(emqttc_event, SubEventHandler, Subscribes),
+	     event_sup_spec(emqttc_event, SubEventHandler, [Subscribes]),
 	     event_sup_spec(gpio_pin_event, marionet_device_event, []),
 	     event_sup_spec(gpio_pin_event, IOEventHandler, [GroupId, DeviceId])
 	    ],
