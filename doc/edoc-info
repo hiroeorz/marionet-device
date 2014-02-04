@@ -3,5 +3,5 @@
 {packages,[]}.
 {modules,[marionet_data,marionet_device,marionet_device_app,
           marionet_device_event,marionet_device_status,marionet_device_sup,
-          marionet_event_manager,marionet_log_sender,
-          marionet_sub_event_handler,omron_fins_event,omron_fins_watcher]}.
+          marionet_event_manager,omron_fins_event,omron_fins_watcher,
+          sample_io_event_handler,sample_sub_handler]}.

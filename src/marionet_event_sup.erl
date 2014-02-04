@@ -19,6 +19,8 @@
 
 -define(SERVER, ?MODULE).
 
+-record(state, {}).
+
 %%%===================================================================
 %%% API
 %%%===================================================================
@@ -50,8 +52,11 @@ start_link(Handler) ->
 %% @end
 %%--------------------------------------------------------------------
 init([{EventManager, Handler, Args}]) ->
-    add_handler({EventManager, Handler, Args}),
-    {ok, {EventManager, Handler, Args}}.
+    lager:info("event handler adding (~p ~p ~p)...",
+	       [EventManager, Handler, Args]),
+    gen_event:add_sup_handler(EventManager, Handler, Args),
+    lager:info("event handler added."),
+    {ok, #state{}}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -94,11 +99,9 @@ handle_cast(_Msg, State) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_info({gen_event_EXIT, HandlerModule, Reason}, Handler) ->
-    lager:info("gen_event_EXIT: ~p (reason:~p)", [HandlerModule, Reason]),
-    add_handler(Handler),
-    lager:info("added event handler:~p", [Handler]),
-    {noreply, Handler};
+handle_info({gen_event_EXIT, HandlerModule, Reason}, State) ->
+    lager:error("gen_event_EXIT: ~p (reason:~p)", [HandlerModule, Reason]),
+    {stop, Reason, State};
 
 handle_info(_Info, State) ->
     {noreply, State}.
@@ -131,9 +134,3 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
-
-add_handler({EventManager, Handler, Args}) ->
-    lager:info("event handler adding...(~p ~p ~p)",
-	       [EventManager, Handler, Args]),
-    gen_event:add_sup_handler(EventManager, Handler, Args),
-    lager:info("event handler added.").
