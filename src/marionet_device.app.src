@@ -17,14 +17,16 @@
   {mod, { marionet_device_app, []}},
   {env, [
          {device_id, 1},
+         {group_id, <<"your_group_id">>},
+
          {mqtt_broker, [{host, "test.mosquitto.org"},
                         {port, 1883},
                         {username, undefined},
                         {password, undefined}
                        ]},
 
-         {subscribes, [{<<"/marionet/2/analog/#">>,  0},
-                       {<<"/marionet/2/digital/#">>, 1}
+         {subscribes, [{<<"/your_group_id/2/analog/#">>,  0},
+                       {<<"/your_group_id/2/digital/#">>, 1}
                       ]},
 
          {io_event_handler,        sample_io_event_handler},

@@ -55,7 +55,7 @@ handle_event({connack_accept}, State=#state{subs=Subscribes}) ->
     {ok, State};
 
 %% digital(QoS=1)
-handle_event({publish, <<"/marionet/2/digital/0">> = Topic,
+handle_event({publish, <<"/your_group_id/2/digital/0">> = Topic,
 	      Payload, 1, MsgId}, State) ->
     lager:info("publish: topic(id:~p):~p~n", [MsgId, Topic]),
 
@@ -69,7 +69,7 @@ handle_event({publish, <<"/marionet/2/digital/0">> = Topic,
     {ok, State};
 
 %% digital(QoS=0)
-handle_event({publish, <<"/marionet/2/digital/0">> = Topic,
+handle_event({publish, <<"/your_group_id/2/digital/0">> = Topic,
 	      Payload}, State) ->
     lager:info("publish: topic:~p~n", [Topic]),
 
@@ -83,7 +83,7 @@ handle_event({publish, <<"/marionet/2/digital/0">> = Topic,
 
 %% analog(QoS=0)
 handle_event({publish, 
-	      <<"/marionet/", _:1/binary, "/analog/", _/binary>> = Topic,
+	      <<"/your_group_id/", _:1/binary, "/analog/", _/binary>> = Topic,
 	      Payload}, State) ->
     lager:debug("publish: topic:~p~n", [Topic]),
     lager:debug("payload: ~p~n", [Payload]),
