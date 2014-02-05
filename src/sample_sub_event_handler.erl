@@ -17,6 +17,7 @@
 -define(SERVER, ?MODULE).
 -define(DIGITAL_CODE, 1).
 -define(ANALOG_CODE, 2).
+-define(SERVO_PINNO, 9).
 
 -record(state, {subs :: list()}).
 
@@ -59,8 +60,8 @@ handle_event({publish, <<"/your_group_id/device002/digital/0">> = Topic,
 	      Payload, 1, MsgId}, State) ->
     lager:info("publish: topic(id:~p):~p~n", [MsgId, Topic]),
 
-    [?DIGITAL_CODE, _DeviceId, _PortNo, StateList] = 
-	marionet_data:unpack(Payload),
+    [?DIGITAL_CODE,
+     _DeviceId, _PortNo, StateList] = marionet_data:unpack(Payload),
 
     lager:info("publish: state:~p~n", [StateList]),
     [_, _, _, _, S, _, _, _] = StateList,
@@ -87,6 +88,7 @@ handle_event({publish, <<"/your_group_id/device001/analog/", _/binary>> = Topic,
     [?ANALOG_CODE, DeviceId, PinNo, Val] = marionet_data:unpack(Payload),
     lager:debug("sub: pin=~p val=~p~n(topic:~p)", [PinNo, Val, Topic]),
     control_led(DeviceId, PinNo, Val),
+    control_servo(DeviceId, PinNo, Val),
     {ok, State};
 
 %% analog(device002, QoS=0)
@@ -95,6 +97,7 @@ handle_event({publish, <<"/your_group_id/device002/analog/", _/binary>> = Topic,
     [?ANALOG_CODE, DeviceId, PinNo, Val] = marionet_data:unpack(Payload),
     lager:debug("sub: pin=~p val=~p~n(topic:~p)", [PinNo, Val, Topic]),
     control_led(DeviceId, PinNo, Val),
+    control_servo(DeviceId, PinNo, Val),
     {ok, State};
 
 %% other(QoS=0)
@@ -105,6 +108,7 @@ handle_event({publish, Topic, Payload}, State) ->
 
 %% other(QoS=1)
 handle_event({publish, Topic, Payload, 1, MsgId}, State) ->
+    lager:info("unknown topic received."),
     lager:info("sub: topic(id:~p):~p~n", [MsgId, Topic]),
     lager:info("sub: payload:~p~n", [Payload]),
     emqttc:puback(emqttc, MsgId),
@@ -181,4 +185,11 @@ control_led(2, 0, Val) when Val =< 512 ->
     gpio_pin:write(24, 0);
 
 control_led(_DeviceId, _PinNo, _Val) ->
+    ok.
+
+control_servo(2, 0, Val) ->
+    Angle = Val * 180 div 1024,
+    arduino:analog_write(?SERVO_PINNO, Angle);
+
+control_servo(_DeviceId, _PinNo, _Val) ->
     ok.
