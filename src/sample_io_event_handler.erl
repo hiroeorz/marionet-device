@@ -58,10 +58,7 @@ handle_event({digital_port_changed, PortNo, Status},
     lager:info("digital sent mqtt broker(port:~w): ~p", [PortNo, Status]),
     Payload = marionet_data:pack([?DIGITAL_CODE, DeviceId, PortNo, Status]),
     GroupId = State#state.group_id,
-
-    Topic = <<"/", GroupId/binary, "/", DeviceId/binary,
-	      "/digital/",              (integer_to_binary(PortNo))/binary >>,
-
+    Topic = topic(GroupId, DeviceId, <<"digital">>, PortNo),
     lager:debug("Send Topic  : ~p", [Topic]),
     lager:debug("Send Payload: ~p", [Payload]),
     emqttc:publish(emqttc, Topic, Payload, [{qos, 0}, {retain, 1}]),
@@ -72,10 +69,7 @@ handle_event({analog_recv, PinNo, Val},
     lager:info("analog send mqtt broker(PinNo:~w): ~w", [PinNo, Val]),
     Payload = marionet_data:pack([?ANALOG_CODE, DeviceId, PinNo, Val]),
     GroupId = State#state.group_id,
-
-    Topic = <<"/", GroupId/binary, "/", DeviceId/binary,
-	      "/analog/",               (integer_to_binary(PinNo))/binary >>,
-
+    Topic = topic(GroupId, DeviceId, <<"analog">>, PinNo),
     lager:debug("Send Topic  : ~p", [Topic]),
     lager:debug("Send Payload: ~p", [Payload]),
     emqttc:publish(emqttc, Topic, Payload),
@@ -141,3 +135,17 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+
+%% crete mqtt topic, that formatted binary.
+-spec topic(GroupId, DeviceId, DataType, DataNo) -> binary() when
+      GroupId :: binary(),
+      DeviceId :: binary(),
+      DataType :: binary(),
+      DataNo :: non_neg_integer().
+topic(GroupId, DeviceId, DataType, DataNo) when is_binary(GroupId),
+						is_binary(DeviceId),
+						is_binary(DataType),
+						is_integer(DataNo) ->
+    list_to_binary(["/", GroupId, "/", DeviceId, "/", DataType, "/",
+		    integer_to_binary(DataNo)]).
+
