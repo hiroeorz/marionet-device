@@ -75,7 +75,6 @@ init([]) ->
     Specs1 = 
 	case ArduinoEnable of
 	    true  -> 
-		{ok, DeviceId} = application:get_env(device_id),
 		Specs ++ [arduino_sup_spec(),
 			  event_sup_spec(arduino_event,
 					 marionet_device_event, []),
@@ -160,9 +159,6 @@ arduino_sup_spec() ->
     Type = supervisor,
 
     {ok, Config} = application:get_env(arduino),
-    %%{ok, DeviceId} = application:get_env(device_id),
-    %%Handlers = [ {marionet_device_event,  []},
-    %%		 {IOEventHandler, [DeviceId]} ],
 
     {arduino_sup, {arduino_sup, start_link, [Config, []]},
      Restart, Shutdown, Type, [arduino_sup]}.
@@ -173,9 +169,6 @@ gpio_sup_spec() ->
     Type = supervisor,
 
     {ok, GpioList} = application:get_env(gpio),
-    %%{ok, DeviceId} = application:get_env(device_id),
-    %%   Handlers = [ {marionet_device_event,  []},
-    %%		 {IOEventHandler, [DeviceId]} ],
 
     {gpio_sup, {gpio_sup, start_link, [GpioList, []]},
      Restart, Shutdown, Type, [gpio_sup]}.

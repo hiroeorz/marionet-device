@@ -16,7 +16,7 @@
                  ]},
   {mod, { marionet_device_app, []}},
   {env, [
-         {device_id, 1},
+         {device_id, <<"device001">>},
          {group_id, <<"your_group_id">>},
 
          {mqtt_broker, [{host, "test.mosquitto.org"},
@@ -25,8 +25,8 @@
                         {password, undefined}
                        ]},
 
-         {subscribes, [{<<"/your_group_id/2/analog/#">>,  0},
-                       {<<"/your_group_id/2/digital/#">>, 1}
+         {subscribes, [{<<"/your_group_id/device002/analog/#">>,  0},
+                       {<<"/your_group_id/device002/digital/#">>, 1}
                       ]},
 
          {io_event_handler,        sample_io_event_handler},

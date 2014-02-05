@@ -19,7 +19,7 @@
 -define(DIGITAL_CODE, 1).
 
 -record(state, {group_id  :: binary(),
-		device_id :: non_neg_integer()}).
+		device_id :: binary() }).
 
 %%%===================================================================
 %%% gen_event callbacks
@@ -59,7 +59,7 @@ handle_event({digital_port_changed, PortNo, Status},
     Payload = marionet_data:pack([?DIGITAL_CODE, DeviceId, PortNo, Status]),
     GroupId = State#state.group_id,
 
-    Topic = <<"/", GroupId/binary, "/", (integer_to_binary(DeviceId))/binary,
+    Topic = <<"/", GroupId/binary, "/", DeviceId/binary,
 	      "/digital/",              (integer_to_binary(PortNo))/binary >>,
 
     lager:debug("Send Topic  : ~p", [Topic]),
@@ -73,7 +73,7 @@ handle_event({analog_recv, PinNo, Val},
     Payload = marionet_data:pack([?ANALOG_CODE, DeviceId, PinNo, Val]),
     GroupId = State#state.group_id,
 
-    Topic = <<"/", GroupId/binary, "/", (integer_to_binary(DeviceId))/binary,
+    Topic = <<"/", GroupId/binary, "/", DeviceId/binary,
 	      "/analog/",               (integer_to_binary(PinNo))/binary >>,
 
     lager:debug("Send Topic  : ~p", [Topic]),

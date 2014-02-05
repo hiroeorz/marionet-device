@@ -55,7 +55,7 @@ handle_event({connack_accept}, State=#state{subs=Subscribes}) ->
     {ok, State};
 
 %% digital(QoS=1)
-handle_event({publish, <<"/your_group_id/2/digital/0">> = Topic,
+handle_event({publish, <<"/your_group_id/device002/digital/0">> = Topic,
 	      Payload, 1, MsgId}, State) ->
     lager:info("publish: topic(id:~p):~p~n", [MsgId, Topic]),
 
@@ -69,39 +69,44 @@ handle_event({publish, <<"/your_group_id/2/digital/0">> = Topic,
     {ok, State};
 
 %% digital(QoS=0)
-handle_event({publish, <<"/your_group_id/2/digital/0">> = Topic,
+handle_event({publish, <<"/your_group_id/device002/digital/0">> = Topic,
 	      Payload}, State) ->
     lager:info("publish: topic:~p~n", [Topic]),
 
-    [?DIGITAL_CODE, _DeviceId, _PortNo, StateList] =
-	marionet_data:unpack(Payload),
+    [?DIGITAL_CODE, 
+     _DeviceId, _PortNo, StateList] = marionet_data:unpack(Payload),
 
-    lager:info("publish: state:~p~n", [StateList]),
+    lager:info("sub: state:~p~n", [StateList]),
     [_, _, _, _, S, _, _, _] = StateList,
     gpio_pin:write(25, S),
     {ok, State};
 
-%% analog(QoS=0)
-handle_event({publish, 
-	      <<"/your_group_id/", _:1/binary, "/analog/", _/binary>> = Topic,
+%% analog(device001, QoS=0)
+handle_event({publish, <<"/your_group_id/device001/analog/", _/binary>> = Topic,
 	      Payload}, State) ->
-    lager:debug("publish: topic:~p~n", [Topic]),
-    lager:debug("payload: ~p~n", [Payload]),
     [?ANALOG_CODE, DeviceId, PinNo, Val] = marionet_data:unpack(Payload),
-    lager:debug("publish: pin=~p val=~p~n", [PinNo, Val]),
+    lager:debug("sub: pin=~p val=~p~n(topic:~p)", [PinNo, Val, Topic]),
+    control_led(DeviceId, PinNo, Val),
+    {ok, State};
+
+%% analog(device002, QoS=0)
+handle_event({publish, <<"/your_group_id/device002/analog/", _/binary>> = Topic,
+	      Payload}, State) ->
+    [?ANALOG_CODE, DeviceId, PinNo, Val] = marionet_data:unpack(Payload),
+    lager:debug("sub: pin=~p val=~p~n(topic:~p)", [PinNo, Val, Topic]),
     control_led(DeviceId, PinNo, Val),
     {ok, State};
 
 %% other(QoS=0)
 handle_event({publish, Topic, Payload}, State) ->
-    lager:info("publish: topic:~p~n", [Topic]),
-    lager:info("publish: payload:~p~n", [Payload]),
+    lager:info("sub: topic:~p~n", [Topic]),
+    lager:info("sub: payload:~p~n", [Payload]),
     {ok, State};
 
 %% other(QoS=1)
 handle_event({publish, Topic, Payload, 1, MsgId}, State) ->
-    lager:info("publish: topic(id:~p):~p~n", [MsgId, Topic]),
-    lager:info("publish: payload:~p~n", [Payload]),
+    lager:info("sub: topic(id:~p):~p~n", [MsgId, Topic]),
+    lager:info("sub: payload:~p~n", [Payload]),
     emqttc:puback(emqttc, MsgId),
     {ok, State};
 
