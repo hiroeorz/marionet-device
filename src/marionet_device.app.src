@@ -32,6 +32,7 @@
 
          {io_event_handler,        sample_io_event_handler},
          {subscribe_event_handler, sample_sub_event_handler},
+         {publish_interval, 10000},
 
          %% {PinNo, ReadWriteMode, [Options]}
          %% PinNo         :: 2 .. 27

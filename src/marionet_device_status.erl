@@ -100,7 +100,7 @@ update_analog_value(PinNo, Value) when is_integer(PinNo),
 %% @doc get digital state of port.
 %% @end
 %%--------------------------------------------------------------------
--spec analog(PinNo) -> [0 | 1] | undefined when
+-spec analog(PinNo) -> non_neg_integer() | undefined when
       PinNo :: non_neg_integer().
 analog(PinNo) ->
     case ets:lookup(analog, PinNo) of
