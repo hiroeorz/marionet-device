@@ -63,15 +63,13 @@ init([]) ->
     {ok, Subscribes} = application:get_env(subscribes),
     {ok, GroupId} = application:get_env(group_id),
     {ok, DeviceId} = application:get_env(device_id),
-    {ok, PublishInterval} = application:get_env(publish_interval),
 
     Specs = [gpio_sup_spec(),
 	     mqtt_spec(),
 	     status_spec(),
 	     event_sup_spec(emqttc_event, SubEventHandler, [Subscribes]),
 	     event_sup_spec(gpio_pin_event, marionet_device_event, []),
-	     event_sup_spec(gpio_pin_event, IOEventHandler, 
-			    [GroupId, DeviceId, PublishInterval])
+	     event_sup_spec(gpio_pin_event, IOEventHandler, [GroupId, DeviceId])
 	    ],
 
     Specs1 = 
@@ -81,8 +79,7 @@ init([]) ->
 			  event_sup_spec(arduino_event,
 					 marionet_device_event, []),
 			  event_sup_spec(arduino_event,
-					 IOEventHandler,
-					[GroupId, DeviceId, PublishInterval]) ];
+					 IOEventHandler, [GroupId, DeviceId]) ];
 		 false -> 
 		     Specs
 	     end,
