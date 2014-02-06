@@ -56,7 +56,7 @@ handle_event({connack_accept}, State=#state{subs=Subscribes}) ->
     {ok, State};
 
 %% digital(QoS=1)
-handle_event({publish, <<"/your_group_id/device002/digital/0">> = Topic,
+handle_event({publish, <<"/demo/pi002/digital/0">> = Topic,
 	      Payload, 1, MsgId}, State) ->
     lager:info("publish: topic(id:~p):~p~n", [MsgId, Topic]),
 
@@ -70,7 +70,7 @@ handle_event({publish, <<"/your_group_id/device002/digital/0">> = Topic,
     {ok, State};
 
 %% digital(QoS=0)
-handle_event({publish, <<"/your_group_id/device002/digital/0">> = Topic,
+handle_event({publish, <<"/demo/pi002/digital/0">> = Topic,
 	      Payload}, State) ->
     lager:info("publish: topic:~p~n", [Topic]),
 
@@ -83,7 +83,7 @@ handle_event({publish, <<"/your_group_id/device002/digital/0">> = Topic,
     {ok, State};
 
 %% analog(device001, QoS=0)
-handle_event({publish, <<"/your_group_id/device001/analog/", _/binary>> = Topic,
+handle_event({publish, <<"/demo/pi001/analog/", _/binary>> = Topic,
 	      Payload}, State) ->
     [?ANALOG_CODE, DeviceId, PinNo, Val] = marionet_data:unpack(Payload),
     lager:debug("sub: pin=~p val=~p~n(topic:~p)", [PinNo, Val, Topic]),
@@ -92,7 +92,7 @@ handle_event({publish, <<"/your_group_id/device001/analog/", _/binary>> = Topic,
     {ok, State};
 
 %% analog(device002, QoS=0)
-handle_event({publish, <<"/your_group_id/device002/analog/", _/binary>> = Topic,
+handle_event({publish, <<"/demo/pi002/analog/", _/binary>> = Topic,
 	      Payload}, State) ->
     [?ANALOG_CODE, DeviceId, PinNo, Val] = marionet_data:unpack(Payload),
     lager:debug("sub: pin=~p val=~p~n(topic:~p)", [PinNo, Val, Topic]),
