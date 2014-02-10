@@ -117,8 +117,4 @@ In default setting,
 
 ## Todo
 
-- Define protocol format between a remote server.
-- Test.
-- Connecting to m2m server.
-- Omron Fins extension.
-- and the other...
+- Omron plc extension (use omron-fins-erlang).
