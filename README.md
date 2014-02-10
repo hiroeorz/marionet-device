@@ -1,30 +1,43 @@
 # MarioNetDevice
 
-## Goals
+## Goal
 
 * Provide a MQTT Client Application That executed on RaspberryPi (with arduino if you need).
 
-## Getting Started
-
-Log in your RaspberryPi and fetch the latest version of MarioNetDevice using git.
-
-```
-$ git clone https://github.com/hiroeorz/marionet-device.git
-$ cd marionet-device
-$ make
-$ make generate
-```
-
-## Movie
+## Demo
 
 [![ScreenShot](https://dl.dropboxusercontent.com/u/24342163/mqtt_demo.png)](http://youtu.be/j3Vmd_o24oU)
 
+## Getting Started
+
+Download MarioNetDevice on your RaspberryPi.
+
+```
+$ wget https://dl.dropboxusercontent.com/u/24342163/marionet-device/marionet-device-001.tar.gz
+$ tar xvzf marionet-device-001.tar.gz
+```
+
+If your have a second RaspberryPi, Download MarioNetDevice second build.
+
+```
+$ wget https://dl.dropboxusercontent.com/u/24342163/marionet-device/marionet-device-002.tar.gz
+$ tar xvzf marionet-device-001.tar.gz
+```
+ 
 ## Running
 
 You need run marionet-device as root.
 
+first RaspberryPi.
+
 ```
-$ sudo ./rel/marionet-device-001/marionet-device-001/bin/marionet-device-001 start
+$ sudo ./marionet-device-001/bin/marionet-device-001 start
+```
+
+second RaspberryPi(If you have).
+
+```
+$ sudo ./marionet-device-002/bin/marionet-device-002 start
 ```
 
 ##  Settings
@@ -35,7 +48,7 @@ You can change pin setting by modifing above file, if you need.
 Your application's setting file is 
 
 ```
-$ vi rel/marionet-device-001/marionet-device-001/releases/1/sys.config
+$ vi ./marionet-device-001/releases/1/sys.config
 ```
 
 ### MQTT connection settings
@@ -113,6 +126,18 @@ In default setting,
 * 8,9 are servo.
 * 10,11 is pwm.
 * 12,13 is output.
+
+
+## Build from source.
+
+Log in your RaspberryPi and fetch the latest version of MarioNetDevice using git.
+
+```
+$ git clone https://github.com/hiroeorz/marionet-device.git
+$ cd marionet-device
+$ make
+$ make generate
+```
 
 
 ## Todo
