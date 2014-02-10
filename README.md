@@ -21,7 +21,7 @@ If your have a second RaspberryPi, Download MarioNetDevice second build.
 
 ```
 $ wget https://dl.dropboxusercontent.com/u/24342163/marionet-device/marionet-device-002.tar.gz
-$ tar xvzf marionet-device-001.tar.gz
+$ tar xvzf marionet-device-002.tar.gz
 ```
  
 ## Running
