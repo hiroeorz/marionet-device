@@ -2,13 +2,7 @@
 
 ## Goals
 
-* Provide a logger interface, that send digital,analog log to a remote server.
-* Provide a remote control interface from a server.
-* Provide a M2M connection interface to your embeded application.
-
-**CAUTION**
-
-Now, MarioNetDevice supported RaspberryPi (and Arduino extension) only, I will support other devices, that running general GNU/Linux operating system. 
+* Provide a MQTT Client Application That executed on RaspberryPi (with arduino if you need).
 
 ## Getting Started
 
@@ -16,207 +10,105 @@ Log in your RaspberryPi and fetch the latest version of MarioNetDevice using git
 
 ```
 $ git clone https://github.com/hiroeorz/marionet-device.git
-$ cd MarioNetDevice
+$ cd marionet-device
 $ make
-```
-
-Or add "deps" line to your app's rebar.conf.
-
-```erlang
-{marionet_device, ".*", {git, "https://github.com/hiroeorz/marionet-device.git",
-   {branch, "master"}}},
-
-```
-
-and get deps
-
-```
-$ ./rebar get-deps
+$ make generate
 ```
 
 ## Running
 
-check [default setting of marionet_device](blob/master/src/marionet-device.app.src).
+You need run marionet-device as root.
 
-In default setting, gpio 25,27 is output pin, other is input pin.
+```
+$ sudo ./rel/marionet-device-002/marionet-device-002/bin/marionet-device-002 start
+```
+
+##  Settings
+
+Defualt setting is [here](https://github.com/hiroeorz/marionet-device/blob/master/rel/marionet-device-001/files/sys.config)
 
 You can change pin setting by modifing above file, if you need.
-
-### Start application.
-
-You must run MarioNetDevice as root. Because MarioNetDevice access to /dev/mem. /dev/mem is allowed writable access from root only.
+Your application's setting file is 
 
 ```
-$ sudo ./start-dev
+$ vi rel/marionet-device-001/marionet-device-001/releases/1/sys.config
 ```
--------
-or start erlang mode as root
 
-```
-$ sudo erl -pa ebin deps/*/ebin -boot start_sasl -sname marionet_device \
-       -setcookie marionet -s marionet_device start
-```
-and start MarioNetDevice in erl shell.
+### MQTT connection settings
+
+marionet-device connet to "test.mosquitto.org" in default. If you want to your own MQTT broker, change "host" setting in "mqtt_broker".
 
 ```erl-sh
-1> application:start(marionet_device).
+{mqtt_broker, [{host, "test.mosquitto.org"},
+               {port, 1883},
+               {client_id, <<"demo/pi001">>}, %% len < 24
+               {username, undefined},
+               {password, undefined}
+              ]},
 ```
--------
 
-MarioNetDevice will connect to a TCP server when start up Application.
-(Default server IP address is '127.0.0.1')
+### General Purpose I/O
 
-And send self status to a server. Status is digital status and analog values.
+Marionet-device send self status to a broker. Status is digital status and analog values.
 
 * Digital status send to server when status is chaned (e.g.: Switch status changes OFF to ON).
-* Analog values send to server when every 0.3 sec.
 
-## General Purpose I/O
+Default settings is
 
-### Read gpio value
-
-```erl-sh
-1> gpio_pin:read(18).
-0
+```
+{gpio, [
+           { 4, in,  [{edge, both}, {pull, up}, {active_low, true}] },
+           {17, in,  [{edge, both}, {pull, up}, {active_low, true}] },
+           {18, in,  [{edge, both}, {pull, up}, {active_low, true}] },
+           {22, in,  [{edge, both}, {pull, up}, {active_low, true}] },
+           {23, in,  [{edge, both}, {pull, up}, {active_low, true}] },
+           {24, out, [{edge, both}, {pull, down}] },
+           {25, out, [{edge, both}, {pull, down}] }
+          ]},
 ```
 
-### Write value to gpio
-
-```erl-sh
-1> gpio_pin:write(25, 1).
-ok
-3> gpio_pin:write(25, 0).
-ok
-```    
-
-### Change Pin mode
-
-```erl-sh
-1> gpio_pin:set_pin_mode(18, out).
-ok
-2> gpio_pin:set_pin_mode(25, in).
-ok
-```
-
-### Pullup or pulldown
-
-```erl-sh
-1> gpio_pin:pullup(18).
-ok
-2> gpio_pin:pulldown(18).
-ok
-3> gpio_pin:pullnone(18).
-ok
-```
-
-### Set interrupt
- 
-```erl-sh
-1> gpio_pin:set_int(18, rising).
-ok
-2> gpio_pin:set_int(18, falling).
-ok
-3> gpio_pin:set_int(18, both).
-ok
-4> gpio_pin:set_int(18, none).
-ok
-```
-### Get active low
- 
-```erl-sh
-1> gpio_pin:get_active_low(4).
-0
-```
-
-### Set active low
-
-```erl-sh
-1> gpio_pin:set_active_low(25, 1).
-```
-
-example:
-
-```erl-sh
-1> gpio_pin:write(25, 1).
-ok
-2> gpio_pin:read(25).
-1
-3> gpio_pin:set_active_low(25, 1).
-ok
-2> gpio_pin:read(25).
-0
-```
-
-### Add event handler of gpio pin
-
-```erl-sh
-1> gpio_pin_event:add_event_handler(sample_module, []).
-ok
-```
-* First argument is module name.
-* Second argument is arguments of sample_module:init/1.
-
-The sample_module is event handler befavior of gen_event.
-If gpio18 set interrupt rising and pin status changed 0 to 1 , called event handler.
-
-This is sample event handler.
-[gpio_pin_event_logger.erl](blob/master/src/gpio_pin_event.erl)
-
-
-### Get all status list
-
-```erl-sh
-1> gpio_pin:status().
-[1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-```
+In default setting, gpio 4,17,18,22,23 are digital input mode, 24,25 are digital output mode.
 
 ## Arduino I/O
 
 You can read write Arduino I/O throuh the Firmata protocol.
-You need to send sketch 'Standard Firmata' to your Arduino or implementation Firmata Protocol your own, before start up the marionet.
+You need to send sketch 'Standard Firmata' to your Arduino or implementation Firmata Protocol your own sketch, before start up the marionet.
 
-In default setting, gpio 0,1,2,3,4,5,6,7 is digital input mode,
-   8, 9 is digital output mode,
-  10,11 is pwm,
-  12,13 is servo.
+```
+   {arduino_enable, true},
+   {arduino, [{speed, 57600},
+              {device, "/dev/ttyACM0"},
+              {sampling_interval, 3000},
+              {digital_port_reporting, [1, 0]},
+              {digital_port_offset, 1},
+              {analog_offset, 0},
+              {analog, [0, 1] },
+              {digital, [
+                         { 0, in, [{pull, up} ]},
+                         { 1, in, [{pull, up} ]},
+                         { 2, in, [{pull, up} ]},
+                         { 3, in, [{pull, up} ]},
+                         { 4, in, [{pull, up} ]},
+                         { 5, in, [{pull, up} ]},
+                         { 6, in, [{pull, up} ]},
+                         { 7, in, [{pull, up} ]},
 
-### Get all digital state.
-
-```erl-sh
-1> arduino:all_digital()
-[1,1,0,0,0,0,0,1]
+                         { 8, servo},
+                         { 9, servo},
+                         {10, pwm},
+                         {11, pwm},
+                         {12, out},
+                         {13, out}
+                        ]
+              }
+             ]},
 ```
 
-### Get all analog value.
-
-```erl-sh
-1> arduino:all_analog().
-[343, 211, 375, 111, 0, 343]
-```
-
-### Write digital state.
-
-PortNO is unit number of every 8 bit digital status.
-
-```erl-sh
-1> arduino:digital_write(0, [1,1,1,1,1,1,1,1]).
-ok
-```
-
-### Add event handler of arduino
-
-```erl-sh
-1> arduino_event:add_event_handler(sample_module, []).
-ok
-```
-
-* First argument is module name.
-* Second argument is arguments of sample_module:init/1.
-
-The sample_module is event handler befavior of gen_event.
-
-This is sample event handler.
-[gpio_pin_event_logger.erl](blob/master/src/arduino_event_logger.erl)
+In default setting,
+* 0,1,2,3,4,5,6,7 are digital input mode.
+* 8,9 are servo.
+* 10,11 is pwm.
+* 12,13 is output.
 
 
 ## Todo
