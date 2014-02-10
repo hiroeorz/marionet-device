@@ -20,7 +20,7 @@ $ make generate
 You need run marionet-device as root.
 
 ```
-$ sudo ./rel/marionet-device-002/marionet-device-002/bin/marionet-device-002 start
+$ sudo ./rel/marionet-device-001/marionet-device-001/bin/marionet-device-001 start
 ```
 
 ##  Settings
