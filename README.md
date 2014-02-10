@@ -15,6 +15,10 @@ $ make
 $ make generate
 ```
 
+## Movie
+
+[![ScreenShot](https://dl.dropboxusercontent.com/u/24342163/mqtt_demo.png)](http://youtu.be/j3Vmd_o24oU)
+
 ## Running
 
 You need run marionet-device as root.
@@ -36,7 +40,7 @@ $ vi rel/marionet-device-001/marionet-device-001/releases/1/sys.config
 
 ### MQTT connection settings
 
-marionet-device connet to "test.mosquitto.org" in default. If you want to your own MQTT broker, change "host" setting in "mqtt_broker".
+marionet-device connet to "test.mosquitto.org" in default. If you want to connect to your own MQTT broker, change "host" setting in "mqtt_broker".
 
 ```erl-sh
 {mqtt_broker, [{host, "test.mosquitto.org"},
