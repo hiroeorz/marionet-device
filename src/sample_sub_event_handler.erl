@@ -187,7 +187,7 @@ control_led(2, 0, Val) when Val =< 512 ->
 control_led(_DeviceId, _PinNo, _Val) ->
     ok.
 
-control_servo(2, 0, Val) ->
+control_servo(<<"pi002">>, 0, Val) ->
     Angle = Val * 180 div 1024,
     arduino:analog_write(?SERVO_PINNO, Angle);
 

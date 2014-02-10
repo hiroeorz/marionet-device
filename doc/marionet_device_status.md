@@ -43,7 +43,7 @@ get all digital state.
 
 
 <pre><code>
-analog(PinNo) -&gt; [0 | 1] | undefined
+analog(PinNo) -&gt; non_neg_integer() | undefined
 </code></pre>
 
 <ul class="definitions"><li><code>PinNo = non_neg_integer()</code></li></ul>
