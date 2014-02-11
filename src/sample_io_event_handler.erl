@@ -15,11 +15,15 @@
          handle_info/2, terminate/2, code_change/3]).
 
 -define(SERVER, ?MODULE).
--define(ANALOG_CODE, 2).
 -define(DIGITAL_CODE, 1).
+-define(ANALOG_CODE, 2).
+-define(ANALOG_SEND_INTERVAL, 3).          %% second
+-define(ANALOG_CHANGE_LIMIT_FOR_SEND, 5).  %% 0 - 1023
 
--record(state, {group_id  :: binary(),
-		device_id :: binary() }).
+-record(state, {group_id                        :: binary(),
+		device_id                       :: binary(),
+		analog_sent_time = dict:new()   :: non_neg_integer(),
+		analog_before_vals = dict:new() :: dict() }).
 
 %%%===================================================================
 %%% gen_event callbacks
@@ -64,16 +68,27 @@ handle_event({digital_port_changed, PortNo, Status},
     emqttc:publish(emqttc, Topic, Payload, [{qos, 0}, {retain, 1}]),
     {ok, State};
 
+%% send analog every 3sec.
 handle_event({analog_recv, PinNo, Val},
-	     State=#state{device_id=DeviceId}) ->
-    lager:info("analog send mqtt broker(PinNo:~w): ~w", [PinNo, Val]),
-    Payload = marionet_data:pack([?ANALOG_CODE, DeviceId, PinNo, Val]),
-    GroupId = State#state.group_id,
-    Topic = topic(GroupId, DeviceId, <<"analog">>, PinNo),
-    lager:debug("Send Topic  : ~p", [Topic]),
-    lager:debug("Send Payload: ~p", [Payload]),
-    emqttc:publish(emqttc, Topic, Payload),
-    {ok, State}.
+	     State=#state{device_id=DeviceId, group_id = GroupId, 
+			  analog_sent_time = SentTimes,
+			  analog_before_vals = BeforeVals}) ->
+
+    NowTime = calendar:datetime_to_gregorian_seconds({date(), time()}),
+    BeforeSentTime = case dict:find(PinNo, SentTimes) of
+			 error     -> 0;
+			 {ok, Sec} -> Sec
+		     end, 
+
+    if ?ANALOG_SEND_INTERVAL =< (NowTime - BeforeSentTime) ->
+	    publish_analog(GroupId, DeviceId, PinNo, Val),
+	    NewSentTimes = dict:store(PinNo, NowTime, SentTimes),
+	    {ok, State#state{analog_sent_time =  NewSentTimes}};
+       true ->
+	    publish_if_large_changed(GroupId, DeviceId, PinNo, Val, BeforeVals),
+	    NewVals = dict:store(PinNo, Val, BeforeVals),
+	    {ok, State#state{analog_before_vals = NewVals}}
+    end.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -136,7 +151,11 @@ code_change(_OldVsn, State, _Extra) ->
 %%% Internal functions
 %%%===================================================================
 
-%% crete mqtt topic, that formatted binary.
+%%--------------------------------------------------------------------
+%% @private
+%% @doc crete mqtt topic, that formatted binary.
+%% @end
+%%--------------------------------------------------------------------
 -spec topic(GroupId, DeviceId, DataType, DataNo) -> binary() when
       GroupId :: binary(),
       DeviceId :: binary(),
@@ -149,3 +168,44 @@ topic(GroupId, DeviceId, DataType, DataNo) when is_binary(GroupId),
     list_to_binary(["/", GroupId, "/", DeviceId, "/", DataType, "/",
 		    integer_to_binary(DataNo)]).
 
+%%--------------------------------------------------------------------
+%% @private
+%% @doc publish analog value if value change is large.
+%% @end
+%%--------------------------------------------------------------------
+-spec publish_if_large_changed(GroupId, DeviceId, PinNo, Val, BeforeVals) -> 
+				      ok when
+      GroupId :: binary(),
+      DeviceId :: binary(),
+      PinNo :: non_neg_integer(),
+      Val :: non_neg_integer(),
+      BeforeVals :: dict().
+publish_if_large_changed(GroupId, DeviceId, PinNo, Val, BeforeVals) ->
+    BeforeVal = case dict:find(PinNo, BeforeVals) of
+		    error      -> 0;
+		    {ok, BVal} -> BVal
+		end,
+    if abs(BeforeVal - Val) > ?ANALOG_CHANGE_LIMIT_FOR_SEND ->
+	    publish_analog(GroupId, DeviceId, PinNo, Val),
+	    sent;
+       true ->
+	    ignore
+    end.
+       
+%%--------------------------------------------------------------------
+%% @private
+%% @doc publish analog value to MQTT broker.
+%% @end
+%%--------------------------------------------------------------------
+-spec publish_analog(GroupId, DeviceId, PinNo, Val) -> ok when
+      GroupId :: binary(),
+      DeviceId :: binary(),
+      PinNo :: non_neg_integer(),
+      Val :: non_neg_integer().
+publish_analog(GroupId, DeviceId, PinNo, Val) ->
+    lager:info("analog send mqtt broker(PinNo:~w): ~w", [PinNo, Val]),
+    Payload = marionet_data:pack([?ANALOG_CODE, DeviceId, PinNo, Val]),
+    Topic = topic(GroupId, DeviceId, <<"analog">>, PinNo),
+    %%lager:debug("Send Topic  : ~p", [Topic]),
+    %%lager:debug("Send Payload: ~p", [Payload]),
+    emqttc:publish(emqttc, Topic, Payload).
