@@ -83,7 +83,7 @@ handle_event({publish, <<"/demo/pi002/digital/0">> = Topic,
     gpio_pin:write(25, S),
     {ok, State};
 
-%% analog(device001, QoS=0)
+%% analog(pi001, QoS=0)
 handle_event({publish, <<"/demo/pi001/analog/", _/binary>> = Topic,
 	      Payload}, State) ->
     [?ANALOG_CODE, DeviceId, PinNo, Val] = marionet_data:unpack(Payload),
@@ -92,7 +92,7 @@ handle_event({publish, <<"/demo/pi001/analog/", _/binary>> = Topic,
     control_servo(DeviceId, PinNo, Val),
     {ok, State};
 
-%% analog(device002, QoS=0)
+%% analog(pi002, QoS=0)
 handle_event({publish, <<"/demo/pi002/analog/", _/binary>> = Topic,
 	      Payload}, State) ->
     [?ANALOG_CODE, DeviceId, PinNo, Val] = marionet_data:unpack(Payload),
