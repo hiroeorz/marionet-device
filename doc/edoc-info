@@ -1,7 +1,7 @@
 %% encoding: UTF-8
 {application,edown}.
 {packages,[]}.
-{modules,[marionet_data,marionet_device,marionet_device_app,
+{modules,[marionet_config,marionet_data,marionet_device,marionet_device_app,
           marionet_device_event,marionet_device_status,marionet_device_sup,
           marionet_event_sup,omron_fins_event,omron_fins_watcher,
           sample_io_event_handler,sample_sub_event_handler]}.
