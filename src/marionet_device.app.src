@@ -12,7 +12,11 @@
                   serial,
                   emqttc,
                   omron_fins,
-                  lager
+                  lager,
+                  ranch,
+                  cowlib,
+                  crypto,
+                  cowboy
                  ]},
   {mod, { marionet_device_app, []}},
   {env, [

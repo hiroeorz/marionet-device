@@ -22,4 +22,8 @@ start() ->
     application:start(emqttc),
     application:start(serial),
     application:start(omron_fins),
+    application:start(ranch),
+    application:start(cowlib),
+    application:start(crypto),
+    application:start(cowboy),
     application:start(marionet_device).
