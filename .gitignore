@@ -1,6 +1,7 @@
 *.beam
 priv/gpio_lib
 priv/bin
+._*
 doc/*.html
 ebin
 .eunit
