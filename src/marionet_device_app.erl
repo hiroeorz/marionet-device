@@ -24,7 +24,7 @@ start_http() ->
 	       {priv_dir, marionet_device, "www",
 		[{mimetypes, cow_mimetypes, all}]}},
 
-	      {"/api", marionet_http_handler, []}
+	      {"/api/[...]", marionet_http_handler, []}
 	     ],
 
     Dispatch = cowboy_router:compile([ {'_', Routes} ]),

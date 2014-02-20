@@ -8,33 +8,32 @@
 %%%-------------------------------------------------------------------
 -module(marionet_http_handler).
 
-%% API
 -export([init/3]).
--export([handle/2]).
--export([terminate/3]).
+-export([content_types_provided/2]).
+-export([content_types_accepted/2]).
+-export([get_json/2]).
+-export([update_json/2]).
 
-%%%===================================================================
-%%% API
-%%%===================================================================
+init(_Transport, _Req, []) ->
+    {upgrade, protocol, cowboy_rest}.
 
-%%--------------------------------------------------------------------
-%% @doc
-%% @spec
-%% @end
-%%--------------------------------------------------------------------
+content_types_provided(Req, State) ->
+    {[ {<<"application/json">>, get_json} ], Req, State}.
 
-init(_Type, Req, []) ->
-	{ok, Req, undefined}.
+content_types_accepted(Req, State) ->
+    {[ {<<"application/json">>, update_json} ], Req, State}.
 
-handle(Req, State) ->
-	{ok, Req2} = cowboy_req:reply(200, 
-				      [{<<"content-type">>, <<"text/plain">>}],
-				      <<"Hello world!">>, Req),
-    {ok, Req2, State}.
+get_json(Req, State) ->
+    Body = <<"{\"device_id\":\"pi001\",
+               \"group_id\":\"demo\",
+               \"mqtt\":{\"host\":\"test.mosquito.org\",
+               \"port\":1883,\"client_id\":\"demo/pi001\"},
+               \"subscribes\":[\"/demo/pi002/analog/#\",
+                               \"/demo/pi002/digital/#\"]}">>,
+    {Body, Req, State}.
 
-terminate(_Reason, _Req, _State) ->
-    ok.
 
-%%%===================================================================
-%%% Internal functions
-%%%===================================================================
+update_json(Req, State) ->
+    {true, Req, State}.
+
+
