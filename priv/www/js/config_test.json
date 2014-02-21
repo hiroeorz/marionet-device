@@ -1,0 +1,4 @@
+{"device_id":"pi001",
+ "group_id":"demo",
+ "mqtt":{"host":"test.mosquito.org","port":1883,"client_id":"demo/pi001"},
+ "subscribes":["/demo/pi002/analog/#", "/demo/pi002/digital/#"]}

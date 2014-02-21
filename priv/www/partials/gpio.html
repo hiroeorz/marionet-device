@@ -1,0 +1,50 @@
+<h3>GPIO</h3>
+<table class="table">
+  <thead>
+    <tr>
+      <th>PinNo</th>
+      <th>Mode</th>
+      <th>Edge</th>
+      <th>Pull</th>
+      <th>Active Low</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    <tr ng-repeat="pin in gpio">
+      <!-- PinNo -->
+      <td><select ng-model="pin.pin_no" 
+		  ng-options="pin_no for pin_no in pin_list">
+      </td>
+
+      <!-- Mode -->
+      <td><select ng-model="pin.mode" 
+		  ng-options="mode for mode in mode_list">
+      </td>
+
+      <!-- Edge -->
+      <td><select ng-model="pin.opts.edge" 
+		  ng-options="edge for edge in edge_list">
+      </td>
+
+      <!-- Pull -->
+      <td><select ng-model="pin.opts.pull" 
+		  ng-options="pull for pull in pull_list">
+      </td>
+
+      <!-- Active Low -->
+      <td><input type="checkbox" ng-model="pin.opts.active_low"></td>
+
+    </tr>
+
+    <tr>
+      <td colspan="5">
+	<button class="btn btn-danger" type="button" ng-click="save()">save
+	</button>
+      </td>
+    </tr>
+
+  </tbody>
+</table>
+
+<hr>

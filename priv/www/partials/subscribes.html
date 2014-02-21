@@ -1,0 +1,19 @@
+<h3>Subscribes</h3>
+<table>
+  <tbody>
+    <tr ng-repeat="topic in topics">
+      <th>Topic</th>
+      <td><input type="text" value="{{ topic }}"></td>
+
+      <th>QoS</th>
+      <td><input type="text" value="{{ get_qos($index) }}"></td>
+    </tr>
+    
+  </tbody>
+</table>
+
+<button class="btn btn-primary" type="button"
+	ng-click="addSubscriber()">add</button>
+
+<hr>
+<button class="btn btn-danger" type="button">save</button>
