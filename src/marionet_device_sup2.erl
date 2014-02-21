@@ -56,13 +56,13 @@ init([]) ->
 
     SupFlags = {RestartStrategy, MaxRestarts, MaxSecondsBetweenRestarts},
 
-    {ok, ArduinoEnable} = marionet_config:get(arduino_enable),
-    {ok, OmronFinsEnable} = marionet_config:get(omron_fins_enable),
-    {ok, IOEventHandler} = marionet_config:get(io_event_handler),
-    {ok, SubEventHandler} = marionet_config:get(subscribe_event_handler),
-    {ok, Subscribes} = marionet_config:get(subscribes),
-    {ok, GroupId} = marionet_config:get(group_id),
-    {ok, DeviceId} = marionet_config:get(device_id),
+    ArduinoEnable = marionet_config:get(arduino_enable),
+    OmronFinsEnable = marionet_config:get(omron_fins_enable),
+    IOEventHandler = marionet_config:get(io_event_handler),
+    SubEventHandler = marionet_config:get(subscribe_event_handler),
+    Subscribes = marionet_config:get(subscribes),
+    GroupId = marionet_config:get(group_id),
+    DeviceId = marionet_config:get(device_id),
 
     Specs = [gpio_sup_spec(),
 	     mqtt_spec(),
@@ -115,7 +115,7 @@ fins_port_spec() ->
     Shutdown = 2000,
     Type = worker,
 
-    {ok, Config} = marionet_config:get(omron_fins),
+    Config = marionet_config:get(omron_fins),
     IPAddress = proplists:get_value(ip_address, Config),
     Port = proplists:get_value(port, Config, 9600),
 
@@ -127,7 +127,7 @@ fins_event_spec(IOEventHandler) ->
     Shutdown = 2000,
     Type = worker,
 
-    {ok, DeviceId} = marionet_config:get(device_id),
+    DeviceId = marionet_config:get(device_id),
     Handlers = [ {marionet_device_event,  []},
 		 {IOEventHandler, [DeviceId]} ],
 
@@ -139,7 +139,7 @@ fins_watcher_spec() ->
     Shutdown = 2000,
     Type = worker,
 
-    {ok, Config} = marionet_config:get(omron_fins),
+    Config = marionet_config:get(omron_fins),
 
     {omron_fins_watcher, {omron_fins_watcher, start_link, [Config]},
      Restart, Shutdown, Type, [omron_fins_watcher]}.
@@ -149,7 +149,7 @@ mqtt_spec() ->
     Shutdown = 2000,
     Type = worker,
 
-    {ok, MqttBroker} = marionet_config:get(mqtt_broker),
+    MqttBroker = marionet_config:get(mqtt_broker),
     {emqttc, {emqttc, start_link, [MqttBroker]},
      Restart, Shutdown, Type, [emqttc]}.
 
@@ -158,7 +158,7 @@ arduino_sup_spec() ->
     Shutdown = 2000,
     Type = supervisor,
 
-    {ok, Config} = marionet_config:get(arduino),
+    Config = marionet_config:get(arduino),
 
     {arduino_sup, {arduino_sup, start_link, [Config, []]},
      Restart, Shutdown, Type, [arduino_sup]}.
@@ -168,7 +168,7 @@ gpio_sup_spec() ->
     Shutdown = 2000,
     Type = supervisor,
 
-    {ok, GpioList} = marionet_config:get(gpio),
+    GpioList = marionet_config:get(gpio),
 
     {gpio_sup, {gpio_sup, start_link, [GpioList, []]},
      Restart, Shutdown, Type, [gpio_sup]}.
@@ -177,7 +177,7 @@ status_spec() ->
     Restart = permanent,
     Shutdown = 2000,
     Type = worker,
-    {ok, GpioList} = marionet_config:get(gpio),
+    GpioList = marionet_config:get(gpio),
 
     {marionet_device_status, {marionet_device_status, start_link, [GpioList]},
      Restart, Shutdown, Type, [marionet_device_status]}.

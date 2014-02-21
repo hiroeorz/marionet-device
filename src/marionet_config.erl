@@ -13,7 +13,8 @@
 %% API
 -export([start_link/1,
 	 get/1,
-	 set/2]).
+	 set/2,
+	 get_all_keys/0]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -21,7 +22,7 @@
 
 -define(SERVER, ?MODULE).
 
--record(state, {}).
+-record(state, {dets_name :: binary()}).
 
 %%%===================================================================
 %%% API
@@ -41,10 +42,10 @@ start_link(FileName) ->
 %% @doc Get application config
 %% @end
 %%--------------------------------------------------------------------
--spec get(Key) -> {ok, Val} | {error, not_found} when
+-spec get(Key) -> Val | undefined when
       Key :: term(),
       Val :: term().
-get(Key) ->
+get(Key) when is_atom(Key) ->
     gen_server:call(?SERVER, {get, Key}).
 
 %%--------------------------------------------------------------------
@@ -55,8 +56,16 @@ get(Key) ->
       Key :: term(),
       Val :: term().
 set(Key, Val) ->
-    gen_server:call(?SERVER, {set, Key, Val}).
+    gen_server:cast(?SERVER, {set, Key, Val}).
 
+%%--------------------------------------------------------------------
+%% @doc Get all config keys.
+%% @end
+%%--------------------------------------------------------------------
+-spec get_all_keys() -> [ {atom(), term()} ].
+get_all_keys() ->
+    gen_server:call(?SERVER, {get_all_keys}).
+    
 %%%===================================================================
 %%% gen_server callbacks
 %%%===================================================================
@@ -75,7 +84,7 @@ set(Key, Val) ->
 init([FileName]) ->
     _ = ets:new(config_ets, [named_table, private]),
     {ok, _} = dets:open_file(FileName, []),
-    {ok, #state{}}.
+    {ok, #state{dets_name = FileName}}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -92,17 +101,25 @@ init([FileName]) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_call({get, Key}, _From, State) ->
-    case ets:lookup(config_ets, Key) of
+    KeyBin = list_to_binary(atom_to_list(Key)),
+    io:format("search config: ~p~n", [KeyBin]),
+
+    case ets:lookup(config_ets, KeyBin) of
 	[{_, Val}] -> 
-	    {reply, {ok, Val}, State};
+	    {reply, Val, State};
 	[] ->
 	    case application:get_env(marionet_device, Key) of
 		{ok, Val1} -> 
-		    {reply, {ok, Val1}, State};
+		    {reply, Val1, State};
 		undefined ->
-		    {reply, {error, not_found}, State}
+		    {reply, undefined, State}
 	    end
-    end.
+    end;
+
+handle_call({get_all_keys}, _From, State) ->
+    {ok, AllKeys} = application:get_all_key(marionet_device),
+    Env = proplists:get_value(env, AllKeys),
+    {reply, Env, State}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -114,9 +131,10 @@ handle_call({get, Key}, _From, State) ->
 %%                                  {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_cast({set, Key, Val}, State) ->
-    true = dets:insert(config_dets, {Key, Val}),
+handle_cast({set, Key, Val}, #state{dets_name = Name} = State) ->
+    ok = dets:insert(Name, {Key, Val}),
     true = ets:insert(config_ets, {Key, Val}),
+    io:format("config saved: ~p~n", [{Key, Val}]),
     {noreply, State}.
 
 %%--------------------------------------------------------------------
