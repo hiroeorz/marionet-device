@@ -106,6 +106,42 @@ get_resource(<<"gpio.json">>, Req, State) ->
 			     {opts, binary_opt(Opts)}]
 		    end, GpioList),
 
+    {marionet_json:encode(Obj), Req, State};
+
+get_resource(<<"arduino.json">>, Req, State) ->
+    Enable = marionet_config:get(arduino_enable),
+    Arduino = marionet_config:get(arduino),
+    Speed = proplists:get_value(speed, Arduino),
+    Device = proplists:get_value(device, Arduino),
+    SamplingInterval = proplists:get_value(sampling_interval, Arduino),
+    DiReporting = proplists:get_value(digital_port_reporting, Arduino),
+    DiPortOffset = proplists:get_value(digital_port_offset, Arduino),
+    AiOffset = proplists:get_value(analog_offset, Arduino),
+    Analog = proplists:get_value(analog, Arduino),
+    Digital = proplists:get_value(digital, Arduino),
+
+    io:format("digital: ~p~n", [Digital]),
+
+    Digital1 = lists:map(fun({PinNo, Mode, Opts}) ->
+				 [{pin_no, PinNo}, 
+				  {mode, list_to_binary(atom_to_list(Mode))},
+				  {opts, binary_opt(Opts)}];
+			    ({PinNo, Mode})->
+				 [{pin_no, PinNo}, 
+				  {mode, list_to_binary(atom_to_list(Mode))},
+				  {opts, []}]
+			 end, Digital),
+    Obj = [
+	   {arduino_enable, Enable},
+	   {speed, Speed},
+	   {device, list_to_binary(Device)},
+	   {sampling_interval, SamplingInterval},
+	   {digital_port_reporting, DiReporting},
+	   {digital_port_offset, DiPortOffset},
+	   {analog_offset, AiOffset},
+	   {analog, Analog},
+	   {digital, Digital1}
+	  ],
 
     {marionet_json:encode(Obj), Req, State}.
 
