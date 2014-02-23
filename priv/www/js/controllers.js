@@ -65,19 +65,13 @@ configControllers.controller('NavCtrl', function($scope, $location) {
 
 // base config
 configControllers.controller('BaseCtrl', function($scope, $resource) {
-    $scope.deviceId = "";
-    $scope.groupId = "";
+    $scope.base = undefined;
 
     var Base = $resource('/api/config/base.json', {});
     var base = Base.get(function() {
-	syncJsonData(base);
+	$scope.base = base;
     });
     
-    var syncJsonData = function(obj) {
-	$scope.deviceId = obj.device_id;
-	$scope.groupId = obj.group_id;
-    }
-
     $scope.save = function() {
 	base.$save();
     }
