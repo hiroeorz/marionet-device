@@ -17,15 +17,14 @@
 -export([init/1]).
 
 -define(SERVER, ?MODULE).
--define(CONFIG_FILE, "/tmp/marionet_config.db").
+-define(CONFIG_FILE, ".marionet-config.db").
 
 %%%===================================================================
 %%% API functions
 %%%===================================================================
 
 %%--------------------------------------------------------------------
-%% @doc
-%% Starts the supervisor
+%% @doc Starts the supervisor
 %%
 %% @spec start_link() -> {ok, Pid} | ignore | {error, Error}
 %% @end
@@ -55,19 +54,48 @@ init([]) ->
     MaxRestarts = 1000,
     MaxSecondsBetweenRestarts = 3600,
     SupFlags = {RestartStrategy, MaxRestarts, MaxSecondsBetweenRestarts},
-
     {ok, {SupFlags, [config_spec(), sup2_spec()]}}.
 
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
 
+%%--------------------------------------------------------------------
+%% @private
+%% @doc Child spec of marionet_config.
+%% @end
+%%--------------------------------------------------------------------
+-spec config_spec() -> supervisor:child_spec().
 config_spec() ->
-    PATH = filename:join([os:getenv("HOME"), ?CONFIG_FILE]),
-    lager:debug("user config file: ~s", [PATH]),
-    {marionet_config, {marionet_config, start_link, [PATH]},
+    lager:debug("user config file: ~s", [conf_file()]),
+    {marionet_config, {marionet_config, start_link, [conf_file()]},
      permanent, 2000, supervisor, [marionet_config]}.
 
+%%--------------------------------------------------------------------
+%% @private
+%% @doc Child spec of marionet_device_sup2.
+%% @end
+%%--------------------------------------------------------------------
+-spec sup2_spec() -> supervisor:child_spec().
 sup2_spec() ->
     {marionet_device_sup2, {marionet_device_sup2, start_link, []},
      permanent, 2000, supervisor, [marionet_device_sup2]}.
+
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc Path of config file path.
+%% @end
+%%--------------------------------------------------------------------
+-spec conf_file() -> file:filename_all().
+conf_file() ->
+    filename:join(home_dir(), ?CONFIG_FILE).
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc Path of user home dir.
+%% @end
+%%--------------------------------------------------------------------
+-spec home_dir() -> string().
+home_dir() ->
+    os:getenv("HOME").
