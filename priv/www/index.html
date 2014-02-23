@@ -45,7 +45,8 @@
 
   <body>
 
-    <div class="navbar navbar-inverse navbar-fixed-top">
+    <div class="navbar navbar-inverse navbar-fixed-top"
+	 ng-controller="NavCtrl">
       <div class="navbar-inner">
         <div class="container">
           <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
@@ -55,12 +56,12 @@
           </button>
           <a class="brand" href="#">Settings</a>
           <div class="nav-collapse collapse">
-            <ul class="nav">
-	      <li class="active"><a href="#/base">Base</a></li>
-	      <li><a href="#/mqtt_broker">MQTT</a></li>
-	      <li><a href="#/subscribes">Subscribe</a></li>
-	      <li><a href="#/gpio">GPIO</a></li>
-	      <li><a href="#/arduino">Arduino</a></li>
+            <ul class="nav" ng-repeat="menu in menuList">
+	      <li ng-class="{ 'active': (selected === menu)}">
+		<a href="{{ menu.href }}" ng-click="setActionButton(menu.href)">
+		  {{ menu.title }}
+		</a>
+	      </li>
             </ul>
           </div><!--/.nav-collapse -->
         </div>

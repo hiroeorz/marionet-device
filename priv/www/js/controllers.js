@@ -41,6 +41,28 @@ configApp.config(['$routeProvider',
 
 var configControllers = angular.module('configControllers', []);
 
+// navigation var controller
+configControllers.controller('NavCtrl', function($scope, $location) {
+    $scope.selected = undefined;
+    $scope.menuList = [
+	{title: "Base"     , href:"#/base"       },
+	{title: "MQTT"     , href:"#/mqtt_broker"},
+	{title: "Subscribe", href:"#/subscribes" },
+	{title: "GPIO"     , href:"#/gpio"       },
+	{title: "Arduino  ", href:"#/arduino"    }
+    ];
+    
+    $scope.setActionButton = function(path) {
+	$scope.menuList.forEach(function(m) {
+	    if (m.href === path) {
+		$scope.selected = m;
+	    }
+	})
+    }
+
+    $scope.setActionButton("#" + $location.path());
+});
+
 // base config
 configControllers.controller('BaseCtrl', function($scope, $resource) {
     $scope.deviceId = "";
@@ -91,7 +113,19 @@ configControllers.controller('SubscribesCtrl', function($scope, $resource) {
     });
 
     $scope.addSubscriber = function() {
-	$scope.subscribes.push({topic:"", qos:0});
+	subscribes.subscribes.push({topic:"", qos:0});
+    }
+
+    $scope.delSubscriber = function(index) {
+	var newArray = [];
+
+	for(var i=0; i < subscribes.subscribes.length; i++) {
+	    if (i != index) {
+		newArray.push(subscribes.subscribes[i]);
+	    }
+	}
+
+	subscribes.subscribes = newArray;
     }
 
     $scope.save = function() {
