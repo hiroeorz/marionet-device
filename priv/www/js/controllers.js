@@ -178,6 +178,5 @@ configControllers.controller('ArduinoCtrl', function($scope, $resource) {
 
     $scope.toInteger = function(name) {
 	arduino[name] = Number(arduino[name]);
-//	arduino.sampling_interval = Number(arduino.sampling_interval);
     }
 });
