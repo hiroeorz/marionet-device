@@ -113,9 +113,7 @@ configControllers.controller('SubscribesCtrl', function($scope, $resource) {
 	var newArray = [];
 
 	for(var i=0; i < subscribes.subscribes.length; i++) {
-	    if (i != index) {
-		newArray.push(subscribes.subscribes[i]);
-	    }
+	    if (i != index) { newArray.push(subscribes.subscribes[i]); }
 	}
 
 	subscribes.subscribes = newArray;
