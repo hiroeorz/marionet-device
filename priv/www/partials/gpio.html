@@ -11,7 +11,7 @@
   </thead>
 
   <tbody>
-    <tr ng-repeat="pin in gpio">
+    <tr ng-repeat="pin in gpio.gpio">
       <!-- PinNo -->
       <td><select ng-model="pin.pin_no" 
 		  ng-options="pin_no for pin_no in pin_list">
@@ -37,14 +37,12 @@
 
     </tr>
 
-    <tr>
-      <td colspan="5">
-	<button class="btn btn-danger" type="button" ng-click="save()">save
-	</button>
-      </td>
-    </tr>
-
   </tbody>
 </table>
+
+<button class="btn btn-danger" type="button"
+	ng-click="save()">
+  save
+</button>
 
 <hr>

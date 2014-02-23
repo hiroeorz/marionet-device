@@ -26,6 +26,10 @@ configApp.config(['$routeProvider',
 			      templateUrl: 'partials/gpio.html',
 			      controller: 'GpioCtrl'
 			  }).
+			  when('/arduino', {
+			      templateUrl: 'partials/arduino.html',
+			      controller: 'ArduinoCtrl'
+			  }).
 			  otherwise({
 			      redirectTo: '/base'
 			  });
@@ -53,7 +57,6 @@ configControllers.controller('BaseCtrl', function($scope, $resource) {
     }
 
     $scope.save = function() {
-	console.log("save");
 	base.$save();
     }
 });
@@ -68,61 +71,85 @@ configControllers.controller('MqttBrokerCtrl', function($scope, $resource) {
     });
 
     $scope.save = function() {
-	console.log("save");
 	mqtt.$save();
     }
 });
 
 // subscribes config
 configControllers.controller('SubscribesCtrl', function($scope, $resource) {
-    $scope.topics = [];
-    $scope.qoss = [];
+    $scope.subscribes = undefined;
+    $scope.isChangedFlag = [];
+    $scope.qosList = [0, 1, 2];
 
     var Subscribe = $resource('/api/config/subscribes.json', {});
-    var subscribe = Subscribe.get(function() {
-	syncJsonData(subscribe);
+
+    var subscribes = Subscribe.get(function() {
+	$scope.subscribes = subscribes;
+	subscribes.subscribes.forEach(function(e) {
+	    $scope.isChangedFlag.push(false);
+	})
     });
-		     
-    var syncJsonData = function(obj) {
-	var topic_array = [];
-	var qos_array = [];
-
-	for(var topic in obj.subscribes) {
-	    var qos = obj.subscribes[topic];
-	    qos_array.push(qos);
-	    topic_array.push(topic);
-	}
-
-	$scope.topics = topic_array;
-	$scope.qoss = qos_array;
-    }
-
-    $scope.get_qos = function(index) {
-	return $scope.qoss[index];
-    }
 
     $scope.addSubscriber = function() {
-	$scope.topics.push("");
-	$scope.qoss.push(0);
+	$scope.subscribes.push({topic:"", qos:0});
+    }
+
+    $scope.save = function() {
+	subscribes.$save();
     }
 
 });
 
 // GPIO config
 configControllers.controller('GpioCtrl', function($scope, $resource) {
-    $scope.pin_list = []; for(var i=1; i<100; i++){ $scope.pin_list.push(i); }
+    $scope.pin_list = []; for(var i=1; i<50; i++){ $scope.pin_list.push(i); }
     $scope.mode_list = ["in", "out"];
     $scope.edge_list = ["rising", "falling", "both", "none"];
     $scope.pull_list = ["up", "down", "none"];
-    $scope.gpio = undefined;
 
+    $scope.gpio = undefined;
+ 
     var Gpio = $resource('/api/config/gpio.json', {});
-    var gpio = Gpio.query(function() {
-	$scope.gpio = gpio;
+    var gpio = Gpio.get(function() { $scope.gpio = gpio; });
+
+    $scope.save = function() {
+	gpio.$save()
+    }
+
+});
+
+// Arduino config
+configControllers.controller('ArduinoCtrl', function($scope, $resource) {
+    $scope.analogList = []; for(var i=0; i<5; i++){ $scope.analogList.push(i); }
+    $scope.analogUsingState = [false, false, false, false, false, false];
+    $scope.mode_list = ["in", "out", "servo", "pwm"];
+    $scope.pull_list = ["up", "none"];
+    $scope.arduino = undefined;
+ 
+    var Arduino = $resource('/api/config/arduino.json', {});
+    var arduino = Arduino.get(function() {
+	$scope.arduino = arduino;
+	arduino.analog.forEach(function(aiNo) {
+	    $scope.analogUsingState[aiNo] = true;
+	})
     });
 
     $scope.save = function() {
-	console.log("save");
-	gpio.forEach(function(pin) { pin.$save(); });
+	arduino.$save()
+    }
+
+    $scope.analogSelectChanged = function() {
+	var newAnalogs = [];
+
+	for(var aiNo = 0; aiNo < $scope.analogUsingState.length; aiNo++) {
+	    if ($scope.analogUsingState[aiNo]) { newAnalogs.push(aiNo); }
+	}
+
+	$scope.arduino.analog = newAnalogs;
+    }
+
+    $scope.toInteger = function(name) {
+	arduino[name] = Number(arduino[name]);
+//	arduino.sampling_interval = Number(arduino.sampling_interval);
     }
 });

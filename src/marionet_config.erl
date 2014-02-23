@@ -84,8 +84,27 @@ get_all_keys() ->
 init([FileName]) ->
     _ = ets:new(config_ets, [named_table, private]),
     {ok, _} = dets:open_file(FileName, []),
+    load_config(FileName),
     {ok, #state{dets_name = FileName}}.
 
+load_config(FileName) ->
+    case dets:first(FileName) of
+	'$end_of_table' ->
+	    ok;
+	Key ->
+	    load_config(FileName, Key)
+    end.
+
+load_config(FileName, Key) ->
+    [{Key, Val}] = dets:lookup(FileName, Key),
+    true = ets:insert(config_ets, {Key, Val}),
+    case dets:next(FileName, Key) of
+	'$end_of_table' ->
+	    ok;
+	NextKey ->
+	    load_config(FileName, NextKey)
+    end.
+	
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
@@ -105,7 +124,11 @@ handle_call({get, Key}, _From, State) ->
     io:format("search config: ~p~n", [KeyBin]),
 
     case ets:lookup(config_ets, KeyBin) of
-	[{_, Val}] -> 
+	[{_, Val}] = A -> 
+	    io:format("-----~n"),
+	    io:format("RESULT: ~p~n", [A]),
+	    io:format("-----config from db(key=~p)~n", [Key]),
+	    io:format("~p~n", [Val]),
 	    {reply, Val, State};
 	[] ->
 	    case application:get_env(marionet_device, Key) of

@@ -32,47 +32,8 @@ content_types_accepted(Req, State) ->
     {[ {'*', update} ], Req, State}.
 
 %%%===================================================================
-%%% Internal functions
+%%% REST
 %%%===================================================================
-
-update(Req, State) ->
-    {[<<"config">>, ResourceName], Req1} = cowboy_req:path_info(Req),
-    {ok, [{Json, true}], Req2} = cowboy_req:body_qs(8000000, Req1),
-    Obj = marionet_json:decode(Json),
-    io:format("body: ~p~n", [Obj]),
-    ok = update_resource(ResourceName, Obj, Req, State),
-    {true, Req2, State}.
-
-update_resource(<<"base.json">>, Obj, _Req, _State) ->
-    lists:foreach(fun({Key, Val}) ->
-			  ok = marionet_config:set(Key, Val)
-		  end, Obj);
-
-update_resource(<<"mqtt_broker.json">>, Obj, _Req, _State) ->
-    lists:foreach(fun({Key, Val}) ->
-			  ok = marionet_config:set(Key, Val)
-		  end, Obj);
-
-update_resource(<<"gpio.json">>, Obj, _Req, _State) ->
-    PinNo = proplists:get_value(<<"pin_no">>, Obj),
-    Mode = list_to_existing_atom(
-	     binary_to_list(proplists:get_value(<<"mode">>, Obj, <<"in">>))
-	    ),
-
-    BinOpts = proplists:get_value(<<"opts">>, Obj, []),
-    Opts = atom_opt(BinOpts),
-    Edge = proplists:get_value(<<"edge">>, Opts),
-    Pull = proplists:get_value(<<"pull">>, Opts),
-    ActiveLow = proplists:get_value(<<"active_low">>, Opts),
-
-    Val = {PinNo, Mode,  [{edge, Edge}, {pull, Pull}, {active_low, ActiveLow}]},
-
-    GpioList = marionet_config:get(gpio),
-    NewGpioList = lists:map(fun({No, _, _}) when No =:= PinNo -> Val;
-			       ({_, _, _} = E) -> E
-			    end, GpioList),
-    io:format("GPIO: ~p~n", [NewGpioList]),
-    ok = marionet_config:set(<<"gpio">>, NewGpioList).
 
 get(Req, State) ->
     {[<<"config">>, ResourceName], Req1} = cowboy_req:path_info(Req),
@@ -94,8 +55,11 @@ get_resource(<<"mqtt_broker.json">>, Req, State) ->
     {marionet_json:encode(Obj), Req, State};
 
 get_resource(<<"subscribes.json">>, Req, State) ->
-    Obj = [{subscribes, marionet_config:get(subscribes)}],
-    {marionet_json:encode(Obj), Req, State};
+    ObjList = lists:map(fun({Topic, Qos}) ->
+				[{topic, Topic}, {qos, Qos}]
+			end, marionet_config:get(subscribes)),
+
+    {marionet_json:encode([{subscribes, ObjList}]), Req, State};
 
 get_resource(<<"gpio.json">>, Req, State) ->
     GpioList = marionet_config:get(gpio),
@@ -106,13 +70,12 @@ get_resource(<<"gpio.json">>, Req, State) ->
 			     {opts, binary_opt(Opts)}]
 		    end, GpioList),
 
-    {marionet_json:encode(Obj), Req, State};
+    {marionet_json:encode([{gpio, Obj}]), Req, State};
 
 get_resource(<<"arduino.json">>, Req, State) ->
     Enable = marionet_config:get(arduino_enable),
     Arduino = marionet_config:get(arduino),
     Speed = proplists:get_value(speed, Arduino),
-    Device = proplists:get_value(device, Arduino),
     SamplingInterval = proplists:get_value(sampling_interval, Arduino),
     DiReporting = proplists:get_value(digital_port_reporting, Arduino),
     DiPortOffset = proplists:get_value(digital_port_offset, Arduino),
@@ -120,6 +83,13 @@ get_resource(<<"arduino.json">>, Req, State) ->
     Analog = proplists:get_value(analog, Arduino),
     Digital = proplists:get_value(digital, Arduino),
 
+    Device = case proplists:get_value(device, Arduino) of
+		 DBin when is_binary(DBin) ->
+		     DBin;
+		 DList when is_binary(DList) ->
+		     list_to_binary(DList)
+	     end,
+ 
     io:format("digital: ~p~n", [Digital]),
 
     Digital1 = lists:map(fun({PinNo, Mode, Opts}) ->
@@ -134,7 +104,7 @@ get_resource(<<"arduino.json">>, Req, State) ->
     Obj = [
 	   {arduino_enable, Enable},
 	   {speed, Speed},
-	   {device, list_to_binary(Device)},
+	   {device, Device},
 	   {sampling_interval, SamplingInterval},
 	   {digital_port_reporting, DiReporting},
 	   {digital_port_offset, DiPortOffset},
@@ -144,6 +114,98 @@ get_resource(<<"arduino.json">>, Req, State) ->
 	  ],
 
     {marionet_json:encode(Obj), Req, State}.
+
+update(Req, State) ->
+    {[<<"config">>, ResourceName], Req1} = cowboy_req:path_info(Req),
+    {ok, [{Json, true}], Req2} = cowboy_req:body_qs(8000000, Req1),
+    Obj = marionet_json:decode(Json),
+    io:format("body: ~p~n", [Obj]),
+    ok = update_resource(ResourceName, Obj, Req, State),
+    {true, Req2, State}.
+
+update_resource(<<"base.json">>, Obj, _Req, _State) ->
+    lists:foreach(fun({Key, Val}) ->
+			  ok = marionet_config:set(Key, Val)
+		  end, Obj);
+
+update_resource(<<"mqtt_broker.json">>, Obj, _Req, _State) ->
+    lists:foreach(fun({Key, Val}) ->
+			  ok = marionet_config:set(Key, Val)
+		  end, Obj);
+
+update_resource(<<"subscribes.json">>, Obj, _Req, _State) ->
+    NewSubList = proplists:get_value(<<"subscribes">>, Obj),
+    NewSubList1 = lists:map(fun(Sub) ->
+				    T = proplists:get_value(<<"topic">>, Sub),
+				    Q = proplists:get_value(<<"qos">>, Sub),
+				    {T, Q}
+			    end, NewSubList),
+
+    ok = marionet_config:set(<<"subscribes">>, NewSubList1);
+
+update_resource(<<"gpio.json">>, Obj, _Req, _State) ->
+    GpioList = proplists:get_value(<<"gpio">>, Obj),
+
+    NewGpioList = 
+	lists:map(fun(Gpio) ->
+			  PinNo = proplists:get_value(<<"pin_no">>, Gpio),
+			  ModeBin = proplists:get_value(<<"mode">>, Gpio), 
+			  Mode = list_to_existing_atom(binary_to_list(ModeBin)),
+			  OptsBin = proplists:get_value(<<"opts">>, Gpio, []),
+			  Opts = atom_opt(OptsBin),
+			  Edge = proplists:get_value(<<"edge">>, Opts),
+			  Pull = proplists:get_value(<<"pull">>, Opts),
+			  ActiveLow = proplists:get_value(<<"active_low">>,
+							  Opts),
+			  {PinNo, Mode,  [{edge, Edge},
+					  {pull, Pull}, 
+					  {active_low, ActiveLow}]}
+		  end, GpioList),
+
+    ok = marionet_config:set(<<"gpio">>, NewGpioList);
+
+update_resource(<<"arduino.json">>, Obj, _Req, _State) ->
+    DigitalList = proplists:get_value(<<"digital">>, Obj),
+
+    NewDigitalList = 
+	lists:map(fun(Gpio) ->
+			  PinNo = proplists:get_value(<<"pin_no">>, Gpio),
+			  ModeBin = proplists:get_value(<<"mode">>, Gpio), 
+			  Mode = list_to_existing_atom(binary_to_list(ModeBin)),
+			  OptsBin = proplists:get_value(<<"opts">>, Gpio, []),
+			  Opts = atom_opt(OptsBin),
+			  Pull = proplists:get_value(<<"pull">>, Opts),
+
+			  case Pull of
+			      undefined ->
+				  {PinNo, Mode};
+			      P when P =:= up; P =:= none ->
+				  {PinNo, Mode,  [{pull, Pull}]}
+			      end				  
+		  end, DigitalList),
+
+    NewConf = [{ speed, proplists:get_value(<<"speed">>, Obj) },
+	       { device, proplists:get_value(<<"device">>, Obj) },
+
+	       { sampling_interval, 
+		 proplists:get_value(<<"sampling_interval">>, Obj) },
+
+	       { digital_port_reporting,
+		 proplists:get_value(<<"digital_port_reporting">>, Obj) },
+
+	       { digital_port_offset, 
+		 proplists:get_value(<<"digital_port_offset">>, Obj) },
+
+	       { analog_offset, proplists:get_value(<<"analog_offset">>, Obj) },
+	       { analog, proplists:get_value(<<"analog">>, Obj)  },
+	       { digital, NewDigitalList}
+	      ],
+
+    ok = marionet_config:set(<<"arduino">>, NewConf).
+
+%%%===================================================================
+%%% Internal functions
+%%%===================================================================
 
 atom_opt(List) ->
     atom_opt(List, []).
