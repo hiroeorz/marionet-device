@@ -98,7 +98,6 @@ configControllers.controller('SubscribesCtrl', function($scope, $resource) {
     $scope.qosList = [0, 1, 2];
 
     var Subscribe = $resource('/api/config/subscribes.json', {});
-
     var subscribes = Subscribe.get(function() {
 	$scope.subscribes = subscribes;
 	subscribes.subscribes.forEach(function(e) {
