@@ -1,0 +1,97 @@
+<h3>Arduino</h3>
+
+<table class="table">
+  <tbody>
+    <tr>
+      <th>Serial Speed</th>
+      <td><input type="text" ng-model="arduino.speed"
+		 ng-change="toInteger('speed')"></td>
+    </tr>
+    <tr>
+      <th>Device</th>
+      <td><input type="text" ng-model="arduino.device"></td>
+    </tr>
+
+    <tr>
+      <th>Sampling Interval(milliseconds)</th>
+      <td>
+	<input type="text" ng-model="arduino.sampling_interval"
+	       ng-change="toInteger('sampling_interval')">
+      </td>
+    </tr>
+
+    <tr>
+      <th>Digital port offset</th>
+      <td><input type="text" ng-model="arduino.digital_port_offset"
+		 ng-change="toInteger('digital_port_offset')"></td>
+    </tr>
+
+    <tr>
+      <th>Analog offset</th>
+      <td><input type="text" ng-model="arduino.analog_offset"
+		 ng-change="toInteger('analog_offset')"></td>
+    </tr>
+
+  </tbody>
+</table>
+
+
+<h4>Analog Pin</h4>
+<table class="table">
+  <thead>
+    <tr>
+      <td ng-repeat="checked in analogList">
+	{{ $index }}
+      </td>
+    </tr>
+  </thead>
+
+  <tbody>
+    <tr>
+      <td ng-repeat="pinNo in analogList">
+	<input type="checkbox"  ng-model="analogUsingState[pinNo]"
+	       ng-change="analogSelectChanged()">
+      </td>
+    </tr>
+
+  </tbody>
+</table>
+
+
+<hr>
+
+<h4>Digital Pin</h4>
+<table class="table">
+  <thead>
+    <tr>
+      <th>PinNo</th>
+      <th>Mode</th>
+      <th>Pull</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    <tr ng-repeat="pin in arduino.digital">
+      <!-- PinNo -->
+      <th>{{ pin.pin_no }}</th>
+
+      <!-- Mode -->
+      <td><select ng-model="pin.mode" 
+		  ng-options="mode for mode in mode_list">
+      </td>
+
+      <!-- Pull -->
+      <td><select ng-model="pin.opts.pull" 
+		  ng-options="pull for pull in pull_list">
+      </td>
+
+    </tr>
+
+  </tbody>
+</table>
+
+<button class="btn btn-danger" type="button" ng-click="save()">
+  save
+</button>
+
+<hr>
