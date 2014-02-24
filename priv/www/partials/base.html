@@ -14,4 +14,6 @@
 </table>
 
 <hr>
-<button class="btn btn-danger" type="button" ng-click="save()">save</button>
+<button class="btn" type="button"
+	ng-click="save()"
+	ng-class="{'btn-danger':changed, 'btn-success':!changed}">save</button>

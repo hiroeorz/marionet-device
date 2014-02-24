@@ -65,34 +65,41 @@ configControllers.controller('NavCtrl', function($scope, $location) {
 
 // base config
 configControllers.controller('BaseCtrl', function($scope, $resource) {
+    $scope.changed = false;
     $scope.base = undefined;
 
     var Base = $resource('/api/config/base.json', {});
     var base = Base.get(function() {
 	$scope.base = base;
+	setWatch('base', $scope);
     });
     
     $scope.save = function() {
-	base.$save();
+	base.$save(function() { $scope.changed = false; });
+	setWatch('base', $scope);
     }
 });
 
 // mqtt broker config
 configControllers.controller('MqttBrokerCtrl', function($scope, $resource) {
+    $scope.changed = false;
     $scope.mqtt = undefined;
 
     var Mqtt = $resource('/api/config/mqtt_broker.json', {});
     var mqtt = Mqtt.get(function() {
 	$scope.mqtt = mqtt;
+	setWatch('mqtt', $scope);
     });
 
     $scope.save = function() {
-	mqtt.$save();
+	mqtt.$save(function(){ $scope.changed = false; });
+	setWatch('mqtt', $scope);
     }
 });
 
 // subscribes config
 configControllers.controller('SubscribesCtrl', function($scope, $resource) {
+    $scope.changed = false;
     $scope.subscribes = undefined;
     $scope.isChangedFlag = [];
     $scope.qosList = [0, 1, 2];
@@ -103,6 +110,7 @@ configControllers.controller('SubscribesCtrl', function($scope, $resource) {
 	subscribes.subscribes.forEach(function(e) {
 	    $scope.isChangedFlag.push(false);
 	})
+	setWatch('subscribes', $scope);
     });
 
     $scope.addSubscriber = function() {
@@ -120,13 +128,15 @@ configControllers.controller('SubscribesCtrl', function($scope, $resource) {
     }
 
     $scope.save = function() {
-	subscribes.$save();
+	subscribes.$save(function() { $scope.changed = false; });
+	setWatch('subscribes', $scope);
     }
 
 });
 
 // GPIO config
 configControllers.controller('GpioCtrl', function($scope, $resource) {
+    $scope.changed = false;
     $scope.pin_list = []; for(var i=1; i<50; i++){ $scope.pin_list.push(i); }
     $scope.mode_list = ["in", "out"];
     $scope.edge_list = ["rising", "falling", "both", "none"];
@@ -135,16 +145,21 @@ configControllers.controller('GpioCtrl', function($scope, $resource) {
     $scope.gpio = undefined;
  
     var Gpio = $resource('/api/config/gpio.json', {});
-    var gpio = Gpio.get(function() { $scope.gpio = gpio; });
+    var gpio = Gpio.get(function() {
+	$scope.gpio = gpio;
+	setWatch('gpio', $scope);
+    });
 
     $scope.save = function() {
-	gpio.$save()
+	gpio.$save(function() { $scope.changed = false; })
+	setWatch('gpio', $scope);
     }
 
 });
 
 // Arduino config
 configControllers.controller('ArduinoCtrl', function($scope, $resource) {
+    $scope.changed = false;
     $scope.analogList = []; for(var i=0; i<5; i++){ $scope.analogList.push(i); }
     $scope.analogUsingState = [false, false, false, false, false, false];
     $scope.mode_list = ["in", "out", "servo", "pwm"];
@@ -156,11 +171,13 @@ configControllers.controller('ArduinoCtrl', function($scope, $resource) {
 	$scope.arduino = arduino;
 	arduino.analog.forEach(function(aiNo) {
 	    $scope.analogUsingState[aiNo] = true;
-	})
+	});
+	setWatch('arduino', $scope);
     });
 
     $scope.save = function() {
-	arduino.$save()
+	arduino.$save(function() { $scope.changed = false; })
+	setWatch('arduino', $scope);
     }
 
     $scope.analogSelectChanged = function() {
@@ -177,3 +194,9 @@ configControllers.controller('ArduinoCtrl', function($scope, $resource) {
 	arduino[name] = Number(arduino[name]);
     }
 });
+
+var setWatch = function(target, scope) {
+    setTimeout(function() {
+	scope.$watch(target, function() { scope.changed = true; });
+    }, 1000);
+}

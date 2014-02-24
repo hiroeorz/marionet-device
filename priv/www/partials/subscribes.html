@@ -26,8 +26,8 @@
 <button class="btn btn-primary" type="button"
 	ng-click="addSubscriber()">add</button>
 
-<button class="btn btn-danger" type="button" ng-click="save()">
-  save
-</button>
+<button class="btn" type="button"
+	ng-click="save()"
+	ng-class="{'btn-danger':changed, 'btn-success':!changed}">save</button>
 
 <hr>
