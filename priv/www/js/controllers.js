@@ -75,8 +75,10 @@ configControllers.controller('BaseCtrl', function($scope, $resource) {
     });
     
     $scope.save = function() {
-	base.$save(function() { $scope.changed = false; });
-	setWatch('base', $scope);
+	base.$save(function() {
+	    $scope.changed = false;
+	    setWatch('base', $scope);
+	});
     }
 });
 
@@ -92,8 +94,10 @@ configControllers.controller('MqttBrokerCtrl', function($scope, $resource) {
     });
 
     $scope.save = function() {
-	mqtt.$save(function(){ $scope.changed = false; });
-	setWatch('mqtt', $scope);
+	mqtt.$save(function(){ 
+	    $scope.changed = false; 
+	    setWatch('mqtt', $scope);
+	});
     }
 });
 
@@ -128,8 +132,10 @@ configControllers.controller('SubscribesCtrl', function($scope, $resource) {
     }
 
     $scope.save = function() {
-	subscribes.$save(function() { $scope.changed = false; });
-	setWatch('subscribes', $scope);
+	subscribes.$save(function() {
+	    $scope.changed = false;
+	    setWatch('subscribes', $scope);
+	});
     }
 
 });
@@ -151,8 +157,10 @@ configControllers.controller('GpioCtrl', function($scope, $resource) {
     });
 
     $scope.save = function() {
-	gpio.$save(function() { $scope.changed = false; })
-	setWatch('gpio', $scope);
+	gpio.$save(function() {
+	    $scope.changed = false;
+	    setWatch('gpio', $scope);
+	})
     }
 
 });
@@ -176,8 +184,10 @@ configControllers.controller('ArduinoCtrl', function($scope, $resource) {
     });
 
     $scope.save = function() {
-	arduino.$save(function() { $scope.changed = false; })
-	setWatch('arduino', $scope);
+	arduino.$save(function() {
+	    $scope.changed = false;
+	    setWatch('arduino', $scope);
+	})
     }
 
     $scope.analogSelectChanged = function() {
