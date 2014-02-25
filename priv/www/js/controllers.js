@@ -207,6 +207,7 @@ configControllers.controller('ArduinoCtrl', function($scope, $resource) {
 
 var setWatch = function(target, scope) {
     setTimeout(function() {
+	scope.changed = false;
 	scope.$watch(target, function() { scope.changed = true; });
-    }, 1000);
+    }, 300);
 }
