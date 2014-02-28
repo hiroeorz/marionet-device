@@ -1,17 +1,17 @@
 
 
-# Module marionet_device_sup #
+# Module marionet_device_sup2 #
 * [Description](#description)
 * [Function Index](#index)
 * [Function Details](#functions)
 
 
 .
-Copyright (c) (C) 2014, HIROE Shin
+Copyright (c) (C) 2013, HIROE Shin
 
 __Behaviours:__ [`supervisor`](supervisor.md).
 
-__Authors:__ HIROE Shin ([`shin@HIROE-no-MacBook-Pro.local`](mailto:shin@HIROE-no-MacBook-Pro.local)).
+__Authors:__ HIROE Shin ([`shin@hibiscus`](mailto:shin@hibiscus)).
 <a name="index"></a>
 
 ## Function Index ##
@@ -33,8 +33,6 @@ __Authors:__ HIROE Shin ([`shin@HIROE-no-MacBook-Pro.local`](mailto:shin@HIROE-n
 start_link() -&gt; {ok, Pid} | ignore | {error, Error}
 </code></pre>
 
-<br></br>
-
+<ul class="definitions"><li><code>Pid = pid()</code></li><li><code>Error = term()</code></li></ul>
 
 Starts the supervisor
-
