@@ -30,6 +30,10 @@ configApp.config(['$routeProvider',
 			      templateUrl: 'partials/arduino.html',
 			      controller: 'ArduinoCtrl'
 			  }).
+			  when('/omron_plc', {
+			      templateUrl: 'partials/omron_plc.html',
+			      controller: 'OmronPlcCtrl'
+			  }).
 			  otherwise({
 			      redirectTo: '/base'
 			  });
@@ -45,11 +49,12 @@ var configControllers = angular.module('configControllers', []);
 configControllers.controller('NavCtrl', function($scope, $location) {
     $scope.selected = undefined;
     $scope.menuList = [
-	{title: "Base"     , href:"#/base"       },
-	{title: "MQTT"     , href:"#/mqtt_broker"},
-	{title: "Subscribe", href:"#/subscribes" },
-	{title: "GPIO"     , href:"#/gpio"       },
-	{title: "Arduino  ", href:"#/arduino"    }
+	{title: "Base"      , href:"#/base"       },
+	{title: "MQTT"      , href:"#/mqtt_broker"},
+	{title: "Subscribe" , href:"#/subscribes" },
+	{title: "GPIO"      , href:"#/gpio"       },
+	{title: "Arduino"   , href:"#/arduino"    },
+	{title: "OMRON PLC" , href:"#/omron_plc"  }
     ];
     
     $scope.setActionButton = function(path) {
@@ -172,6 +177,7 @@ configControllers.controller('ArduinoCtrl', function($scope, $resource) {
     $scope.analogUsingState = [false, false, false, false, false, false];
     $scope.mode_list = ["in", "out", "servo", "pwm"];
     $scope.pull_list = ["up", "none"];
+    $scope.detailStyle = { display:'none' };
     $scope.arduino = undefined;
  
     var Arduino = $resource('/api/config/arduino.json', {});
@@ -203,6 +209,45 @@ configControllers.controller('ArduinoCtrl', function($scope, $resource) {
     $scope.toInteger = function(name) {
 	arduino[name] = Number(arduino[name]);
     }
+
+    $scope.enableChanged = function() {
+	if ($scope.arduino.arduino_enable) {
+	    $scope.detailStyle = { display:'block' };
+	} else {
+	    $scope.detailStyle = { display:'none' };
+	}
+    }
+
+});
+
+// omron plc
+configControllers.controller('OmronPlcCtrl', function($scope, $resource) {
+    $scope.changed = false;
+    $scope.enable = false;
+    $scope.detailStyle = { display:'none' };
+
+//    var Base = $resource('/api/config/base.json', {});
+//    var base = Base.get(function() {
+//	$scope.base = base;
+//	setWatch('base', $scope);
+//    });
+    
+//    $scope.save = function() {
+//	base.$save(function() {
+//	    $scope.changed = false;
+//	    setWatch('base', $scope);
+//	});
+//    }
+
+    $scope.enableChanged = function() {
+	if ($scope.enable) {
+	    $scope.detailStyle = { display:'block' };
+	} else {
+	    $scope.detailStyle = { display:'none' };
+	}
+
+    }
+
 });
 
 var setWatch = function(target, scope) {

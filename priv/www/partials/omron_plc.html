@@ -1,0 +1,21 @@
+<h3>OMRON PLC</h3>
+
+<!-- OMRON PLC enable/disable -->
+<h4>Enable/Disable</h4>
+<input type="checkbox"  ng-model="enable"
+       ng-change="enableChanged()"
+       id="omron-plc-enable">
+
+<label for="omron-plc-enable" style="display:inline;">
+  Enable OMRON PLC
+</label><br><br>
+
+<div ng-style="detailStyle">
+  <hr>
+
+</div>
+
+<hr>
+<button class="btn" type="button"
+	ng-click="save()"
+	ng-class="{'btn-danger':changed, 'btn-success':!changed}">save</button>

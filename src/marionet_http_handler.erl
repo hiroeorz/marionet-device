@@ -200,8 +200,10 @@ update_resource(<<"arduino.json">>, Obj, _Req, _State) ->
 	       { analog, proplists:get_value(<<"analog">>, Obj)  },
 	       { digital, NewDigitalList}
 	      ],
-
-    ok = marionet_config:set(<<"arduino">>, NewConf).
+    ok = marionet_config:set(<<"arduino">>, NewConf),
+    
+    ArduinoEnable = proplists:get_value(<<"arduino_enable">>, Obj),
+    ok = marionet_config:set(<<"arduino_enable">>, ArduinoEnable).
 
 %%%===================================================================
 %%% Internal functions
