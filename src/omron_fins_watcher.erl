@@ -70,6 +70,14 @@ init([Config]) ->
     DigitalNoList = proplists:get_value(digital, Config, []),
     Interval = proplists:get_value(check_interval, Config, 2900),
 
+    lager:debug("omron_fins_watcher start arguments...."),
+    lager:debug("PLC Port      : ~p", [Port]),
+    lager:debug("Analog Offset : ~p", [AnalogOffset]),
+    lager:debug("Digital Offset: ~p", [DigitalOffset]),
+    lager:debug("Watch Analogs : ~p", [AnalogNoList]),
+    lager:debug("Watch Digitals: ~p", [DigitalNoList]),
+    lager:debug("Interval      : ~p", [Interval]),
+
     {ok, TRef} = timer:apply_interval(Interval, ?MODULE, check_status, []),
     {ok, #state{dst_address = DstAddress, port = Port, timer_ref = TRef,
 		analog_offset=AnalogOffset, digital_port_offset=DigitalOffset,

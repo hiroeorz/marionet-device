@@ -209,7 +209,39 @@ update_resource(<<"arduino.json">>, Obj, _Req, _State) ->
     ok = marionet_config:set(<<"arduino">>, NewConf),
     
     ArduinoEnable = proplists:get_value(<<"arduino_enable">>, Obj),
-    ok = marionet_config:set(<<"arduino_enable">>, ArduinoEnable).
+    ok = marionet_config:set(<<"arduino_enable">>, ArduinoEnable);
+
+update_resource(<<"omron_fins.json">>, Obj, _Req, _State) ->
+    FinsEnable = proplists:get_value(<<"omron_fins_enable">>, Obj),
+    Conf = proplists:get_value(<<"omron_fins">>, Obj),
+
+    NewConf = [{ ip_address, 
+		 proplists:get_value(<<"ip_address">>, Conf) },
+
+	       { dst_address, 
+		 proplists:get_value(<<"dst_address">>, Conf) },
+
+	       { port, 
+		 proplists:get_value(<<"port">>, Conf) },
+
+	       { check_interval, 
+		 proplists:get_value(<<"check_interval">>, Conf) },
+
+	       { analog_offset, 
+		 proplists:get_value(<<"analog_offset">>, Conf) },
+
+	       { digital_port_offset, 
+		 proplists:get_value(<<"digital_port_offset">>, Conf) },
+
+	       { analog,
+		 proplists:get_value(<<"analog">>, Conf) },
+
+	       { digital,
+		 proplists:get_value(<<"digital">>, Conf) }
+	      ],
+
+    ok = marionet_config:set(<<"omron_fins">>, NewConf),
+    ok = marionet_config:set(<<"omron_fins_enable">>, FinsEnable).
 
 %%%===================================================================
 %%% Internal functions

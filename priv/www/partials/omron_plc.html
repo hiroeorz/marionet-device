@@ -2,7 +2,7 @@
 
 <!-- OMRON PLC enable/disable -->
 <h4>Enable/Disable</h4>
-<input type="checkbox"  ng-model="enable"
+<input type="checkbox"  ng-model="fins.omron_fins_enable"
        ng-change="enableChanged()"
        id="omron-plc-enable">
 
@@ -12,6 +12,81 @@
 
 <div ng-style="detailStyle">
   <hr>
+
+  <h4>Details</h4>
+  <table class="table">
+    <tbody>
+      <tr>
+	<th>Listen IP Address</th>
+	<td><input type="text" ng-model="fins.omron_fins.ip_address"></td>
+      </tr>
+      <tr>
+	<th>PLC IP Address</th>
+	<td><input type="text" ng-model="fins.omron_fins.dst_address"></td>
+      </tr>
+
+      <tr>
+	<th>Port</th>
+	<td>
+	  <input type="text" ng-model="fins.omron_fins.port"
+		 ng-change="toInteger('port')">
+	</td>
+      </tr>
+
+      <tr>
+	<th>Check Interval (ms)</th>
+	<td><input type="text" ng-model="fins.omron_fins.check_interval"
+		   ng-change="toInteger('check_interval')"></td>
+      </tr>
+
+      <tr>
+	<th>Analog offset</th>
+	<td><input type="text" ng-model="fins.omron_fins.analog_offset"
+		   ng-change="toInteger('analog_offset')"></td>
+      </tr>
+
+      <tr>
+	<th>Digital port offset</th>
+	<td><input type="text" ng-model="fins.omron_fins.digital_port_offset"
+		   ng-change="toInteger('digital_port_offset')"></td>
+      </tr>
+
+      <tr>
+	<th>Analog DM areas</th>
+	<td>
+	  <input type="text" style="width:60px; text-align:right;"
+		 ng-model="analogInput">
+	  <button class="btn btn-success" type="button" 
+		  ng-click="addAnalog()">add</button>
+	  <button class="btn btn-danger" type="button"
+		  ng-click="delAnalog()">delete</button>
+	  <br>
+	  <select multiple disabled="disabled"
+		    ng-model="fins.omron_fins.analog"
+		    ng-options="analog for analog in fins.omron_fins.analog"
+                    style="width:200px; height:400px; text-align:right;">
+	</td>
+      </tr>
+
+      <tr>
+	<th>Digital DM areas</th>
+	<td>
+	  <input type="text" style="width:60px; text-align:right;"
+		 ng-model="digitalInput">
+	  <button class="btn btn-success" type="button" 
+		  ng-click="addDigital()">add</button>
+	  <button class="btn btn-danger" type="button"
+		  ng-click="delDigital()">delete</button>
+	  <br>
+	  <select multiple disabled="disabled"
+		    ng-model="fins.omron_fins.digital"
+		    ng-options="digital for digital in fins.omron_fins.digital"
+                    style="width:200px; height:400px; text-align:right;">
+	</td>
+      </tr>
+
+    </tbody>
+  </table>
 
 </div>
 

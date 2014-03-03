@@ -32,7 +32,7 @@ configApp.config(['$routeProvider',
 			  }).
 			  when('/omron_plc', {
 			      templateUrl: 'partials/omron_plc.html',
-			      controller: 'OmronPlcCtrl'
+			      controller: 'OmronFinsCtrl'
 			  }).
 			  otherwise({
 			      redirectTo: '/base'
@@ -183,6 +183,7 @@ configControllers.controller('ArduinoCtrl', function($scope, $resource) {
     var Arduino = $resource('/api/config/arduino.json', {});
     var arduino = Arduino.get(function() {
 	$scope.arduino = arduino;
+	$scope.enableChanged();
 	arduino.analog.forEach(function(aiNo) {
 	    $scope.analogUsingState[aiNo] = true;
 	});
@@ -220,32 +221,103 @@ configControllers.controller('ArduinoCtrl', function($scope, $resource) {
 
 });
 
-// omron plc
-configControllers.controller('OmronPlcCtrl', function($scope, $resource) {
+// omron fins
+configControllers.controller('OmronFinsCtrl', function($scope, $resource) {
     $scope.changed = false;
-    $scope.enable = false;
     $scope.detailStyle = { display:'none' };
+    $scope.fins = undefined;
 
-//    var Base = $resource('/api/config/base.json', {});
-//    var base = Base.get(function() {
-//	$scope.base = base;
-//	setWatch('base', $scope);
-//    });
+    $scope.analogInput = "0"
+
+    var OmronFins = $resource('/api/config/omron_fins.json', {});
+    var fins = OmronFins.get(function() {
+	$scope.fins = fins;
+	$scope.enableChanged();
+	setDefaultAnalogInput();
+	setDefaultDigitalInput();
+	setWatch('fins', $scope);
+    });
     
-//    $scope.save = function() {
-//	base.$save(function() {
-//	    $scope.changed = false;
-//	    setWatch('base', $scope);
-//	});
-//    }
+    $scope.save = function() {
+	fins.$save(function() {
+	    $scope.changed = false;
+	    setWatch('fins', $scope);
+	});
+    }
+
+    $scope.toInteger = function(name) {
+	fins.omron_fins[name] = Number(fins.omron_fins[name]);
+    }
 
     $scope.enableChanged = function() {
-	if ($scope.enable) {
+	if ($scope.fins.omron_fins_enable) {
 	    $scope.detailStyle = { display:'block' };
 	} else {
 	    $scope.detailStyle = { display:'none' };
 	}
+    }
 
+    $scope.addAnalog = function() {
+	fins.omron_fins.analog.push(parseInt($scope.analogInput));
+	fins.omron_fins.analog = sortInteger(fins.omron_fins.analog);
+	setDefaultAnalogInput();
+    }
+
+    $scope.delAnalog = function() {
+	var array = [];
+	var value = parseInt($scope.analogInput);
+
+	fins.omron_fins.analog.forEach(function(e) {
+	    if (e != value) array.push(e);
+	})
+
+	fins.omron_fins.analog = sortInteger(array);
+	setDefaultAnalogInput();
+    }
+
+    $scope.addDigital = function() {
+	fins.omron_fins.digital.push(parseInt($scope.digitalInput));
+	fins.omron_fins.digital = sortInteger(fins.omron_fins.digital);
+	setDefaultDigitalInput();
+    }
+
+    $scope.delDigital = function() {
+	var array = [];
+	var value = parseInt($scope.digitalInput);
+
+	fins.omron_fins.digital.forEach(function(e) {
+	    if (e != value) array.push(e);
+	})
+
+	fins.omron_fins.digital = sortInteger(array);
+	setDefaultDigitalInput();
+    }
+
+    setDefaultAnalogInput = function() {
+	if (fins.omron_fins.analog.length === 0) {
+	    $scope.analogInput = ""
+	} else {
+	    $scope.analogInput = Math.max.apply(null, 
+						fins.omron_fins.analog) + 1;
+	}
+    }
+
+    setDefaultDigitalInput = function() {
+	if (fins.omron_fins.digital.length === 0) {
+	    $scope.digitalInput = ""
+	} else {
+	    $scope.digitalInput = Math.max.apply(null, 
+						fins.omron_fins.digital) + 1;
+	}
+    }
+
+    sortInteger = function(array) {
+	array.sort(function(a1, a2) {
+	    if (a1 < a2) return -1;
+	    if (a1 > a2) return  1;
+	    return 0;
+	});
+	return array
     }
 
 });
