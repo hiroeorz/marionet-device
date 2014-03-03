@@ -113,6 +113,12 @@ get_resource(<<"arduino.json">>, Req, State) ->
 	   {digital, Digital1}
 	  ],
 
+    {marionet_json:encode(Obj), Req, State};
+
+get_resource(<<"omron_fins.json">>, Req, State) ->
+    Enable = marionet_config:get(omron_fins_enable),
+    OmronFins = marionet_config:get(omron_fins),
+    Obj = [{omron_fins_enable, Enable}, {omron_fins, OmronFins}],
     {marionet_json:encode(Obj), Req, State}.
 
 update(Req, State) ->
@@ -200,8 +206,10 @@ update_resource(<<"arduino.json">>, Obj, _Req, _State) ->
 	       { analog, proplists:get_value(<<"analog">>, Obj)  },
 	       { digital, NewDigitalList}
 	      ],
-
-    ok = marionet_config:set(<<"arduino">>, NewConf).
+    ok = marionet_config:set(<<"arduino">>, NewConf),
+    
+    ArduinoEnable = proplists:get_value(<<"arduino_enable">>, Obj),
+    ok = marionet_config:set(<<"arduino_enable">>, ArduinoEnable).
 
 %%%===================================================================
 %%% Internal functions

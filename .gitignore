@@ -17,3 +17,4 @@ priv/rgpio_lib
 c_src/*.o
 rel/marionet-device-001/marionet-device-001
 rel/marionet-device-002/marionet-device-002
+rel/plc/plc

@@ -3,15 +3,17 @@
   <tbody>
     <tr>
       <th>Device ID</th>
-      <td><input type="text" value="" ng-model="deviceId"></td>
+      <td><input type="text" value="" ng-model="base.device_id"></td>
     </tr>
     <tr>
       <th>Group ID</th>
-      <td><input type="text" value="" ng-model="groupId"></td>
+      <td><input type="text" value="" ng-model="base.group_id"></td>
     </tr>
 
   </tbody>
 </table>
 
 <hr>
-<button class="btn btn-danger" type="button" ng-click="save()">save</button>
+<button class="btn" type="button"
+	ng-click="save()"
+	ng-class="{'btn-danger':changed, 'btn-success':!changed}">save</button>

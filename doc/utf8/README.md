@@ -21,5 +21,6 @@
 <tr><td><a href="omron_fins_event.md" class="module">omron_fins_event</a></td></tr>
 <tr><td><a href="omron_fins_watcher.md" class="module">omron_fins_watcher</a></td></tr>
 <tr><td><a href="sample_io_event_handler.md" class="module">sample_io_event_handler</a></td></tr>
-<tr><td><a href="sample_sub_event_handler.md" class="module">sample_sub_event_handler</a></td></tr></table>
+<tr><td><a href="sample_sub_event_handler.md" class="module">sample_sub_event_handler</a></td></tr>
+<tr><td><a href="sample_sub_plc_event_handler.md" class="module">sample_sub_plc_event_handler</a></td></tr></table>
 
