@@ -21,5 +21,6 @@
 <tr><td><a href="http://github.com/hiroeorz17/marionet-device/blob/master/doc/omron_fins_event.md" class="module">omron_fins_event</a></td></tr>
 <tr><td><a href="http://github.com/hiroeorz17/marionet-device/blob/master/doc/omron_fins_watcher.md" class="module">omron_fins_watcher</a></td></tr>
 <tr><td><a href="http://github.com/hiroeorz17/marionet-device/blob/master/doc/sample_io_event_handler.md" class="module">sample_io_event_handler</a></td></tr>
-<tr><td><a href="http://github.com/hiroeorz17/marionet-device/blob/master/doc/sample_sub_event_handler.md" class="module">sample_sub_event_handler</a></td></tr></table>
+<tr><td><a href="http://github.com/hiroeorz17/marionet-device/blob/master/doc/sample_sub_event_handler.md" class="module">sample_sub_event_handler</a></td></tr>
+<tr><td><a href="http://github.com/hiroeorz17/marionet-device/blob/master/doc/sample_sub_plc_event_handler.md" class="module">sample_sub_plc_event_handler</a></td></tr></table>
 

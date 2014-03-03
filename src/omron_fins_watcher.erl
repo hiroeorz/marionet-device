@@ -180,6 +180,15 @@ report_digital(_No, [], _) ->
 report_digital(No, [Val | Tail], [Val | TailOld]) ->
     report_digital(No + 2, Tail, TailOld);
 
+report_digital(No, [Val | Tail], []) ->
+    Least = Val div 256,
+    Status1 = bit_list(Least),
+    gen_event:notify(omron_fins_event, {digital_port_changed, No, Status1}),
+    Most = Val rem 256,
+    Status2 = bit_list(Most),
+    gen_event:notify(omron_fins_event, {digital_port_changed, No+1, Status2}),
+    report_digital(No + 2, Tail, []);
+
 report_digital(No, [Val | Tail], [OldVal | TailOld]) ->
     Least = Val div 256,
     OldLeast = OldVal div 256,

@@ -45,6 +45,9 @@ generate-001:
 generate-002:
 	cd rel/marionet-device-002 && $(REBAR_GEN) generate
 
+generate-plc:
+	cd rel/plc && $(REBAR_GEN) generate
+
 dialyzer: compile
 	@$(DIALYZER) ebin deps/serial/ebin
 

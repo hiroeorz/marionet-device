@@ -1,16 +1,22 @@
 <h3>Subscribes</h3>
 <table class="table">
+  <thead>
+    <th>Topic</th>
+    <th>QoS</th>
+  </thead>
   <tbody>
     <tr ng-repeat="sub in subscribes.subscribes">
-      <th>Topic</th>
       <td><input type="text" ng-model="sub.topic"
 		 required
 		 ng-trim="true"></td>
 
-      <th>QoS</th>
       <td><select ng-model="sub.qos" 
 		  ng-options="qos for qos in qosList"
-                  style="width:50px;">
+                  style="width:50px;"></td>
+
+      <td>
+	<button class="btn btn-warning" type="button"
+		ng-click="delSubscriber($index)">delete</button>
       </td>
     </tr>
     
@@ -20,8 +26,8 @@
 <button class="btn btn-primary" type="button"
 	ng-click="addSubscriber()">add</button>
 
-<button class="btn btn-danger" type="button" ng-click="save()">
-  save
-</button>
+<button class="btn" type="button"
+	ng-click="save()"
+	ng-class="{'btn-danger':changed, 'btn-success':!changed}">save</button>
 
 <hr>
