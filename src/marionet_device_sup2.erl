@@ -119,7 +119,7 @@ fins_port_spec() ->
     IPAddress = proplists:get_value(ip_address, Config),
     Port = proplists:get_value(port, Config, 9600),
 
-    {omron_fins_port, {omron_fins, start_port, [IPAddress, Port]},
+    {omron_fins_port, {omron_fins_port, start_link, [IPAddress, Port]},
      Restart, Shutdown, Type, [omron_fins_port]}.
 
 fins_event_spec(IOEventHandler) ->

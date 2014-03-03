@@ -39,6 +39,10 @@ get(Req, State) ->
     {[<<"config">>, ResourceName], Req1} = cowboy_req:path_info(Req),
     get_resource(ResourceName, Req1, State).
 
+get_resource(<<"status.json">>, Req, State) ->
+    Obj = [{status, <<"available">>}],
+    {marionet_json:encode(Obj), Req, State};
+
 get_resource(<<"base.json">>, Req, State) ->
     Obj = [{device_id, marionet_config:get(device_id)},
 	   {group_id,  marionet_config:get(group_id)}
@@ -128,6 +132,18 @@ update(Req, State) ->
     io:format("body: ~p~n", [Obj]),
     ok = update_resource(ResourceName, Obj, Req, State),
     {true, Req2, State}.
+
+update_resource(<<"status.json">>, Obj, _Req, _State) ->
+    case proplists:get_value(<<"status">>, Obj) of
+	<<"restart">> ->
+	    lager:notice("System Restarting..."),
+	    application:stop(marionet_device),
+	    timer:sleep(3000),
+	    application:start(marionet_device),
+	    ok;
+	_ ->
+	    ok
+    end;
 
 update_resource(<<"base.json">>, Obj, _Req, _State) ->
     lists:foreach(fun({Key, Val}) ->

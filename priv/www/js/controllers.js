@@ -10,6 +10,10 @@ var configApp = angular.module('configApp', [
 configApp.config(['$routeProvider',
 		  function($routeProvider) {
 		      $routeProvider.
+			  when('/status', {
+			      templateUrl: 'partials/status.html',
+			      controller: 'StatusCtrl'
+			  }).
 			  when('/base', {
 			      templateUrl: 'partials/base.html',
 			      controller: 'BaseCtrl'
@@ -35,7 +39,7 @@ configApp.config(['$routeProvider',
 			      controller: 'OmronFinsCtrl'
 			  }).
 			  otherwise({
-			      redirectTo: '/base'
+			      redirectTo: '/status'
 			  });
 		  }]);
 
@@ -49,6 +53,7 @@ var configControllers = angular.module('configControllers', []);
 configControllers.controller('NavCtrl', function($scope, $location) {
     $scope.selected = undefined;
     $scope.menuList = [
+	{title: "Status"    , href:"#/status"     },
 	{title: "Base"      , href:"#/base"       },
 	{title: "MQTT"      , href:"#/mqtt_broker"},
 	{title: "Subscribe" , href:"#/subscribes" },
@@ -66,6 +71,25 @@ configControllers.controller('NavCtrl', function($scope, $location) {
     }
 
     $scope.setActionButton("#" + $location.path());
+});
+
+// base config
+configControllers.controller('StatusCtrl', function($scope, $resource) {
+    $scope.status = undefined;
+    $scope.message = "";
+
+    var Status = $resource('/api/config/status.json', {});
+    var status = Status.get(function() {
+	$scope.status = status;
+    });
+
+    $scope.restart = function() {
+	status.status = "restart";
+	status.$save(function() {
+	    $scope.message = "System restarted."
+	})
+    }
+    
 });
 
 // base config

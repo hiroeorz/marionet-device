@@ -28,6 +28,8 @@ start_http() ->
 	     ],
 
     Dispatch = cowboy_router:compile([ {'_', Routes} ]),
-    {ok, _} = cowboy:start_http(http, 10, [{port, 8080}],
-				[ {env, [{dispatch, Dispatch}]} ]),
-    ok.
+    case cowboy:start_http(http, 10, [{port, 8080}],
+			   [ {env, [{dispatch, Dispatch}]} ]) of
+	{ok, _} -> ok;
+	{error, {already_started, _Pid}} -> ok
+    end.
