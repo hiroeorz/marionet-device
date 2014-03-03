@@ -113,6 +113,12 @@ get_resource(<<"arduino.json">>, Req, State) ->
 	   {digital, Digital1}
 	  ],
 
+    {marionet_json:encode(Obj), Req, State};
+
+get_resource(<<"omron_fins.json">>, Req, State) ->
+    Enable = marionet_config:get(omron_fins_enable),
+    OmronFins = marionet_config:get(omron_fins),
+    Obj = [{omron_fins_enable, Enable}, {omron_fins, OmronFins}],
     {marionet_json:encode(Obj), Req, State}.
 
 update(Req, State) ->
