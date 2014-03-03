@@ -86,7 +86,7 @@ get_resource(<<"arduino.json">>, Req, State) ->
     Device = case proplists:get_value(device, Arduino) of
 		 DBin when is_binary(DBin) ->
 		     DBin;
-		 DList when is_binary(DList) ->
+		 DList when is_list(DList) ->
 		     list_to_binary(DList)
 	     end,
  
