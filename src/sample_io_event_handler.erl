@@ -17,13 +17,13 @@
 -define(SERVER, ?MODULE).
 -define(DIGITAL_CODE, 1).
 -define(ANALOG_CODE, 2).
--define(ANALOG_SEND_INTERVAL, 3).          %% second
 -define(ANALOG_CHANGE_LIMIT_FOR_SEND, 5).  %% 0 - 1023
 
 -record(state, {group_id                        :: binary(),
 		device_id                       :: binary(),
 		analog_sent_time = dict:new()   :: non_neg_integer(),
-		analog_before_vals = dict:new() :: dict() }).
+		analog_before_vals = dict:new() :: dict(),
+		analog_pub_interval = 3000      :: pos_integer() }).
 
 %%%===================================================================
 %%% gen_event callbacks
@@ -38,9 +38,11 @@
 %% @spec init(Args) -> {ok, State}
 %% @end
 %%--------------------------------------------------------------------
-init([GroupId, DeviceId] = Args) ->
+init([GroupId, DeviceId, AnalogPubInterval] = Args) ->
     lager:info("Start I/O event handler: ~p, ~p", [?MODULE, Args]),
-    {ok, #state{group_id = GroupId, device_id = DeviceId}}.
+    {ok, #state{group_id = GroupId, 
+		device_id = DeviceId, 
+		analog_pub_interval = AnalogPubInterval}}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -72,15 +74,15 @@ handle_event({digital_port_changed, PortNo, Status},
 handle_event({analog_recv, PinNo, Val},
 	     State=#state{device_id=DeviceId, group_id = GroupId, 
 			  analog_sent_time = SentTimes,
-			  analog_before_vals = BeforeVals}) ->
-
+			  analog_before_vals = BeforeVals,
+			  analog_pub_interval = AnalogPubInterval}) ->
     NowTime = calendar:datetime_to_gregorian_seconds({date(), time()}),
     BeforeSentTime = case dict:find(PinNo, SentTimes) of
 			 error     -> 0;
 			 {ok, Sec} -> Sec
 		     end, 
 
-    if ?ANALOG_SEND_INTERVAL =< (NowTime - BeforeSentTime) ->
+    if AnalogPubInterval =< ((NowTime - BeforeSentTime) * 1000) ->
 	    publish_analog(GroupId, DeviceId, PinNo, Val),
 	    NewSentTimes = dict:store(PinNo, NowTime, SentTimes),
 	    {ok, State#state{analog_sent_time =  NewSentTimes}};

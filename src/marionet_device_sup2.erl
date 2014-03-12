@@ -63,37 +63,43 @@ init([]) ->
     Subscribes = marionet_config:get(subscribes),
     GroupId = marionet_config:get(group_id),
     DeviceId = marionet_config:get(device_id),
+    AnalogPubInterval = marionet_config:get(analog_publish_interval),
 
     Specs = [gpio_sup_spec(),
 	     mqtt_spec(),
 	     status_spec(),
 	     event_sup_spec(emqttc_event, SubEventHandler, [Subscribes]),
 	     event_sup_spec(gpio_pin_event, marionet_device_event, []),
-	     event_sup_spec(gpio_pin_event, IOEventHandler, [GroupId, DeviceId])
+	     event_sup_spec(gpio_pin_event, IOEventHandler,
+			    [GroupId, DeviceId, AnalogPubInterval])
 	    ],
 
     Specs1 = 
 	case ArduinoEnable of
 	    true  -> 
-		Specs ++ [arduino_sup_spec(),
-			  event_sup_spec(arduino_event,
-					 marionet_device_event, []),
-			  event_sup_spec(arduino_event,
-					 IOEventHandler, [GroupId, DeviceId]) ];
+		[arduino_sup_spec(),
+		 event_sup_spec(arduino_event, marionet_device_event, []),
+		 event_sup_spec(arduino_event, IOEventHandler, 
+				[GroupId, DeviceId, AnalogPubInterval])
+		];
 		 false -> 
-		     Specs
+		     []
 	     end,
 
     Specs2 = 
 	case OmronFinsEnable of
 	    true  -> 
-		Specs1 ++ [fins_port_spec(),
-			   fins_event_spec(IOEventHandler),
-			   fins_watcher_spec()];
-	    false -> Specs1
+		[fins_port_spec(),
+		 fins_event_spec(),
+		 event_sup_spec(omron_fins_event, IOEventHandler,
+				[GroupId, DeviceId, AnalogPubInterval]),
+		 fins_watcher_spec()
+		];
+	    false ->
+		[]
 	end,
 
-    {ok, {SupFlags, Specs2}}.
+    {ok, {SupFlags, Specs ++ Specs1 ++ Specs2}}.
 
 %%%===================================================================
 %%% Internal functions
@@ -122,16 +128,12 @@ fins_port_spec() ->
     {omron_fins_port, {omron_fins_port, start_link, [IPAddress, Port]},
      Restart, Shutdown, Type, [omron_fins_port]}.
 
-fins_event_spec(IOEventHandler) ->
+fins_event_spec() ->
     Restart = permanent,
     Shutdown = 2000,
     Type = worker,
-
-    DeviceId = marionet_config:get(device_id),
-    Handlers = [ {marionet_device_event,  []},
-		 {IOEventHandler, [DeviceId]} ],
-
-    {omron_fins_event, {omron_fins_event, start_link, [Handlers]},
+    
+    {omron_fins_event, {omron_fins_event, start_link, [ [] ]},
      Restart, Shutdown, Type, [omron_fins_event]}.
 
 fins_watcher_spec() ->
