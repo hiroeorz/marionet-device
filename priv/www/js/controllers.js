@@ -161,10 +161,38 @@ configControllers.controller('SubscribesCtrl', function($scope, $resource) {
     }
 
     $scope.save = function() {
+	// '+'が文字化けしないように送信時だけエンコードする
+	subscribes.subscribes = encodeTopics(subscribes.subscribes);
+
 	subscribes.$save(function() {
+	    subscribes.subscribes = decodeTopics(subscribes.subscribes);
 	    $scope.changed = false;
 	    setWatch('subscribes', $scope);
 	});
+    }
+
+    encodeTopics = function(subArray) {
+	var newArray = [];
+
+	for(var i = 0; i < subArray.length; i++) {
+	    newArray[i] = subArray[i];
+	    newArray[i].topic = encodeURIComponent(subArray[i].topic)
+	}
+
+	console.log(newArray);
+	return newArray
+    }
+
+    decodeTopics = function(subArray) {
+	var newArray = [];
+
+	for(var i = 0; i < subArray.length; i++) {
+	    newArray[i] = subArray[i];
+	    newArray[i].topic = decodeURIComponent(subArray[i].topic)
+	}
+
+	console.log(newArray);
+	return newArray
     }
 
 });

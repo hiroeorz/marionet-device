@@ -128,6 +128,7 @@ get_resource(<<"omron_fins.json">>, Req, State) ->
 update(Req, State) ->
     {[<<"config">>, ResourceName], Req1} = cowboy_req:path_info(Req),
     {ok, [{Json, true}], Req2} = cowboy_req:body_qs(8000000, Req1),
+    io:format("body(json): ~p~n", [Json]),
     Obj = marionet_json:decode(Json),
     io:format("body: ~p~n", [Obj]),
     ok = update_resource(ResourceName, Obj, Req, State),
