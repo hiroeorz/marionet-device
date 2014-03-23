@@ -51,10 +51,18 @@ get_resource(<<"base.json">>, Req, State) ->
 
 get_resource(<<"mqtt_broker.json">>, Req, State) ->
     Mqtt = marionet_config:get(mqtt_broker),
-    io:format("mqtt: ~p~n", [Mqtt]),
+    Host = case proplists:get_value(host, Mqtt) of
+	       HostList when is_list(HostList) ->
+		   list_to_binary(HostList);
+	       HostBin when is_binary(HostBin) ->
+		   HostBin
+	   end,
+
     Obj = [{client_id, proplists:get_value(client_id, Mqtt)},
-	   {host, list_to_binary(proplists:get_value(host, Mqtt))},
-	   {port, proplists:get_value(port, Mqtt)}
+	   {host, Host},
+	   {port, proplists:get_value(port, Mqtt)},
+	   {username,  proplists:get_value(username, Mqtt, null)},
+	   {password,  proplists:get_value(password, Mqtt, null)}
 	  ],
     {marionet_json:encode(Obj), Req, State};
 
@@ -67,14 +75,16 @@ get_resource(<<"subscribes.json">>, Req, State) ->
 
 get_resource(<<"gpio.json">>, Req, State) ->
     GpioList = marionet_config:get(gpio),
+    AnalogList = marionet_config:get(analog_list),
 
-    Obj = lists:map(fun({PinNo, Mode, Opts}) ->
-			    [{pin_no, PinNo}, 
-			     {mode, list_to_binary(atom_to_list(Mode))},
-			     {opts, binary_opt(Opts)}]
-		    end, GpioList),
+    GpioObj = lists:map(fun({PinNo, Mode, Opts}) ->
+				[{pin_no, PinNo}, 
+				 {mode, gpio_mode_bin(Mode)},
+				 {opts, binary_opt(Opts)}]
+			end, GpioList),
 
-    {marionet_json:encode([{gpio, Obj}]), Req, State};
+    Obj = [{gpio, GpioObj}, {analog_list, AnalogList}],
+    {marionet_json:encode(Obj), Req, State};
 
 get_resource(<<"arduino.json">>, Req, State) ->
     Enable = marionet_config:get(arduino_enable),
@@ -98,11 +108,11 @@ get_resource(<<"arduino.json">>, Req, State) ->
 
     Digital1 = lists:map(fun({PinNo, Mode, Opts}) ->
 				 [{pin_no, PinNo}, 
-				  {mode, list_to_binary(atom_to_list(Mode))},
+				  {mode, gpio_mode_bin(Mode)},
 				  {opts, binary_opt(Opts)}];
 			    ({PinNo, Mode})->
 				 [{pin_no, PinNo}, 
-				  {mode, list_to_binary(atom_to_list(Mode))},
+				  {mode, gpio_mode_bin(Mode)},
 				  {opts, []}]
 			 end, Digital),
     Obj = [
@@ -152,9 +162,14 @@ update_resource(<<"base.json">>, Obj, _Req, _State) ->
 		  end, Obj);
 
 update_resource(<<"mqtt_broker.json">>, Obj, _Req, _State) ->
-    lists:foreach(fun({Key, Val}) ->
-			  ok = marionet_config:set(Key, Val)
-		  end, Obj);
+    Mqtt = [
+	    { client_id, proplists:get_value(<<"client_id">>, Obj) },
+	    { host,      proplists:get_value(<<"host">>, Obj) },
+	    { port,      proplists:get_value(<<"port">>, Obj) },
+	    { username,  proplists:get_value(<<"username">>, Obj) },
+	    { password,  proplists:get_value(<<"password">>, Obj) }
+	   ],
+    ok = marionet_config:set(<<"mqtt_broker">>, Mqtt);
 
 update_resource(<<"subscribes.json">>, Obj, _Req, _State) ->
     NewSubList = proplists:get_value(<<"subscribes">>, Obj),
@@ -168,6 +183,7 @@ update_resource(<<"subscribes.json">>, Obj, _Req, _State) ->
 
 update_resource(<<"gpio.json">>, Obj, _Req, _State) ->
     GpioList = proplists:get_value(<<"gpio">>, Obj),
+    AnalogList = proplists:get_value(<<"analog_list">>, Obj),
 
     NewGpioList = 
 	lists:map(fun(Gpio) ->
@@ -185,6 +201,7 @@ update_resource(<<"gpio.json">>, Obj, _Req, _State) ->
 					  {active_low, ActiveLow}]}
 		  end, GpioList),
 
+    ok = marionet_config:set(<<"analog_list">>, AnalogList),
     ok = marionet_config:set(<<"gpio">>, NewGpioList);
 
 update_resource(<<"arduino.json">>, Obj, _Req, _State) ->
@@ -293,3 +310,8 @@ binary_opt([{Name, Atom} | Tail], Result) when Atom =:= true;
 
 binary_opt([{Name, Atom} | Tail], Result) ->
     binary_opt(Tail, [{Name, list_to_binary(atom_to_list(Atom))} | Result]).
+
+gpio_mode_bin(in)    -> <<"in">>;
+gpio_mode_bin(out)   -> <<"out">>;
+gpio_mode_bin(servo) -> <<"servo">>;
+gpio_mode_bin(pwm)   -> <<"pwm">>.
