@@ -66,6 +66,12 @@ get_resource(<<"mqtt_broker.json">>, Req, State) ->
 	  ],
     {marionet_json:encode(Obj), Req, State};
 
+get_resource(<<"publish.json">>, Req, State) ->
+    Obj = [{analog_publish_interval,
+	    marionet_config:get(analog_publish_interval)}
+	  ],
+    {marionet_json:encode(Obj), Req, State};
+
 get_resource(<<"subscribes.json">>, Req, State) ->
     ObjList = lists:map(fun({Topic, Qos}) ->
 				[{topic, Topic}, {qos, Qos}]
@@ -170,6 +176,11 @@ update_resource(<<"mqtt_broker.json">>, Obj, _Req, _State) ->
 	    { password,  proplists:get_value(<<"password">>, Obj) }
 	   ],
     ok = marionet_config:set(<<"mqtt_broker">>, Mqtt);
+
+update_resource(<<"publish.json">>, Obj, _Req, _State) ->
+    lists:foreach(fun({Key, Val}) ->
+			  ok = marionet_config:set(Key, Val)
+		  end, Obj);
 
 update_resource(<<"subscribes.json">>, Obj, _Req, _State) ->
     NewSubList = proplists:get_value(<<"subscribes">>, Obj),

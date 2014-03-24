@@ -22,6 +22,10 @@ configApp.config(['$routeProvider',
 			      templateUrl: 'partials/mqtt_broker.html',
 			      controller: 'MqttBrokerCtrl'
 			  }).
+			  when('/publish', {
+			      templateUrl: 'partials/publish.html',
+			      controller: 'PublishCtrl'
+			  }).
 			  when('/subscribes', {
 			      templateUrl: 'partials/subscribes.html',
 			      controller: 'SubscribesCtrl'
@@ -56,6 +60,7 @@ configControllers.controller('NavCtrl', function($scope, $location) {
 	{title: "Status"    , href:"#/status"     },
 	{title: "Base"      , href:"#/base"       },
 	{title: "MQTT"      , href:"#/mqtt_broker"},
+	{title: "Publish"   , href:"#/publish"    },
 	{title: "Subscribe" , href:"#/subscribes" },
 	{title: "GPIO"      , href:"#/gpio"       },
 	{title: "Arduino"   , href:"#/arduino"    },
@@ -128,6 +133,29 @@ configControllers.controller('MqttBrokerCtrl', function($scope, $resource) {
 	    $scope.changed = false; 
 	    setWatch('mqtt', $scope);
 	});
+    }
+});
+
+// base config
+configControllers.controller('PublishCtrl', function($scope, $resource) {
+    $scope.changed = false;
+    $scope.publish = undefined;
+
+    var Publish = $resource('/api/config/publish.json', {});
+    var publish = Publish.get(function() {
+	$scope.publish = publish;
+	setWatch('publish', $scope);
+    });
+    
+    $scope.save = function() {
+	publish.$save(function() {
+	    $scope.changed = false;
+	    setWatch('publish', $scope);
+	});
+    }
+
+    $scope.toInteger = function(name) {
+	publish[name] = Number(publish[name]);
     }
 });
 

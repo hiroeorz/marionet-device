@@ -1,0 +1,15 @@
+<h3>Publish</h3>
+<table>
+  <tbody>
+    <tr>
+      <th>Analog Publish Interval(ms)</th>
+      <td><input type="text" ng-model="publish.analog_publish_interval"
+		   ng-change="toInteger('analog_publish_interval')">
+    </tr>
+  </tbody>
+</table>
+
+<hr>
+<button class="btn" type="button"
+	ng-click="save()"
+	ng-class="{'btn-danger':changed, 'btn-success':!changed}">save</button>
