@@ -124,6 +124,7 @@ configControllers.controller('MqttBrokerCtrl', function($scope, $resource) {
     var Mqtt = $resource('/api/config/mqtt_broker.json', {});
     var mqtt = Mqtt.get(function() {
 	$scope.mqtt = mqtt;
+	console.log(mqtt);
 	setWatch('mqtt', $scope);
     });
 
@@ -189,10 +190,38 @@ configControllers.controller('SubscribesCtrl', function($scope, $resource) {
     }
 
     $scope.save = function() {
+	// '+'が文字化けしないように送信時だけエンコードする
+	subscribes.subscribes = encodeTopics(subscribes.subscribes);
+
 	subscribes.$save(function() {
+	    subscribes.subscribes = decodeTopics(subscribes.subscribes);
 	    $scope.changed = false;
 	    setWatch('subscribes', $scope);
 	});
+    }
+
+    encodeTopics = function(subArray) {
+	var newArray = [];
+
+	for(var i = 0; i < subArray.length; i++) {
+	    newArray[i] = subArray[i];
+	    newArray[i].topic = encodeURIComponent(subArray[i].topic)
+	}
+
+	console.log(newArray);
+	return newArray
+    }
+
+    decodeTopics = function(subArray) {
+	var newArray = [];
+
+	for(var i = 0; i < subArray.length; i++) {
+	    newArray[i] = subArray[i];
+	    newArray[i].topic = decodeURIComponent(subArray[i].topic)
+	}
+
+	console.log(newArray);
+	return newArray
     }
 
 });
@@ -203,13 +232,14 @@ configControllers.controller('GpioCtrl', function($scope, $resource) {
     $scope.pin_list = []; for(var i=1; i<50; i++){ $scope.pin_list.push(i); }
     $scope.mode_list = ["in", "out"];
     $scope.edge_list = ["rising", "falling", "both", "none"];
-    $scope.pull_list = ["up", "down", "none"];
+    $scope.pull_list = ["up", "down", "strong", "none"];
 
     $scope.gpio = undefined;
  
     var Gpio = $resource('/api/config/gpio.json', {});
     var gpio = Gpio.get(function() {
 	$scope.gpio = gpio;
+	setDefaultAnalogInput();
 	setWatch('gpio', $scope);
     });
 
@@ -218,6 +248,32 @@ configControllers.controller('GpioCtrl', function($scope, $resource) {
 	    $scope.changed = false;
 	    setWatch('gpio', $scope);
 	})
+    }
+
+    $scope.addAnalog = function() {
+	gpio.analog_list.push(parseInt($scope.analogInput));
+	gpio.analog_list = sortInteger(gpio.analog_list);
+	setDefaultAnalogInput();
+    }
+
+    $scope.delAnalog = function() {
+	var array = [];
+	var value = parseInt($scope.analogInput);
+
+	gpio.analog_list.forEach(function(e) {
+	    if (e != value) array.push(e);
+	})
+
+	gpio.analog_list = sortInteger(array);
+	setDefaultAnalogInput();
+    }
+
+    setDefaultAnalogInput = function() {
+	if (gpio.analog_list.length === 0) {
+	    $scope.analogInput = "0"
+	} else {
+	    $scope.analogInput = Math.max.apply(null, gpio.analog_list) + 1;
+	}
     }
 
 });
@@ -363,20 +419,24 @@ configControllers.controller('OmronFinsCtrl', function($scope, $resource) {
 	}
     }
 
-    sortInteger = function(array) {
-	array.sort(function(a1, a2) {
-	    if (a1 < a2) return -1;
-	    if (a1 > a2) return  1;
-	    return 0;
-	});
-	return array
-    }
-
 });
+
+/***********************************************************************
+Private Functions
+************************************************************************/
 
 var setWatch = function(target, scope) {
     setTimeout(function() {
 	scope.changed = false;
 	scope.$watch(target, function() { scope.changed = true; });
     }, 300);
+}
+
+var sortInteger = function(array) {
+    array.sort(function(a1, a2) {
+	if (a1 < a2) return -1;
+	if (a1 > a2) return  1;
+	return 0;
+    });
+    return array
 }

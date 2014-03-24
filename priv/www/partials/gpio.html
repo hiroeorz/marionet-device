@@ -1,4 +1,7 @@
 <h3>GPIO</h3>
+
+<h4>Digital</h4>
+
 <table class="table">
   <thead>
     <tr>
@@ -40,7 +43,31 @@
   </tbody>
 </table>
 
+<hr>
+
+<h4>Analog  (Supported Intel Galileo only)</h4>
+<p>Add target analog pin no</p>
+
+<input type="text" style="width:60px; text-align:right;" ng-model="analogInput">
+
+<button class="btn btn-success" type="button" ng-click="addAnalog()">
+  add
+</button>
+
+<button class="btn btn-danger" type="button" ng-click="delAnalog()">
+  delete
+</button>
+
+<br>
+<select multiple disabled="disabled"
+	ng-model="gpio.analog_list"
+	ng-options="analog for analog in gpio.analog_list"
+        style="width:200px; height:200px; text-align:right;"></select>
+
+
+<hr>
+
 <button class="btn" type="button"
 	ng-click="save()"
 	ng-class="{'btn-danger':changed, 'btn-success':!changed}">save</button>
-<hr>
+

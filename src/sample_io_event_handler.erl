@@ -67,7 +67,7 @@ handle_event({digital_port_changed, PortNo, Status},
     Topic = topic(GroupId, DeviceId, <<"digital">>, PortNo),
     lager:debug("Send Topic  : ~p", [Topic]),
     lager:debug("Send Payload: ~p", [Payload]),
-    emqttc:publish(emqttc, Topic, Payload, [{qos, 0}, {retain, 1}]),
+    emqttc:publish(emqttc, Topic, Payload, [{qos, 0}, {retain, true}]),
     {ok, State};
 
 %% send analog every 3sec.
@@ -208,9 +208,7 @@ publish_analog(GroupId, DeviceId, PinNo, Val) ->
     lager:info("analog send mqtt broker(PinNo:~w): ~w", [PinNo, Val]),
     Payload = marionet_data:pack([?ANALOG_CODE, DeviceId, PinNo, Val]),
     Topic = topic(GroupId, DeviceId, <<"analog">>, PinNo),
-    %%lager:debug("Send Topic  : ~p", [Topic]),
-    %%lager:debug("Send Payload: ~p", [Payload]),
-    emqttc:publish(emqttc, Topic, Payload).
+    emqttc:publish(emqttc, Topic, Payload, [{qos, 0}, {retain, true}]).
 
 %%--------------------------------------------------------------------
 %% @private

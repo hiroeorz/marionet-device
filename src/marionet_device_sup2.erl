@@ -171,8 +171,11 @@ gpio_sup_spec() ->
     Type = supervisor,
 
     GpioList = marionet_config:get(gpio),
+    AnalogList = marionet_config:get(analog_list),
+    AnalogInterval = marionet_config:get(analog_interval),
 
-    {gpio_sup, {gpio_sup, start_link, [GpioList, []]},
+    {gpio_sup, {gpio_sup, start_link, 
+		[GpioList, AnalogList, AnalogInterval, []]},
      Restart, Shutdown, Type, [gpio_sup]}.
 
 status_spec() ->

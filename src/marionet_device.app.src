@@ -55,6 +55,8 @@
                  {25, out, [{edge, both}, {pull, down}] }
                 ]},
 
+         {analog_list, [0, 1, 2, 3, 4, 5]},
+
          %% driver node node name
          %% c1@ is fixed. change your hostname part of 'raspberrypi'.
          {c_node, c1@raspberrypi},
