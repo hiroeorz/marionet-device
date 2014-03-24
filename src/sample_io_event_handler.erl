@@ -76,13 +76,13 @@ handle_event({analog_recv, PinNo, Val},
 			  analog_sent_time = SentTimes,
 			  analog_before_vals = BeforeVals,
 			  analog_pub_interval = AnalogPubInterval}) ->
-    NowTime = calendar:datetime_to_gregorian_seconds({date(), time()}),
+    NowTime = current_millisec(),
     BeforeSentTime = case dict:find(PinNo, SentTimes) of
 			 error     -> 0;
-			 {ok, Sec} -> Sec
+			 {ok, MilliSec} -> MilliSec
 		     end, 
 
-    if AnalogPubInterval =< ((NowTime - BeforeSentTime) * 1000) ->
+    if AnalogPubInterval =< (NowTime - BeforeSentTime) ->
 	    publish_analog(GroupId, DeviceId, PinNo, Val),
 	    NewSentTimes = dict:store(PinNo, NowTime, SentTimes),
 	    {ok, State#state{analog_sent_time =  NewSentTimes}};
@@ -211,3 +211,13 @@ publish_analog(GroupId, DeviceId, PinNo, Val) ->
     %%lager:debug("Send Topic  : ~p", [Topic]),
     %%lager:debug("Send Payload: ~p", [Payload]),
     emqttc:publish(emqttc, Topic, Payload).
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc get current time(millisecond).
+%% @end
+%%--------------------------------------------------------------------
+-spec current_millisec() -> non_neg_integer().
+current_millisec() ->
+    {MSec, Sec, MicroSec} = erlang:now(),
+    (MSec * 1000000 + Sec) * 1000 + (MicroSec div 1000).
