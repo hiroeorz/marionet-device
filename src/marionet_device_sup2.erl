@@ -68,7 +68,10 @@ init([]) ->
     Specs = [gpio_sup_spec(),
 	     mqtt_spec(),
 	     status_spec(),
+	     zmq_server_spec(),
 	     event_sup_spec(emqttc_event, SubEventHandler, [Subscribes]),
+	     event_sup_spec(emqttc_event, marionet_sub_event_handler,
+			    [Subscribes]),
 	     event_sup_spec(gpio_pin_event, marionet_device_event, []),
 	     event_sup_spec(gpio_pin_event, IOEventHandler,
 			    [GroupId, DeviceId, AnalogPubInterval])
@@ -104,6 +107,18 @@ init([]) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+
+zmq_server_spec() ->
+    Restart = permanent,
+    Shutdown = 2000,
+    Type = worker,
+
+    Config = marionet_config:get(omron_fins),
+    IPAddress = proplists:get_value(ip_address, Config),
+    Port = proplists:get_value(port, Config, 9600),
+
+    {marionet_zmq_server, {marionet_zmq_server, start_link, [IPAddress, Port]},
+     Restart, Shutdown, Type, [marionet_zmq_server]}.
 
 event_sup_spec(EventManager, EventHandler, Args) ->
     Restart = permanent,
