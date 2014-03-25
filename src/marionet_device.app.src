@@ -16,7 +16,8 @@
                   ranch,
                   cowlib,
                   crypto,
-                  cowboy
+                  cowboy,
+                  erlzmq
                  ]},
   {mod, { marionet_device_app, []}},
   {env, [

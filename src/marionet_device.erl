@@ -26,4 +26,5 @@ start() ->
     application:start(cowlib),
     application:start(crypto),
     application:start(cowboy),
+    application:start(erlzmq),
     application:start(marionet_device).
