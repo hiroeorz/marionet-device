@@ -101,6 +101,15 @@ handle_event({publish, <<"/demo/pi002/analog/", _/binary>> = Topic,
     control_servo(DeviceId, PinNo, Val),
     {ok, State};
 
+%% analog(pi002, QoS=0)
+handle_event({publish, <<"/demo/galileo/analog/", _/binary>> = Topic,
+	      Payload}, State) ->
+    [?ANALOG_CODE, DeviceId, PinNo, Val] = marionet_data:unpack(Payload),
+    lager:debug("sub: pin=~p val=~p~n(topic:~p)", [PinNo, Val, Topic]),
+    control_led(DeviceId, PinNo, Val),
+    control_servo(DeviceId, PinNo, Val),
+    {ok, State};
+
 %% other(QoS=0)
 handle_event({publish, Topic, Payload}, State) ->
     lager:info("sub: topic:~p~n", [Topic]),
@@ -187,6 +196,10 @@ control_led(2, 0, Val) when Val =< 512 ->
 
 control_led(_DeviceId, _PinNo, _Val) ->
     ok.
+
+control_servo(<<"galileo">>, 0, Val) ->
+    Angle = Val * 180 div 4096,
+    arduino:analog_write(?SERVO_PINNO, Angle);
 
 control_servo(<<"pi002">>, 0, Val) ->
     Angle = Val * 180 div 1024,
