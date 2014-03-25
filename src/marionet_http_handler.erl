@@ -61,8 +61,8 @@ get_resource(<<"mqtt_broker.json">>, Req, State) ->
     Obj = [{client_id, proplists:get_value(client_id, Mqtt)},
 	   {host, Host},
 	   {port, proplists:get_value(port, Mqtt)},
-	   {username,  proplists:get_value(username, Mqtt, null)},
-	   {password,  proplists:get_value(password, Mqtt, null)}
+	   {username,  proplists:get_value(username, Mqtt)},
+	   {password,  proplists:get_value(password, Mqtt)}
 	  ],
     {marionet_json:encode(Obj), Req, State};
 

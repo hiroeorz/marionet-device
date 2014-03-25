@@ -125,14 +125,24 @@ configControllers.controller('MqttBrokerCtrl', function($scope, $resource) {
     var mqtt = Mqtt.get(function() {
 	$scope.mqtt = mqtt;
 	console.log(mqtt);
+	set_null_if_empty('username');
+	set_null_if_empty('password');
 	setWatch('mqtt', $scope);
     });
 
     $scope.save = function() {
+	set_null_if_empty('username');
+	set_null_if_empty('password');
 	mqtt.$save(function(){ 
 	    $scope.changed = false; 
 	    setWatch('mqtt', $scope);
 	});
+    }
+
+    set_null_if_empty = function(name) {
+	if (mqtt[name] === "" || mqtt[name] === "undefined") {
+	    mqtt[name] = undefined;
+	}
     }
 });
 
