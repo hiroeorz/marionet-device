@@ -18,6 +18,8 @@
 <tr><td><a href="marionet_event_sup.md" class="module">marionet_event_sup</a></td></tr>
 <tr><td><a href="marionet_http_handler.md" class="module">marionet_http_handler</a></td></tr>
 <tr><td><a href="marionet_json.md" class="module">marionet_json</a></td></tr>
+<tr><td><a href="marionet_sub_event_handler.md" class="module">marionet_sub_event_handler</a></td></tr>
+<tr><td><a href="marionet_zmq_server.md" class="module">marionet_zmq_server</a></td></tr>
 <tr><td><a href="omron_fins_event.md" class="module">omron_fins_event</a></td></tr>
 <tr><td><a href="omron_fins_watcher.md" class="module">omron_fins_watcher</a></td></tr>
 <tr><td><a href="sample_io_event_handler.md" class="module">sample_io_event_handler</a></td></tr>
