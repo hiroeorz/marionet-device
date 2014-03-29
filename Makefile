@@ -43,9 +43,6 @@ generate-galileo:
 generate-plc:
 	cd rel/plc && $(REBAR_GEN) generate
 
-generate-galileo:                                                
-	cd rel/galileo && $(REBAR_GEN) generate
-
 dialyzer: compile
 	@$(DIALYZER) ebin deps/serial/ebin
 
