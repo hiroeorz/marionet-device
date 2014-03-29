@@ -34,16 +34,11 @@ test:
 edoc:
 	@$(EDOWN)
 
-generate:
-	cd rel/marionet-device-001 && $(REBAR_GEN) generate
-	cd ../../
-	cd rel/marionet-device-002 && $(REBAR_GEN) generate
+generate-pi:
+	cd rel/raspberrypi && $(REBAR_GEN) generate
 
-generate-001:
-	cd rel/marionet-device-001 && $(REBAR_GEN) generate
-
-generate-002:
-	cd rel/marionet-device-002 && $(REBAR_GEN) generate
+generate-galileo:                                                
+	cd rel/galileo && $(REBAR_GEN) generate
 
 generate-plc:
 	cd rel/plc && $(REBAR_GEN) generate
