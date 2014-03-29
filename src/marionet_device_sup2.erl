@@ -188,9 +188,10 @@ gpio_sup_spec() ->
     GpioList = marionet_config:get(gpio),
     AnalogList = marionet_config:get(analog_list),
     AnalogInterval = marionet_config:get(analog_interval),
+    C_Node = marionet_config:get(c_node),
 
     {gpio_sup, {gpio_sup, start_link, 
-		[GpioList, AnalogList, AnalogInterval, []]},
+		[GpioList, AnalogList, AnalogInterval, [], C_Node]},
      Restart, Shutdown, Type, [gpio_sup]}.
 
 status_spec() ->
