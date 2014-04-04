@@ -64,20 +64,27 @@ init([]) ->
     GroupId = marionet_config:get(group_id),
     DeviceId = marionet_config:get(device_id),
     AnalogPubInterval = marionet_config:get(analog_publish_interval),
+    MqttEnable = marionet_config:get(mqtt_enable),
 
-    Specs = [gpio_sup_spec(),
-	     mqtt_spec(),
-	     status_spec(),
-	     zmq_server_spec(),
-	     event_sup_spec(emqttc_event, SubEventHandler, [Subscribes]),
-	     event_sup_spec(emqttc_event, marionet_sub_event_handler,
-			    [Subscribes]),
-	     event_sup_spec(gpio_pin_event, marionet_device_event, []),
-	     event_sup_spec(gpio_pin_event, IOEventHandler,
-			    [GroupId, DeviceId, AnalogPubInterval])
-	    ],
+    GpioSpecs = [gpio_sup_spec()],
 
-    Specs1 = 
+    MqttSpecs = 
+	case MqttEnable of
+	    true  -> [mqtt_spec()];
+	    false -> []
+	end,
+
+    EventSpecs = [status_spec(),
+		  zmq_server_spec(),
+		  event_sup_spec(emqttc_event, SubEventHandler, [Subscribes]),
+		  event_sup_spec(emqttc_event, marionet_sub_event_handler,
+				 [Subscribes]),
+		  event_sup_spec(gpio_pin_event, marionet_device_event, []),
+		  event_sup_spec(gpio_pin_event, IOEventHandler,
+				 [GroupId, DeviceId, AnalogPubInterval])
+		 ],
+
+    ArduinoSpecs = 
 	case ArduinoEnable of
 	    true  -> 
 		[arduino_sup_spec(),
@@ -89,7 +96,7 @@ init([]) ->
 		     []
 	     end,
 
-    Specs2 = 
+    FinsSpecs = 
 	case OmronFinsEnable of
 	    true  -> 
 		[fins_port_spec(),
@@ -102,7 +109,8 @@ init([]) ->
 		[]
 	end,
 
-    {ok, {SupFlags, Specs ++ Specs1 ++ Specs2}}.
+    {ok, {SupFlags, 
+	  GpioSpecs ++ MqttSpecs ++ EventSpecs ++ ArduinoSpecs ++ FinsSpecs}}.
 
 %%%===================================================================
 %%% Internal functions

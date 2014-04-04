@@ -50,6 +50,7 @@ get_resource(<<"base.json">>, Req, State) ->
     {marionet_json:encode(Obj), Req, State};
 
 get_resource(<<"mqtt_broker.json">>, Req, State) ->
+    MqttEnable = marionet_config:get(mqtt_enable),
     Mqtt = marionet_config:get(mqtt_broker),
     Host = case proplists:get_value(host, Mqtt) of
 	       HostList when is_list(HostList) ->
@@ -58,7 +59,8 @@ get_resource(<<"mqtt_broker.json">>, Req, State) ->
 		   HostBin
 	   end,
 
-    Obj = [{client_id, proplists:get_value(client_id, Mqtt)},
+    Obj = [{mqtt_enable, MqttEnable},
+	   {client_id, proplists:get_value(client_id, Mqtt)},
 	   {host, Host},
 	   {port, proplists:get_value(port, Mqtt)},
 	   {username,  proplists:get_value(username, Mqtt)},
@@ -154,6 +156,7 @@ update_resource(<<"status.json">>, Obj, _Req, _State) ->
     case proplists:get_value(<<"status">>, Obj) of
 	<<"restart">> ->
 	    lager:notice("System Restarting..."),
+	    ok = marionet_zmq_server:close(),
 	    application:stop(marionet_device),
 	    timer:sleep(3000),
 	    application:start(marionet_device),
@@ -168,6 +171,7 @@ update_resource(<<"base.json">>, Obj, _Req, _State) ->
 		  end, Obj);
 
 update_resource(<<"mqtt_broker.json">>, Obj, _Req, _State) ->
+    MqttEnable = proplists:get_value(<<"mqtt_enable">>, Obj),
     Mqtt = [
 	    { client_id, proplists:get_value(<<"client_id">>, Obj) },
 	    { host,      proplists:get_value(<<"host">>, Obj) },
@@ -175,7 +179,8 @@ update_resource(<<"mqtt_broker.json">>, Obj, _Req, _State) ->
 	    { username,  proplists:get_value(<<"username">>, Obj) },
 	    { password,  proplists:get_value(<<"password">>, Obj) }
 	   ],
-    ok = marionet_config:set(<<"mqtt_broker">>, Mqtt);
+    ok = marionet_config:set(<<"mqtt_broker">>, Mqtt),
+    ok = marionet_config:set(<<"mqtt_enable">>, MqttEnable);
 
 update_resource(<<"publish.json">>, Obj, _Req, _State) ->
     lists:foreach(fun({Key, Val}) ->

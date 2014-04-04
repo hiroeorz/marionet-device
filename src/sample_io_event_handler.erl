@@ -67,7 +67,7 @@ handle_event({digital_port_changed, PortNo, Status},
     Topic = topic(GroupId, DeviceId, <<"digital">>, PortNo),
     lager:debug("Send Topic  : ~p", [Topic]),
     lager:debug("Send Payload: ~p", [Payload]),
-    emqttc:publish(emqttc, Topic, Payload, [{qos, 0}, {retain, true}]),
+    maybe_publish(Topic, Payload, [{qos, 0}, {retain, true}]),
     {ok, State};
 
 %% send analog every 3sec.
@@ -208,7 +208,7 @@ publish_analog(GroupId, DeviceId, PinNo, Val) ->
     lager:info("analog send mqtt broker(PinNo:~w): ~w", [PinNo, Val]),
     Payload = marionet_data:pack([?ANALOG_CODE, DeviceId, PinNo, Val]),
     Topic = topic(GroupId, DeviceId, <<"analog">>, PinNo),
-    emqttc:publish(emqttc, Topic, Payload, [{qos, 0}, {retain, true}]).
+    maybe_publish(Topic, Payload, [{qos, 0}, {retain, true}]).
 
 %%--------------------------------------------------------------------
 %% @private
@@ -219,3 +219,12 @@ publish_analog(GroupId, DeviceId, PinNo, Val) ->
 current_millisec() ->
     {MSec, Sec, MicroSec} = erlang:now(),
     (MSec * 1000000 + Sec) * 1000 + (MicroSec div 1000).
+
+maybe_publish(Topic, Payload, Opts) ->
+    case whereis(emqttc) of
+	undefined -> 
+	    lager:warning("MQTT not connected."),
+	    ok;
+	Pid when is_pid(Pid) ->
+	    emqttc:publish(Pid, Topic, Payload, Opts)
+    end.

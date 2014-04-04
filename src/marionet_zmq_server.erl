@@ -11,7 +11,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/2, start_link/3]).
+-export([start_link/2, start_link/3, close/0]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -19,6 +19,7 @@
 
 -define(ZMQ_END_POINT, "tcp://127.0.0.1:6789").
 -define(SERVER, ?MODULE).
+-define(CLOSE_TIMEOUT, 5000).
 
 -record(state, { context     :: binary(),
 		 socket      :: {pos_integer, binary()},
@@ -43,6 +44,9 @@ start_link(EndPoint, PlcAddress, PlcPort) ->
     gen_server:start_link({local, ?SERVER}, ?MODULE, 
 			  [EndPoint, PlcAddress, PlcPort], []).
 
+close() ->
+    gen_server:call(?SERVER, close).
+
 %%%===================================================================
 %%% gen_server callbacks
 %%%===================================================================
@@ -63,7 +67,7 @@ init([EndPoint, PlcAddress, PlcPort]) ->
     {ok, Socket} = erlzmq:socket(Context, [rep, {active, true}]),
     ok = erlzmq:bind(Socket, EndPoint),
     {ok, #state{context = Context, socket = Socket,
-	       plc_address = PlcAddress, plc_port = PlcPort}}.
+		plc_address = PlcAddress, plc_port = PlcPort}}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -79,8 +83,8 @@ init([EndPoint, PlcAddress, PlcPort]) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_call(_Request, _From, State) ->
-    Reply = ok,
+handle_call(close, _From, State) ->
+    Reply = close_socket(State),
     {reply, Reply, State}.
 
 %%--------------------------------------------------------------------
@@ -133,8 +137,8 @@ handle_info(_Info, State) ->
 %% @spec terminate(Reason, State) -> void()
 %% @end
 %%--------------------------------------------------------------------
-terminate(_Reason, _State) ->
-    ok.
+terminate(_Reason, State) ->
+    close_socket(State).
 
 %%--------------------------------------------------------------------
 %% @private
@@ -153,4 +157,10 @@ code_change(_OldVsn, State, _Extra) ->
 
 handle_zmq_request(M, F, Args) ->
     lager:debug("handle zmq req: ~p : ~p : ~p", [M, F, Args]).
+
+close_socket(_State = #state{socket = Socket, context = Context}) ->
+    lager:info("closing ZMQ."),
+    ok = erlzmq:close(Socket, ?CLOSE_TIMEOUT),
+    ok = erlzmq:term(Context, ?CLOSE_TIMEOUT).
+
 
