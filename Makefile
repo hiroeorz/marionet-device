@@ -7,7 +7,7 @@ REBAR_GEN=../../rebar
 DIALYZER=dialyzer
 EDOWN=./make_doc
 
-all: update-deps get-deps clean compile xref edoc
+all: update-deps get-deps compile xref edoc
 
 dev: compile xref edoc
 
