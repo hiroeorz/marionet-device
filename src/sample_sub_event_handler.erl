@@ -61,11 +61,11 @@ handle_event({publish, <<"/demo/pi002/digital/0">> = Topic,
 	      Payload, 1, MsgId}, State) ->
     lager:info("publish: topic(id:~p):~p~n", [MsgId, Topic]),
 
-    [?DIGITAL_CODE,
-     _DeviceId, _PortNo, StateList] = marionet_data:unpack(Payload),
+    {<<"di">>, 
+     _DeviceId, _PortNo, Status, _} = marionet_data:unpack_io(Payload),
 
-    lager:info("publish: state:~p~n", [StateList]),
-    [_, _, _, _, S, _, _, _] = StateList,
+    lager:info("publish: state:~p~n", [Status]),
+    [_, _, _, _, S, _, _, _] = Status,
     gpio_pin:write(25, S),
     emqttc:puback(emqttc, MsgId),
     {ok, State};
@@ -75,18 +75,18 @@ handle_event({publish, <<"/demo/pi002/digital/0">> = Topic,
 	      Payload}, State) ->
     lager:info("publish: topic:~p~n", [Topic]),
 
-    [?DIGITAL_CODE, 
-     _DeviceId, _PortNo, StateList] = marionet_data:unpack(Payload),
+    {<<"di">>, 
+     _DeviceId, _PortNo, Status, _} = marionet_data:unpack_io(Payload),
 
-    lager:info("sub: state:~p~n", [StateList]),
-    [_, _, _, _, S, _, _, _] = StateList,
+    lager:info("sub: state:~p~n", [Status]),
+    [_, _, _, _, S, _, _, _] = Status,
     gpio_pin:write(25, S),
     {ok, State};
 
 %% analog(pi001, QoS=0)
 handle_event({publish, <<"/demo/pi001/analog/", _/binary>> = Topic,
 	      Payload}, State) ->
-    [?ANALOG_CODE, DeviceId, PinNo, Val] = marionet_data:unpack(Payload),
+    {<<"ai">>, DeviceId, PinNo, Val, _Opts} = marionet_data:unpack_io(Payload),
     lager:debug("sub: pin=~p val=~p~n(topic:~p)", [PinNo, Val, Topic]),
     control_led(DeviceId, PinNo, Val),
     control_servo(DeviceId, PinNo, Val),
@@ -95,7 +95,7 @@ handle_event({publish, <<"/demo/pi001/analog/", _/binary>> = Topic,
 %% analog(pi002, QoS=0)
 handle_event({publish, <<"/demo/pi002/analog/", _/binary>> = Topic,
 	      Payload}, State) ->
-    [?ANALOG_CODE, DeviceId, PinNo, Val] = marionet_data:unpack(Payload),
+    {<<"ai">>, DeviceId, PinNo, Val, _Opts} = marionet_data:unpack_io(Payload),
     lager:debug("sub: pin=~p val=~p~n(topic:~p)", [PinNo, Val, Topic]),
     control_led(DeviceId, PinNo, Val),
     control_servo(DeviceId, PinNo, Val),
@@ -104,7 +104,7 @@ handle_event({publish, <<"/demo/pi002/analog/", _/binary>> = Topic,
 %% analog(pi002, QoS=0)
 handle_event({publish, <<"/demo/galileo/analog/", _/binary>> = Topic,
 	      Payload}, State) ->
-    [?ANALOG_CODE, DeviceId, PinNo, Val] = marionet_data:unpack(Payload),
+    {<<"ai">>, DeviceId, PinNo, Val, _Opts} = marionet_data:unpack_io(Payload),
     lager:debug("sub: pin=~p val=~p~n(topic:~p)", [PinNo, Val, Topic]),
     control_led(DeviceId, PinNo, Val),
     control_servo(DeviceId, PinNo, Val),

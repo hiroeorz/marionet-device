@@ -62,7 +62,7 @@ init([GroupId, DeviceId, AnalogPubInterval] = Args) ->
 handle_event({digital_port_changed, PortNo, Status},
 	     State=#state{device_id = DeviceId, group_id = GroupId}) ->
     lager:info("digital sent mqtt broker(port:~w): ~p", [PortNo, Status]),
-    Payload = marionet_data:pack_digital(DeviceId, PortNo, Status),
+    Payload = marionet_data:pack_io(<<"di">>, DeviceId, PortNo, Status),
     Topic = topic(GroupId, DeviceId, <<"digital">>, PortNo),
     lager:debug("Send Topic  : ~p", [Topic]),
     lager:debug("Send Payload: ~p", [Payload]),
@@ -205,7 +205,7 @@ publish_if_large_changed(GroupId, DeviceId, PinNo, Val, BeforeVals) ->
       Val :: non_neg_integer().
 publish_analog(GroupId, DeviceId, PinNo, Val) ->
     lager:info("analog send mqtt broker(PinNo:~w): ~w", [PinNo, Val]),
-    Payload = marionet_data:pack_analog(DeviceId, PinNo, Val),
+    Payload = marionet_data:pack_io(<<"ai">>, DeviceId, PinNo, Val),
     Topic = topic(GroupId, DeviceId, <<"analog">>, PinNo),
     maybe_publish(Topic, Payload, [{qos, 0}, {retain, true}]).
 

@@ -9,7 +9,9 @@
 -module(marionet_data).
 
 %% API
--export([pack_analog/3, pack_digital/3]).
+-export([pack_io/5, 
+	 unpack_io/1]).
+
 -export([pack/1, unpack/1]).
 
 %%%===================================================================
@@ -17,36 +19,44 @@
 %%%===================================================================
 
 %%--------------------------------------------------------------------
-%% @doc format digital status data.
+%% @doc Format analog status data.
 %% @end
 %%--------------------------------------------------------------------
--spec pack_analog(DeviceId, AnalogNo, Val) -> Payload when
+-spec pack_io(Type, DeviceId, AnalogNo, Val, Opts) -> Payload when
+      Type :: binary(),
       DeviceId :: binary(),
       AnalogNo :: non_neg_integer(),
       Val :: non_neg_integer(),
+      Opts :: [tuple()],
       Payload :: binary().
-pack_analog(DeviceId, AnalogNo, Val) ->
-    Obj = [{type, <<"ai">>},
+pack_io(Type, DeviceId, AnalogNo, Val, Opts) ->
+    Obj = [{type, Type},
 	   {id, DeviceId},
 	   {no, AnalogNo},
-	   {status, Val}],
+	   {val, Val},
+	   {opts, Opts}
+	  ],
     pack(Obj).
 
 %%--------------------------------------------------------------------
-%% @doc format digital status data.
+%% @doc Parse analog status data.
 %% @end
 %%--------------------------------------------------------------------
--spec pack_digital(DeviceId, PortNo, Status) -> Payload when
+-spec unpack_io(Payload) -> {Type, DeviceId, No, Val, Opts} when
+      Payload :: binary(),
+      Type :: binary(),
       DeviceId :: binary(),
-      PortNo :: non_neg_integer(),
-      Status :: [1|0],
-      Payload :: binary().
-pack_digital(DeviceId, PortNo, Status) ->
-    Obj = [{type, <<"di">>},
-	   {id, DeviceId},
-	   {no, PortNo},
-	   {status, Status}],
-    pack(Obj).
+      No :: non_neg_integer(),
+      Val :: non_neg_integer(),
+      Opts :: [tuple()].
+unpack_io(Payload) ->
+    Obj = unpack(Payload), <<"ai">> = proplists:get_value(<<"type">>, Obj),
+    Type = proplists:get_value(<<"type">>, Obj),
+    DeviceId = proplists:get_value(<<"id">>, Obj),
+    No = proplists:get_value(<<"no">>, Obj),
+    Val = proplists:get_value(<<"val">>, Obj),
+    Opts = proplists:get_value(<<"opts">>, Obj),
+    {Type, DeviceId, No, Val, Opts}.
 
 %%--------------------------------------------------------------------
 %% @doc format using msgpack

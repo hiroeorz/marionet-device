@@ -60,12 +60,37 @@ handle_event({connack_accept}, State=#state{subs=Subscribes}) ->
 
 handle_event({publish, Topic, Payload, 1, MsgId}, State) ->
     lager:debug("subscribe: topic(id:~p):~p~n", [MsgId, Topic]),
-    ok = erlzmq:send(State#state.socket, <<Topic, ":", Payload>>),
+    {Type, DeviceId, No, _Val, _} = marionet_data:unpack_io(Payload),
+    Data = create_zmq_publish(<<"io">>, Type, DeviceId, No, Payload),
+    ok = erlzmq:send(State#state.socket, Data),
     {ok, State};
 
 handle_event(Event, State) ->
     lager:warning("unknown sub event: ~p", [Event]),
     {ok, State}.
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc Create zmq publish data.
+%% @end
+%%--------------------------------------------------------------------
+-spec create_zmq_publish(EventType, DeviceId, DataType, No, Payload) -> 
+				binary() when
+      EventType :: binary(),
+      DeviceId :: binary(),
+      DataType :: binary(),
+      No :: non_neg_integer(),
+      Payload :: binary().
+create_zmq_publish(EventType, DeviceId, DataType, No, Payload) ->
+    <<EventType/binary,
+      ":@:",
+      DeviceId/binary,
+      ":@:",
+      (integer_to_binary(DataType))/binary,
+      ":@:",
+      (integer_to_binary(No))/binary,
+      ":@:",
+      Payload/binary>>.
 
 %%--------------------------------------------------------------------
 %% @private
