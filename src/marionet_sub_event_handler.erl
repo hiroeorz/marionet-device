@@ -15,6 +15,7 @@
 	 handle_info/2, terminate/2, code_change/3]).
 
 -define(ZMQ_END_POINT, "tcp://127.0.0.1:6788").
+-define(CLOSE_TIMEOUT, 5000).
 
 -record(state, { subs    :: list(),
 		 context :: binary(),
@@ -37,7 +38,7 @@ init([Subscribes]) ->
     {ok, Context} = erlzmq:context(),
     {ok, Socket} = erlzmq:socket(Context, pub),
     ok = erlzmq:bind(Socket, ?ZMQ_END_POINT),
-    {ok, #state{subs = Subscribes, socket = Socket}}.
+    {ok, #state{subs = Subscribes, socket = Socket, context = Context}}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -110,7 +111,7 @@ handle_info(_Info, State) ->
 %% @end
 %%--------------------------------------------------------------------
 terminate(_Reason, State) ->
-    _ = erlzmq:close(State#state.socket, 3000),
+    close_socket(State),
     ok.
 
 %%--------------------------------------------------------------------
@@ -123,3 +124,12 @@ terminate(_Reason, State) ->
 %%--------------------------------------------------------------------
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
+
+%%%===================================================================
+%%% Internal functions
+%%%===================================================================
+
+close_socket(_State = #state{socket = Socket}) ->
+    lager:info("closing ZMQ(sub handler)."),
+    ok = erlzmq:close(Socket, ?CLOSE_TIMEOUT).
+
