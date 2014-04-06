@@ -8,7 +8,7 @@ MarioNetDeviceでは端末固有の制御などを外部アプリケーション
 外部アプリケーションにはZeroMQを通して次の２つのイベントが転送されます。
 
 * MQTT Subscribeイベント
-* GPIO,PLCなどのアナログ・デジタルIOイベント
+* GPIO,PLCなどのアナログ・デジタルI/Oイベント
 
 また、外部アプリケーション側からMarioNetDeviceに対してGPIO出力やMQTT Publishなどのコマンドを発行する事ができます。
 
@@ -18,7 +18,8 @@ MarioNetDeviceでは端末固有の制御などを外部アプリケーション
 
 外部アプリケーションからMarioNetDeviceのイベントを受け取るには、ZeroMQポートにconnectする必要が有ります。connectする為に必要な情報は下記の通りです。
 
-* ZMQ Endopoint: tcp://127.0.0.1:6788
+* ZMQ Endopoint
+    * tcp://127.0.0.1:6788
 
 ### Subscribe
 
@@ -32,7 +33,7 @@ MarioNetDeivce側から送られてくるデータのフォーマットは以下
 
 イベント種別は以下の2種類です。
 
-* IOイベント: "io"
+* I/Oイベント: "io"
 * Subscribeイベント: "sub"
 
 **********************************************
