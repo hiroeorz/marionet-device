@@ -58,6 +58,13 @@ handle_event({connack_accept}, State=#state{subs=Subscribes}) ->
     io:format("sent subscribe request: ~p~n", [Subscribes]),
     {ok, State};
 
+handle_event({publish, Topic, Payload}, State) ->
+    lager:debug("subscribe: topic:~p~n", [Topic]),
+    {Type, DeviceId, No, _Val, _} = marionet_data:unpack_io(Payload),
+    Data = create_zmq_publish(<<"io">>, Type, DeviceId, No, Payload),
+    ok = erlzmq:send(State#state.socket, Data),
+    {ok, State};
+
 handle_event({publish, Topic, Payload, 1, MsgId}, State) ->
     lager:debug("subscribe: topic(id:~p):~p~n", [MsgId, Topic]),
     {Type, DeviceId, No, _Val, _} = marionet_data:unpack_io(Payload),
@@ -74,19 +81,19 @@ handle_event(Event, State) ->
 %% @doc Create zmq publish data.
 %% @end
 %%--------------------------------------------------------------------
--spec create_zmq_publish(EventType, DeviceId, DataType, No, Payload) -> 
+-spec create_zmq_publish(EventType, Type, DeviceId, No, Payload) -> 
 				binary() when
       EventType :: binary(),
+      Type :: binary(),
       DeviceId :: binary(),
-      DataType :: binary(),
       No :: non_neg_integer(),
       Payload :: binary().
-create_zmq_publish(EventType, DeviceId, DataType, No, Payload) ->
+create_zmq_publish(EventType, Type, DeviceId, No, Payload) ->
     <<EventType/binary,
       ":@:",
       DeviceId/binary,
       ":@:",
-      (integer_to_binary(DataType))/binary,
+      Type/binary,
       ":@:",
       (integer_to_binary(No))/binary,
       ":@:",

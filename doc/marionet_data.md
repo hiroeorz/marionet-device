@@ -53,7 +53,7 @@ Format analog status data.
 
 
 <pre><code>
-unpack(Bin::binary) -&gt; term()
+unpack(Bin::binary()) -&gt; term()
 </code></pre>
 
 <br></br>
