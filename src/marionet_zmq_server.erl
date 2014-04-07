@@ -112,12 +112,12 @@ handle_cast(_Msg, State) ->
 %%--------------------------------------------------------------------
 %%   ["gpio", "write", [PinNo, 1]]
 %%   ["omron_fins", "write_dm_values", [StartAddress, [1,2,3]]]
-handle_info({zmq, _S, Msg, []}, State) ->
+handle_info({zmq, _S, Msg, []}, State = #socket{socket = Socket}) ->
     lager:debug("zmq rep: ~p", [Msg]),
     case marionet_data:unpack(Msg) of
 	[M, F, Args] ->
 	    Rep = handle_zmq_request(M, F, Args),
-	    erlzmq:send(State#state.socket, Rep);
+	    erlzmq:send(Socket, Rep);
 	Other ->
 	    lager:warning("unknown zmq req: ~p", [Other])
     end,
