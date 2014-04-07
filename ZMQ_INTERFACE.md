@@ -113,8 +113,8 @@ MarioNetDeivce側から送られてくるデータのフォーマットは以下
 
 ```json
 {
-  "command": "digital_write", // コマンド名
-  "args": [2, 1]              // [デジタル番号, 出力値(0:OFF 1:ON)]
+  "command": "gpio_digital_write", // コマンド名
+  "args": [2, 1]                   // [デジタル番号, 出力値(0:OFF 1:ON)]
 }
 ```
 
@@ -122,7 +122,7 @@ MarioNetDeivce側から送られてくるデータのフォーマットは以下
 
 ```json
 {
-  "return": true              // 成功:true, 失敗:false 
+  "return": true              // true固定
 }
 ```
 
@@ -134,8 +134,8 @@ MarioNetDeivce側から送られてくるデータのフォーマットは以下
 
 ```json
 {
-  "command": "digital_read",  // コマンド名
-  "args": [2]                 // [デジタル番号]
+  "command": "gpio_digital_read",  // コマンド名
+  "args": [2]                      // [デジタル番号]
 }
 ```
 

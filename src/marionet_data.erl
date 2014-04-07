@@ -10,7 +10,8 @@
 
 %% API
 -export([pack_io/5, 
-	 unpack_io/1]).
+	 unpack_io/1,
+	 unpack_command/1]).
 
 -export([pack/1, unpack/1]).
 
@@ -57,6 +58,20 @@ unpack_io(Payload) ->
     Val = proplists:get_value(<<"val">>, Obj),
     Opts = proplists:get_value(<<"opts">>, Obj),
     {Type, DeviceId, No, Val, Opts}.
+
+%%--------------------------------------------------------------------
+%% @doc Parse command that send from other application.
+%% @end
+%%--------------------------------------------------------------------
+-spec unpack_command(Payload) -> {Command, Args} when
+      Payload :: binary(),
+      Command :: binary(),
+      Args :: [term()].
+unpack_command(Payload) ->
+    Obj = unpack(Payload),
+    Command = proplists:get_value(<<"command">>, Obj),
+    Args = proplists:get_value(<<"args">>, Obj),
+    {Command, Args}.
 
 %%--------------------------------------------------------------------
 %% @doc format using msgpack

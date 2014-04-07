@@ -110,20 +110,22 @@ handle_cast(_Msg, State) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-%%   ["gpio", "write", [PinNo, 1]]
-%%   ["omron_fins", "write_dm_values", [StartAddress, [1,2,3]]]
-handle_info({zmq, _S, Msg, []}, State = #socket{socket = Socket}) ->
-    lager:debug("zmq rep: ~p", [Msg]),
-    case marionet_data:unpack(Msg) of
-	[M, F, Args] ->
-	    Rep = handle_zmq_request(M, F, Args),
-	    erlzmq:send(Socket, Rep);
+%%   ["digital_write", [2, 1]]
+%%   ["digital_read" , [2]]
+handle_info({zmq, _S, Payload, []}, State = #state{socket = Socket}) ->
+    lager:debug("zmq rep: ~p", [Payload]),
+    case marionet_data:unpack_command(Payload) of
+	{Command, Args} when is_binary(Command), is_list(Args) ->
+	    Rep = handle_zmq_request(Command, Args),
+	    Json = marionet_data:pack(Rep),
+	    erlzmq:send(Socket, Json);
 	Other ->
 	    lager:warning("unknown zmq req: ~p", [Other])
     end,
     {noreply, State};
 
-handle_info(_Info, State) ->
+handle_info(Info, State) ->
+    lager:warning("unknown message: ~p", [Info]),
     {noreply, State}.
 
 %%--------------------------------------------------------------------
@@ -152,11 +154,25 @@ code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
 
 %%%===================================================================
-%%% Internal functions
+%%% Command Handler
 %%%===================================================================
 
-handle_zmq_request(M, F, Args) ->
-    lager:debug("handle zmq req: ~p : ~p : ~p", [M, F, Args]).
+handle_zmq_request(<<"gpio_digital_write">>, [PinNo, Val]) ->
+    lager:debug("gpio_digital_write(PinNo:~p, Val:~p)", [PinNo, Val]),
+    ok = gpio_pin:write(PinNo, Val),
+    [{return, true}];
+
+handle_zmq_request(<<"gpio_digital_read">>, [PinNo]) ->
+    lager:debug("gpio_digital_read(PinNo:~p)", [PinNo]),
+    [{return, gpio_pin:read(PinNo)}];
+
+handle_zmq_request(Command, Args) ->
+    lager:debug("unknown zmq request: ~p : ~p", [Command, Args]),
+    [{return, nil}, {error, <<"command_not_found">>}].
+
+%%%===================================================================
+%%% Internal functions
+%%%===================================================================
 
 close_socket(_State = #state{socket = Socket, context = Context}) ->
     lager:info("closing ZMQ."),
