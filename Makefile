@@ -25,8 +25,9 @@ xref:
 
 clean:
 	@$(REBAR) clean
-	rm -rf  ./rel/marionet-device-001/marionet-device-001
-	rm -rf  ./rel/marionet-device-002/marionet-device-002
+	rm -rf  ./rel/raspberrypi/raspberrypi
+	rm -rf  ./rel/galileo/galileo
+	rm -rf  ./rel/plc/plc
 
 test:
 	@$(REBAR) skip_deps=true eunit

@@ -67,7 +67,7 @@ pack(Obj) ->
     %%msgpack:pack(Obj, [{format, jsx}]).
     jsx:encode(Obj).
 
--spec unpack(binary) -> term().
+-spec unpack(binary()) -> term().
 unpack(Bin) ->
     %%{ok, Val} = msgpack:unpack(Bin, [{format, jsx}]),
     %%Val.
