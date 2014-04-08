@@ -60,44 +60,32 @@ handle_event({connack_accept}, State=#state{subs=Subscribes}) ->
 
 handle_event({publish, Topic, Payload}, State) ->
     lager:debug("subscribe: topic:~p~n", [Topic]),
-    {Type, DeviceId, No, _Val, _} = marionet_data:unpack_io(Payload),
-    Data = create_zmq_publish(<<"io">>, Type, DeviceId, No, Payload),
-    ok = erlzmq:send(State#state.socket, Data),
+
+    _ = case check_json(Payload) of
+	    ok ->
+		ok = erlzmq:send(State#state.socket, Payload);
+	    {error, _Reason} ->
+		ignore
+	end,
+
     {ok, State};
 
 handle_event({publish, Topic, Payload, 1, MsgId}, State) ->
     lager:debug("subscribe: topic(id:~p):~p~n", [MsgId, Topic]),
-    {Type, DeviceId, No, _Val, _} = marionet_data:unpack_io(Payload),
-    Data = create_zmq_publish(<<"io">>, Type, DeviceId, No, Payload),
-    ok = erlzmq:send(State#state.socket, Data),
+
+    _ = case check_json(Payload) of
+	    ok ->
+		ok = erlzmq:send(State#state.socket, Payload);
+	    {error, _Reason} ->
+		emqttc:puback(emqttc, MsgId),
+		ignore
+	end,
+
     {ok, State};
 
 handle_event(Event, State) ->
     lager:warning("unknown sub event: ~p", [Event]),
     {ok, State}.
-
-%%--------------------------------------------------------------------
-%% @private
-%% @doc Create zmq publish data.
-%% @end
-%%--------------------------------------------------------------------
--spec create_zmq_publish(EventType, Type, DeviceId, No, Payload) -> 
-				binary() when
-      EventType :: binary(),
-      Type :: binary(),
-      DeviceId :: binary(),
-      No :: non_neg_integer(),
-      Payload :: binary().
-create_zmq_publish(EventType, Type, DeviceId, No, Payload) ->
-    <<EventType/binary,
-      ":@:",
-      DeviceId/binary,
-      ":@:",
-      Type/binary,
-      ":@:",
-      (integer_to_binary(No))/binary,
-      ":@:",
-      Payload/binary>>.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -161,7 +149,31 @@ code_change(_OldVsn, State, _Extra) ->
 %%% Internal functions
 %%%===================================================================
 
+%%--------------------------------------------------------------------
+%% @private
+%% @doc Close ZMQ Socket.
+%% @end
+%%--------------------------------------------------------------------
 close_socket(_State = #state{socket = Socket}) ->
     lager:info("closing ZMQ(sub handler)."),
     ok = erlzmq:close(Socket, ?CLOSE_TIMEOUT).
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc Check valid JSON.
+%% @end
+%%--------------------------------------------------------------------
+-spec check_json(Payload) -> ok | {error, Reason} when
+      Payload :: binary(),
+      Reason :: term().
+check_json(Payload) ->
+    try
+	_ = marionet_data:unpack_io(Payload),
+	ok
+    catch
+	error:Reason ->
+	    lager:error("Sub data parse error: ~p : ~p", [Reason, Payload]),
+	    {error, Reason}
+		
+    end.
 

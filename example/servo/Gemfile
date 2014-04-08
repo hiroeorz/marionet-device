@@ -1,0 +1,8 @@
+
+source 'https://rubygems.org'
+
+# for ffi loading library libzmq.so
+ENV['LD_LIBRARY_PATH'] = "${LD_LIBRARY_PATH}:../../deps/erlzmq/deps/zeromq3/src/.libs"
+
+# Specify your gem's dependencies in servo.gemspec
+gemspec

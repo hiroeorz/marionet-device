@@ -19,3 +19,4 @@ rel/marionet-device-002/marionet-device-002
 rel/raspberrypi/raspberrypi
 rel/plc/plc
 rel/galileo/galileo
+example/*/vendor
