@@ -35,6 +35,7 @@ module MarioNet
     end
 
     def call(ev)
+      return unless ev.kind_of?(Hash)
       type   = ev["type"]
       type = "analog"  if type == "ai" # delete when source data type fixed.
       type = "digital" if type == "di" # delete when source data type fixed.
