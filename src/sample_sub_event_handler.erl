@@ -57,57 +57,57 @@ handle_event({connack_accept}, State=#state{subs=Subscribes}) ->
     {ok, State};
 
 %% digital(QoS=1)
-handle_event({publish, <<"/demo/pi002/digital/0">> = Topic,
-	      Payload, 1, MsgId}, State) ->
-    lager:info("publish: topic(id:~p):~p~n", [MsgId, Topic]),
+handle_event({publish, <<"/demo/pi002/digital/0">> = _Topic,
+	      _Payload, 1, _MsgId}, State) ->
+    %%lager:info("publish: topic(id:~p):~p~n", [MsgId, Topic]),
 
-    {<<"di">>, 
-     _DeviceId, _PortNo, Status, _} = marionet_data:unpack_io(Payload),
+    %%{<<"di">>, 
+    %% _DeviceId, _PortNo, Status, _} = marionet_data:unpack_io(Payload),
 
-    lager:info("publish: state:~p~n", [Status]),
-    [_, _, _, _, S, _, _, _] = Status,
-    gpio_pin:write(25, S),
-    emqttc:puback(emqttc, MsgId),
+    %%lager:info("publish: state:~p~n", [Status]),
+    %%[_, _, _, _, S, _, _, _] = Status,
+    %%gpio_pin:write(25, S),
+    %%emqttc:puback(emqttc, MsgId),
     {ok, State};
 
 %% digital(QoS=0)
-handle_event({publish, <<"/demo/pi002/digital/0">> = Topic,
-	      Payload}, State) ->
-    lager:info("publish: topic:~p~n", [Topic]),
+handle_event({publish, <<"/demo/pi002/digital/0">> = _Topic,
+	      _Payload}, State) ->
+    %%lager:info("publish: topic:~p~n", [Topic]),
 
-    {<<"di">>, 
-     _DeviceId, _PortNo, Status, _} = marionet_data:unpack_io(Payload),
+    %%{<<"di">>, 
+    %% _DeviceId, _PortNo, Status, _} = marionet_data:unpack_io(Payload),
 
-    lager:info("sub: state:~p~n", [Status]),
-    [_, _, _, _, S, _, _, _] = Status,
-    gpio_pin:write(25, S),
+    %%lager:info("sub: state:~p~n", [Status]),
+    %%[_, _, _, _, S, _, _, _] = Status,
+    %%gpio_pin:write(25, S),
     {ok, State};
 
 %% analog(pi001, QoS=0)
-handle_event({publish, <<"/demo/pi001/analog/", _/binary>> = Topic,
-	      Payload}, State) ->
-    {<<"ai">>, DeviceId, PinNo, Val, _Opts} = marionet_data:unpack_io(Payload),
-    lager:debug("sub: pin=~p val=~p~n(topic:~p)", [PinNo, Val, Topic]),
-    control_led(DeviceId, PinNo, Val),
-    control_servo(DeviceId, PinNo, Val),
+handle_event({publish, <<"/demo/pi001/analog/", _/binary>> = _Topic,
+	      _Payload}, State) ->
+    %%{<<"ai">>, DeviceId, PinNo, Val, _Opts} = marionet_data:unpack_io(Payload),
+    %%lager:debug("sub: pin=~p val=~p~n(topic:~p)", [PinNo, Val, Topic]),
+    %%control_led(DeviceId, PinNo, Val),
+    %%control_servo(DeviceId, PinNo, Val),
     {ok, State};
 
 %% analog(pi002, QoS=0)
-handle_event({publish, <<"/demo/pi002/analog/", _/binary>> = Topic,
-	      Payload}, State) ->
-    {<<"ai">>, DeviceId, PinNo, Val, _Opts} = marionet_data:unpack_io(Payload),
-    lager:debug("sub: pin=~p val=~p~n(topic:~p)", [PinNo, Val, Topic]),
-    control_led(DeviceId, PinNo, Val),
-    control_servo(DeviceId, PinNo, Val),
+handle_event({publish, <<"/demo/pi002/analog/", _/binary>> = _Topic,
+	      _Payload}, State) ->
+    %%{<<"ai">>, DeviceId, PinNo, Val, _Opts} = marionet_data:unpack_io(Payload),
+    %%lager:debug("sub: pin=~p val=~p~n(topic:~p)", [PinNo, Val, Topic]),
+    %%control_led(DeviceId, PinNo, Val),
+    %%control_servo(DeviceId, PinNo, Val),
     {ok, State};
 
 %% analog(pi002, QoS=0)
-handle_event({publish, <<"/demo/galileo/analog/", _/binary>> = Topic,
-	      Payload}, State) ->
-    {<<"ai">>, DeviceId, PinNo, Val, _Opts} = marionet_data:unpack_io(Payload),
-    lager:debug("sub: pin=~p val=~p~n(topic:~p)", [PinNo, Val, Topic]),
-    control_led(DeviceId, PinNo, Val),
-    control_servo(DeviceId, PinNo, Val),
+handle_event({publish, <<"/demo/galileo/analog/", _/binary>> = _Topic,
+	      _Payload}, State) ->
+    %%{<<"ai">>, DeviceId, PinNo, Val, _Opts} = marionet_data:unpack_io(Payload),
+    %%lager:debug("sub: pin=~p val=~p~n(topic:~p)", [PinNo, Val, Topic]),
+    %%control_led(DeviceId, PinNo, Val),
+    %%control_servo(DeviceId, PinNo, Val),
     {ok, State};
 
 %% other(QoS=0)
@@ -188,22 +188,22 @@ code_change(_OldVsn, State, _Extra) ->
 %%% Internal functions
 %%%===================================================================
 
-control_led(2, 0, Val) when Val > 512 ->
-    gpio_pin:write(24, 1);
+%control_led(2, 0, Val) when Val > 512 ->
+%    gpio_pin:write(24, 1);
 
-control_led(2, 0, Val) when Val =< 512 ->
-    gpio_pin:write(24, 0);
+%control_led(2, 0, Val) when Val =< 512 ->
+%    gpio_pin:write(24, 0);
 
-control_led(_DeviceId, _PinNo, _Val) ->
-    ok.
+%control_led(_DeviceId, _PinNo, _Val) ->
+%    ok.
 
-control_servo(<<"galileo">>, 0, Val) ->
-    Angle = Val * 180 div 4096,
-    arduino:analog_write(?SERVO_PINNO, Angle);
+%control_servo(<<"galileo">>, 0, Val) ->
+%    Angle = Val * 180 div 4096,
+%    arduino:analog_write(?SERVO_PINNO, Angle);
 
-control_servo(<<"pi002">>, 0, Val) ->
-    Angle = Val * 180 div 1024,
-    arduino:analog_write(?SERVO_PINNO, Angle);
+%control_servo(<<"pi002">>, 0, Val) ->
+%    Angle = Val * 180 div 1024,
+%    arduino:analog_write(?SERVO_PINNO, Angle);
 
-control_servo(_DeviceId, _PinNo, _Val) ->
-    ok.
+%control_servo(_DeviceId, _PinNo, _Val) ->
+%    ok.

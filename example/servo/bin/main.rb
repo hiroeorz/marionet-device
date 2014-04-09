@@ -139,6 +139,19 @@ module MarioNet
 
   end
 
+  class Arduino
+
+    def initialize(task)
+      @task = task
+    end
+    
+    def analog_write(pin, val, &block)
+      @task.send_command({command:"arduino_analog_write", args:[pin, val]},
+                         &block)
+    end
+
+  end
+
   class CommandError < StandardError
   end
 
@@ -149,6 +162,7 @@ end
 
 io = MarioNet::IO.new
 gpio = MarioNet::GPIO.new(io)
+arduino = MarioNet::Arduino.new(io)
 
 #
 # LED status change when analog data received from device "plc".
@@ -184,6 +198,12 @@ io.remote(device:"galileo", type:"analog") do |no, val|
     puts "galileo: #{state} -> #{new_state}"
     gpio.digital_write(24, new_state)
   end
+end
+
+io.remote(device:"galileo", type:"analog", no:0) do |no, val|
+  servo_pin = 9
+  angle = val * 180 / 4096
+  arduino.analog_write(servo_pin, angle) { puts "servo: -> #{angle}" }
 end
 
 io.remote(device:"galileo", type:"digital") do |no, val|
