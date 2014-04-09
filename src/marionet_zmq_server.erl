@@ -115,12 +115,14 @@ handle_cast(_Msg, State) ->
 handle_info({zmq, _S, Payload, []}, State = #state{socket = Socket}) ->
     lager:debug("zmq rep: ~p", [Payload]),
     case marionet_data:unpack_command(Payload) of
-	{Command, Args} when is_binary(Command), is_list(Args) ->
+	{UUID, Command, Args} when is_binary(Command), is_list(Args) ->
 	    Rep = handle_zmq_request(Command, Args),
-	    Json = marionet_data:pack(Rep),
+	    Json = marionet_data:pack([{uuid, UUID} | Rep]),
 	    erlzmq:send(Socket, Json);
 	Other ->
-	    lager:warning("unknown zmq req: ~p", [Other])
+	    lager:warning("unknown zmq req: ~p", [Other]),
+	    Json = marionet_data:pack([{error, <<"invalid_command">>}]),
+	    erlzmq:send(Socket, Json)
     end,
     {noreply, State};
 

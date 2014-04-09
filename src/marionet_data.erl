@@ -51,7 +51,13 @@ pack_io(Type, DeviceId, AnalogNo, Val, Opts) ->
       Val :: non_neg_integer(),
       Opts :: [tuple()].
 unpack_io(Payload) ->
-    Obj = unpack(Payload), <<"ai">> = proplists:get_value(<<"type">>, Obj),
+    Obj = unpack(Payload),
+
+    _ = case proplists:get_value(<<"type">>, Obj) of % check
+	    <<"di">> -> ok;
+	    <<"ai">> -> ok
+	end,
+
     Type = proplists:get_value(<<"type">>, Obj),
     DeviceId = proplists:get_value(<<"id">>, Obj),
     No = proplists:get_value(<<"no">>, Obj),
@@ -63,15 +69,17 @@ unpack_io(Payload) ->
 %% @doc Parse command that send from other application.
 %% @end
 %%--------------------------------------------------------------------
--spec unpack_command(Payload) -> {Command, Args} when
+-spec unpack_command(Payload) -> {UUID, Command, Args} when
       Payload :: binary(),
+      UUID :: binary(),
       Command :: binary(),
       Args :: [term()].
 unpack_command(Payload) ->
     Obj = unpack(Payload),
     Command = proplists:get_value(<<"command">>, Obj),
     Args = proplists:get_value(<<"args">>, Obj),
-    {Command, Args}.
+    UUID = proplists:get_value(<<"uuid">>, Obj),
+    {UUID, Command, Args}.
 
 %%--------------------------------------------------------------------
 %% @doc format using msgpack
