@@ -1,23 +1,28 @@
-# -*- coding: utf-8 -*-
-
 require "json"
 require "em-zeromq"
 require "uuidtools"
 
 module MarioNet
-  class Task
+  class IO
 
     # URI to ZeroMQ binded port.
     ZMQ_SUB_URI = "tcp://127.0.0.1:6788"
     ZMQ_REQ_URI = "tcp://127.0.0.1:6789"
+
+    # Error raised if task count over TASK_COUNT_LIMIT.
+    TASK_COUNT_LIMIT = 30
 
     def initialize
       @req = nil
       @callback = nil
     end
 
-    def event_queue
-      @event_queue ||= {}
+    def task_queue
+      @task_queue ||= []
+    end
+
+    def remote_events
+      @remote_events ||= {}
     end
 
     def context
@@ -28,31 +33,52 @@ module MarioNet
       @callback ||= {}
     end
 
-    def event(ev, &block)
+    def remote(ev, &block)
       raise ArgumentError.new("Block must given!") unless block_given?
-      event_queue[ev] = block
+      remote_events[ev] = block
     end
 
     def call(ev)
-      type = ev["type"]
-      id   = ev["id"]
-      no   = ev["no"]
-      val  = ev["val"]
-      opts = ev["opts"]
+      type   = ev["type"]
+      type = "analog"  if type == "ai" # delete when source data type fixed.
+      type = "digital" if type == "di" # delete when source data type fixed.
 
-      task1 = event_queue[{:id => id, :type => type, :no => no}]
-      task1.call(val, ev) if task1
+      device = ev["id"]
+      no     = ev["no"]
+      val    = ev["val"]
+      opts   = ev["opts"]
 
-      task2 = event_queue[{:id => id, :type => type}]
-      task2.call(val, ev) if task2
+      task1 = remote_events[{:device => device, :type => type, :no => no}]
+      task1.call(no, val, ev) if task1
+
+      task2 = remote_events[{:device => device, :type => type}]
+      task2.call(no, val, ev) if task2
     end
 
     def send_command(obj, &block)
-      obj[:uuid] = uuid
+      exec_block(obj, block)
+    end
+
+    def exec_block(obj, block)
+      command_uuid = uuid
+      obj[:uuid] = command_uuid
 
       if @req.send_msg(obj.to_json)
-        callback[uuid] = block if block_given?
+        callback[command_uuid] = block if block
+      else
+        task_queue << {:obj => obj, :block => block}
+        if TASK_COUNT_LIMIT < task_queue.length
+          raise TooMuchTaskError.new("too much task: #{task_queue.length}")
+        end
       end
+    end
+
+    def flash_task!
+      return if task_queue.empty?
+      task = task_queue.shift
+      obj = task[:obj]
+      block = task[:block]
+      exec_block(obj, block)
     end
 
     def start
@@ -73,11 +99,12 @@ module MarioNet
             if result["error"]
               raise MarioNet::CommandError.new(result["error"])
             else
-              p result
-              p [:callback, callback]
-              callback.shift.call(result["return"])
+              fun = callback.delete(result["uuid"])
+              fun.call(result["return"]) if fun
             end
           end
+
+          flash_task!
         }
 
         sub.on(:message) { |part|
@@ -89,7 +116,7 @@ module MarioNet
     private
 
     def uuid
-      UUIDTools::UUID.random_create
+      UUIDTools::UUID.random_create.to_s
     end
 
   end
@@ -115,33 +142,39 @@ module MarioNet
   class CommandError < StandardError
   end
 
+  class TooMuchTaskError < StandardError
+  end
+
 end
 
-task = MarioNet::Task.new
-gpio = MarioNet::GPIO.new(task)
+io = MarioNet::IO.new
+gpio = MarioNet::GPIO.new(io)
 
-task.event(id:"plc", type:"ai") do |val, ev|
-  p [val, ev]
-  
-#  pin = ev["no"]
-
-#  gpio.digital_read(4) do |state|
-#    p [:read, state]
-#    new_val = (state.zero?) ? 1 : 0
-#    gpio.digital_write(24, new_val) { |result| p [:write, result] }
-#  end
+#
+# LED status change when analog data received from device "plc".
+#
+io.remote(device:"plc", type:"analog") do |no, val, ev|
+  gpio.digital_read(25) do |state|
+    new_state = (state.zero?) ? 1 : 0
+    puts "#{state} -> #{new_state}"
+    gpio.digital_write(25, new_state)
+  end
 end
 
-task.event(id:"plc", type:"ai", no:2) do |val, ev|
-  p [val, ev]
+io.remote(device:"plc", type:"analog", no:2) do |no, val, ev|
+  # some task
 end
 
-task.event(id:"pi002", type:"ai") do |val, ev|
-  p [val, ev]
+io.remote(device:"pi002", type:"analog") do |no, val, ev|
+  # some task
 end
 
-task.event(id:"galileo", type:"ai") do |val, ev|
-  p [val, ev]
+io.remote(device:"galileo", type:"analog") do |no, val, ev|
+  # some task
 end
 
-task.start
+io.remote(device:"galileo", type:"digital") do |no, val, ev|
+  # some task
+end
+
+io.start
