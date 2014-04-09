@@ -15,7 +15,7 @@ __Authors:__ HIROE Shin ([`shin@HIROE-no-MacBook-Pro.local`](mailto:shin@HIROE-n
 ## Function Index ##
 
 
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#pack-1">pack/1</a></td><td>format using msgpack.</td></tr><tr><td valign="top"><a href="#pack_io-5">pack_io/5</a></td><td>Format analog status data.</td></tr><tr><td valign="top"><a href="#unpack-1">unpack/1</a></td><td></td></tr><tr><td valign="top"><a href="#unpack_io-1">unpack_io/1</a></td><td>Parse analog status data.</td></tr></table>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#pack-1">pack/1</a></td><td>format using msgpack.</td></tr><tr><td valign="top"><a href="#pack_io-5">pack_io/5</a></td><td>Format analog status data.</td></tr><tr><td valign="top"><a href="#unpack-1">unpack/1</a></td><td></td></tr><tr><td valign="top"><a href="#unpack_command-1">unpack_command/1</a></td><td>Parse command that send from other application.</td></tr><tr><td valign="top"><a href="#unpack_io-1">unpack_io/1</a></td><td>Parse analog status data.</td></tr></table>
 
 
 <a name="functions"></a>
@@ -60,6 +60,18 @@ unpack(Bin::binary()) -&gt; term()
 
 
 
+<a name="unpack_command-1"></a>
+
+### unpack_command/1 ###
+
+
+<pre><code>
+unpack_command(Payload) -&gt; {Command, Args}
+</code></pre>
+
+<ul class="definitions"><li><code>Payload = binary()</code></li><li><code>Command = binary()</code></li><li><code>Args = [term()]</code></li></ul>
+
+Parse command that send from other application.
 <a name="unpack_io-1"></a>
 
 ### unpack_io/1 ###

@@ -153,27 +153,40 @@ gpio = MarioNet::GPIO.new(io)
 #
 # LED status change when analog data received from device "plc".
 #
-io.remote(device:"plc", type:"analog") do |no, val, ev|
+io.remote(device:"plc", type:"analog") do |no, val|
   gpio.digital_read(25) do |state|
     new_state = (state.zero?) ? 1 : 0
-    puts "#{state} -> #{new_state}"
+    puts "plc: #{state} -> #{new_state}"
     gpio.digital_write(25, new_state)
   end
 end
 
-io.remote(device:"plc", type:"analog", no:2) do |no, val, ev|
+#
+# plc analog(2) received.
+#
+io.remote(device:"plc", type:"analog", no:2) do |no, val|
   # some task
 end
 
-io.remote(device:"pi002", type:"analog") do |no, val, ev|
+#
+# pi002 analog(all) received.
+#
+io.remote(device:"pi002", type:"analog") do |no, val|
   # some task
 end
 
-io.remote(device:"galileo", type:"analog") do |no, val, ev|
-  # some task
+#
+# galileo analog(all) received.
+#
+io.remote(device:"galileo", type:"analog") do |no, val|
+  gpio.digital_read(24) do |state|
+    new_state = (state.zero?) ? 1 : 0
+    puts "galileo: #{state} -> #{new_state}"
+    gpio.digital_write(24, new_state)
+  end
 end
 
-io.remote(device:"galileo", type:"digital") do |no, val, ev|
+io.remote(device:"galileo", type:"digital") do |no, val|
   # some task
 end
 
