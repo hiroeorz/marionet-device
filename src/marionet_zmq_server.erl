@@ -168,6 +168,11 @@ handle_zmq_request(<<"gpio_digital_read">>, [PinNo]) ->
     lager:debug("gpio_digital_read(PinNo:~p)", [PinNo]),
     [{return, gpio_pin:read(PinNo)}];
 
+handle_zmq_request(<<"arduino_analog_write">>, [PinNo, Val]) ->
+    lager:debug("arduino_servo_write(PinNo:~p, Val:~p)", [PinNo, Val]),
+    arduino:analog_write(PinNo, Val),
+    [{return, true}];
+
 handle_zmq_request(Command, Args) ->
     lager:debug("unknown zmq request: ~p : ~p", [Command, Args]),
     [{return, nil}, {error, <<"command_not_found">>}].
@@ -180,5 +185,3 @@ close_socket(_State = #state{socket = Socket, context = Context}) ->
     lager:info("closing ZMQ."),
     ok = erlzmq:close(Socket, ?CLOSE_TIMEOUT),
     ok = erlzmq:term(Context, ?CLOSE_TIMEOUT).
-
-
