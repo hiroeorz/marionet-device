@@ -52,12 +52,6 @@ pack_io(Type, DeviceId, AnalogNo, Val, Opts) ->
       Opts :: [tuple()].
 unpack_io(Payload) ->
     Obj = unpack(Payload),
-
-    _ = case proplists:get_value(<<"type">>, Obj) of % check
-	    <<"di">> -> ok;
-	    <<"ai">> -> ok
-	end,
-
     Type = proplists:get_value(<<"type">>, Obj),
     DeviceId = proplists:get_value(<<"id">>, Obj),
     No = proplists:get_value(<<"no">>, Obj),
