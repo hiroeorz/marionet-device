@@ -31,11 +31,11 @@
       Opts :: [tuple()],
       Payload :: binary().
 pack_io(Type, DeviceId, AnalogNo, Val, Opts) ->
-    Obj = [{type, Type},
-	   {id, DeviceId},
-	   {no, AnalogNo},
-	   {val, Val},
-	   {opts, Opts}
+    Obj = [{<<"type">>, Type},
+	   {<<"id">>, DeviceId},
+	   {<<"no">>, AnalogNo},
+	   {<<"val">>, Val},
+	   {<<"opts">>, Opts}
 	  ],
     pack(Obj).
 
@@ -81,14 +81,19 @@ unpack_command(Payload) ->
 %%--------------------------------------------------------------------
 -spec pack(term()) -> binary().
 pack(Obj) ->
-    %%msgpack:pack(Obj, [{format, jsx}]).
-    jsx:encode(Obj).
+    msgpack:pack(Obj, [{format, jsx}]).
+    %%jsx:encode(Obj).
 
 -spec unpack(binary()) -> term().
 unpack(Bin) ->
-    %%{ok, Val} = msgpack:unpack(Bin, [{format, jsx}]),
-    %%Val.
-    jsx:decode(Bin).
+    case msgpack:unpack(Bin, [{format, jsx}]) of
+	{ok, Val} ->
+	    Val;
+	{error, {badarg, name}} ->
+	    lager:error("Invalid msgpack data received: ~p", [Bin]),
+	    []
+    end.
+    %%jsx:decode(Bin).
 
 %%%===================================================================
 %%% Internal functions
