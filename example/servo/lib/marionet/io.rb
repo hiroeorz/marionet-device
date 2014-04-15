@@ -60,7 +60,7 @@ module MarioNet
       command_uuid = uuid
       obj[:uuid] = command_uuid
 
-      if @req.send_msg(obj.to_json)
+      if @req.send_msg(obj.to_msgpack)
         callback[command_uuid] = block if block
       else
         task_queue << {:obj => obj, :block => block}
@@ -91,7 +91,7 @@ module MarioNet
         
         @req.on(:message) { |part|
           if !callback.empty?
-            result = JSON.parse(part.copy_out_string)
+            result = MessagePack.unpack(part.copy_out_string)
 
             if result["error"]
               raise MarioNet::CommandError.new(result["error"])
@@ -105,7 +105,7 @@ module MarioNet
         }
 
         sub.on(:message) { |part|
-          self.call(JSON.parse(part.copy_out_string))
+          self.call(MessagePack.unpack(part.copy_out_string))
         }
       }
     end
