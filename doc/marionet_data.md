@@ -66,10 +66,10 @@ unpack(Bin::binary()) -&gt; term()
 
 
 <pre><code>
-unpack_command(Payload) -&gt; {Command, Args}
+unpack_command(Payload) -&gt; {UUID, Command, Args}
 </code></pre>
 
-<ul class="definitions"><li><code>Payload = binary()</code></li><li><code>Command = binary()</code></li><li><code>Args = [term()]</code></li></ul>
+<ul class="definitions"><li><code>Payload = binary()</code></li><li><code>UUID = binary()</code></li><li><code>Command = binary()</code></li><li><code>Args = [term()]</code></li></ul>
 
 Parse command that send from other application.
 <a name="unpack_io-1"></a>
