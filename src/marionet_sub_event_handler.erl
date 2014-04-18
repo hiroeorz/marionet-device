@@ -61,7 +61,7 @@ handle_event({connack_accept}, State=#state{subs=Subscribes}) ->
 handle_event({publish, Topic, Payload}, State) ->
     lager:debug("subscribe: topic:~p~n", [Topic]),
 
-    _ = case check_json(Payload) of
+    _ = case check_format(Payload) of
 	    ok ->
 		ok = erlzmq:send(State#state.socket, Payload);
 	    {error, _Reason} ->
@@ -73,7 +73,7 @@ handle_event({publish, Topic, Payload}, State) ->
 handle_event({publish, Topic, Payload, 1, MsgId}, State) ->
     lager:debug("subscribe: topic(id:~p):~p~n", [MsgId, Topic]),
 
-    _ = case check_json(Payload) of
+    _ = case check_format(Payload) of
 	    ok ->
 		ok = erlzmq:send(State#state.socket, Payload);
 	    {error, _Reason} ->
@@ -163,10 +163,10 @@ close_socket(_State = #state{socket = Socket}) ->
 %% @doc Check valid JSON.
 %% @end
 %%--------------------------------------------------------------------
--spec check_json(Payload) -> ok | {error, Reason} when
+-spec check_format(Payload) -> ok | {error, Reason} when
       Payload :: binary(),
       Reason :: term().
-check_json(Payload) ->
+check_format(Payload) ->
     try
 	_ = marionet_data:unpack_io(Payload),
 	ok

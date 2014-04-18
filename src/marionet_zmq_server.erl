@@ -113,16 +113,16 @@ handle_cast(_Msg, State) ->
 %%   ["digital_write", [2, 1]]
 %%   ["digital_read" , [2]]
 handle_info({zmq, _S, Payload, []}, State = #state{socket = Socket}) ->
-    lager:debug("zmq rep: ~p", [Payload]),
+    %%lager:debug("zmq rep: ~p", [Payload]),
     case marionet_data:unpack_command(Payload) of
 	{UUID, Command, Args} when is_binary(Command), is_list(Args) ->
 	    Rep = handle_zmq_request(Command, Args),
-	    Json = marionet_data:pack([{uuid, UUID} | Rep]),
-	    erlzmq:send(Socket, Json);
+	    Pack = marionet_data:pack([{<<"uuid">>, UUID} | Rep]),
+	    erlzmq:send(Socket, Pack);
 	Other ->
 	    lager:warning("unknown zmq req: ~p", [Other]),
-	    Json = marionet_data:pack([{error, <<"invalid_command">>}]),
-	    erlzmq:send(Socket, Json)
+	    Pack = marionet_data:pack([{<<"error">>, <<"invalid_command">>}]),
+	    erlzmq:send(Socket, Pack)
     end,
     {noreply, State};
 
@@ -162,20 +162,20 @@ code_change(_OldVsn, State, _Extra) ->
 handle_zmq_request(<<"gpio_digital_write">>, [PinNo, Val]) ->
     lager:debug("gpio_digital_write(PinNo:~p, Val:~p)", [PinNo, Val]),
     ok = gpio_pin:write(PinNo, Val),
-    [{return, true}];
+    [{<<"return">>, true}];
 
 handle_zmq_request(<<"gpio_digital_read">>, [PinNo]) ->
     lager:debug("gpio_digital_read(PinNo:~p)", [PinNo]),
-    [{return, gpio_pin:read(PinNo)}];
+    [{<<"return">>, gpio_pin:read(PinNo)}];
 
 handle_zmq_request(<<"arduino_analog_write">>, [PinNo, Val]) ->
     lager:debug("arduino_servo_write(PinNo:~p, Val:~p)", [PinNo, Val]),
     arduino:analog_write(PinNo, Val),
-    [{return, true}];
+    [{<<"return">>, true}];
 
 handle_zmq_request(Command, Args) ->
     lager:debug("unknown zmq request: ~p : ~p", [Command, Args]),
-    [{return, nil}, {error, <<"command_not_found">>}].
+    [{<<"return">>, nil}, {<<"error">>, <<"command_not_found">>}].
 
 %%%===================================================================
 %%% Internal functions

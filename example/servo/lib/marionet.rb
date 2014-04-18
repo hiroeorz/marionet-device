@@ -1,4 +1,4 @@
-require "json"
+require "msgpack"
 require "em-zeromq"
 require "uuidtools"
 

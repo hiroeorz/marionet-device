@@ -59,10 +59,6 @@
 
          {analog_list, [0, 1, 2, 3, 4, 5]},
 
-         %% driver node node name
-         %% c1@ is fixed. change your hostname part of 'raspberrypi'.
-         {c_node, 'c1@127.0.0.1'},
-
          %% arduino extend setting.
          {arduino_enable, true},
          {arduino, [{speed, 57600},
