@@ -59,7 +59,6 @@ init([]) ->
     ArduinoEnable = marionet_config:get(arduino_enable),
     OmronFinsEnable = marionet_config:get(omron_fins_enable),
     IOEventHandler = marionet_config:get(io_event_handler),
-    SubEventHandler = marionet_config:get(subscribe_event_handler),
     Subscribes = marionet_config:get(subscribes),
     GroupId = marionet_config:get(group_id),
     DeviceId = marionet_config:get(device_id),
@@ -76,7 +75,6 @@ init([]) ->
 
     EventSpecs = [status_spec(),
 		  zmq_server_spec(),
-		  event_sup_spec(emqttc_event, SubEventHandler, [Subscribes]),
 		  event_sup_spec(emqttc_event, marionet_sub_event_handler,
 				 [Subscribes]),
 		  event_sup_spec(gpio_pin_event, marionet_device_event, []),
