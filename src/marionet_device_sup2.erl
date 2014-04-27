@@ -59,7 +59,6 @@ init([]) ->
     ArduinoEnable = marionet_config:get(arduino_enable),
     OmronFinsEnable = marionet_config:get(omron_fins_enable),
     IOEventHandler = marionet_config:get(io_event_handler),
-    Subscribes = marionet_config:get(subscribes),
     GroupId = marionet_config:get(group_id),
     DeviceId = marionet_config:get(device_id),
     AnalogPubInterval = marionet_config:get(analog_publish_interval),
@@ -75,8 +74,7 @@ init([]) ->
 
     EventSpecs = [status_spec(),
 		  zmq_server_spec(),
-		  event_sup_spec(emqttc_event, marionet_sub_event_handler,
-				 [Subscribes]),
+		  event_sup_spec(emqttc_event, marionet_sub_event_handler, []),
 		  event_sup_spec(gpio_pin_event, marionet_device_event, []),
 		  event_sup_spec(gpio_pin_event, IOEventHandler,
 				 [GroupId, DeviceId, AnalogPubInterval])
@@ -173,7 +171,10 @@ mqtt_spec() ->
     Type = worker,
 
     MqttBroker = marionet_config:get(mqtt_broker),
-    {emqttc, {emqttc, start_link, [MqttBroker]},
+    Subscribes = marionet_config:get(subscribes),
+    Opts = [{topics, Subscribes} | MqttBroker],
+
+    {emqttc, {emqttc, start_link, [emqttc, Opts]},
      Restart, Shutdown, Type, [emqttc]}.
 
 arduino_sup_spec() ->

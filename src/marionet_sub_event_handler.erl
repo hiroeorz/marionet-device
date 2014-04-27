@@ -17,8 +17,7 @@
 -define(ZMQ_END_POINT, "tcp://127.0.0.1:6788").
 -define(CLOSE_TIMEOUT, 5000).
 
--record(state, { subs    :: list(),
-		 context :: binary(),
+-record(state, { context :: binary(),
 		 socket  :: {pos_integer(), binary()} }).
 
 %%%===================================================================
@@ -34,11 +33,11 @@
 %% @spec init(Args) -> {ok, State}
 %% @end
 %%--------------------------------------------------------------------
-init([Subscribes]) ->
+init([]) ->
     {ok, Context} = erlzmq:context(),
     {ok, Socket} = erlzmq:socket(Context, pub),
     ok = erlzmq:bind(Socket, ?ZMQ_END_POINT),
-    {ok, #state{subs = Subscribes, socket = Socket, context = Context}}.
+    {ok, #state{socket = Socket, context = Context}}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -53,11 +52,6 @@ init([Subscribes]) ->
 %%                          remove_handler
 %% @end
 %%--------------------------------------------------------------------
-handle_event({connack_accept}, State=#state{subs=Subscribes}) ->
-    ok = emqttc:subscribe(emqttc, Subscribes),
-    io:format("sent subscribe request: ~p~n", [Subscribes]),
-    {ok, State};
-
 handle_event({publish, Topic, Payload}, State) ->
     lager:debug("subscribe: topic:~p~n", [Topic]),
 
