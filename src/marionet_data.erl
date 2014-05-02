@@ -35,7 +35,8 @@ pack_io(Type, DeviceId, AnalogNo, Val, Opts) ->
 	   {<<"id">>, DeviceId},
 	   {<<"no">>, AnalogNo},
 	   {<<"val">>, Val},
-	   {<<"opts">>, Opts}
+	   {<<"opts">>, Opts},
+	   {<<"datetime">>, datetime_bin(date(), time())}
 	  ],
     pack(Obj).
 
@@ -98,3 +99,22 @@ unpack(Bin) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+
+%%--------------------------------------------------------------------
+%% @doc 与えられた日付と時刻情報からバイナリ文字列を生成してかえす。
+%% @end
+%%--------------------------------------------------------------------
+-spec datetime_bin(Date, Time) -> binary() when
+      Date :: {integer(), integer(), integer()},
+      Time :: {integer(), integer(), integer()}.
+datetime_bin(Date, Time) ->
+    {Y, M, D} = Date,
+    {H, Mi, S} = Time,
+
+    list_to_binary([string:right(integer_to_list(Y), 4, $0), 
+                    string:right(integer_to_list(M), 2, $0),
+                    string:right(integer_to_list(D), 2, $0),
+                    string:right(integer_to_list(H), 2, $0),
+                    string:right(integer_to_list(Mi), 2, $0),
+                    string:right(integer_to_list(S), 2, $0),
+		    "000"]).
