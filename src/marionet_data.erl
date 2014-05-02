@@ -31,12 +31,13 @@
       Opts :: [tuple()],
       Payload :: binary().
 pack_io(Type, DeviceId, AnalogNo, Val, Opts) ->
+    {Date, Time} = calendar:universal_time(),
     Obj = [{<<"type">>, Type},
 	   {<<"id">>, DeviceId},
 	   {<<"no">>, AnalogNo},
 	   {<<"val">>, Val},
 	   {<<"opts">>, Opts},
-	   {<<"datetime">>, datetime_bin(date(), time())}
+	   {<<"datetime">>, datetime_bin(Date, Time)}
 	  ],
     pack(Obj).
 
