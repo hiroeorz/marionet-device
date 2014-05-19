@@ -1,4 +1,4 @@
-# MarioNetDevice
+# MarioNetDevice   [![Build Status](https://travis-ci.org/hiroeorz/marionet-device.svg?branch=master)](https://travis-ci.org/hiroeorz/marionet-device)
 
 ## Goal
 
