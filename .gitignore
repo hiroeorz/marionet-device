@@ -20,3 +20,4 @@ rel/raspberrypi/raspberrypi
 rel/plc/plc
 rel/galileo/galileo
 example/*/vendor
+.rebar
