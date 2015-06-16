@@ -71,7 +71,7 @@ handle_event({publish, Topic, Payload, 1, MsgId}, State) ->
 	    ok ->
 		ok = erlzmq:send(State#state.socket, Payload);
 	    {error, _Reason} ->
-		emqttc:puback(emqttc, MsgId),
+		%%emqttc:puback(emqttc, MsgId),
 		ignore
 	end,
 

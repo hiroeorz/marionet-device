@@ -21,8 +21,8 @@
 
 -record(state, {group_id                        :: binary(),
 		device_id                       :: binary(),
-		analog_sent_time = dict:new()   :: non_neg_integer(),
-		analog_before_vals = dict:new() :: dict(),
+		analog_sent_time = dict:new()   :: dict:dict(),
+		analog_before_vals = dict:new() :: dict:dict(),
 		analog_pub_interval = 3000      :: pos_integer() }).
 
 %%%===================================================================
@@ -175,12 +175,12 @@ topic(GroupId, DeviceId, DataType, DataNo) when is_binary(GroupId),
 %% @end
 %%--------------------------------------------------------------------
 -spec publish_if_large_changed(GroupId, DeviceId, PinNo, Val, BeforeVals) -> 
-				      ok when
+				      sent | ignore when
       GroupId :: binary(),
       DeviceId :: binary(),
       PinNo :: non_neg_integer(),
       Val :: non_neg_integer(),
-      BeforeVals :: dict().
+      BeforeVals :: dict:dict().
 publish_if_large_changed(GroupId, DeviceId, PinNo, Val, BeforeVals) ->
     BeforeVal = case dict:find(PinNo, BeforeVals) of
 		    error      -> 0;

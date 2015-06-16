@@ -121,7 +121,7 @@ handle_event({publish, Topic, Payload, 1, MsgId}, State) ->
     lager:info("unknown topic received."),
     lager:info("sub: topic(id:~p):~p~n", [MsgId, Topic]),
     lager:info("sub: payload:~p~n", [Payload]),
-    emqttc:puback(emqttc, MsgId),
+    %%emqttc:puback(emqttc, MsgId),
     {ok, State};
 
 handle_event(_Event, State) ->

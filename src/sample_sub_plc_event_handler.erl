@@ -67,7 +67,7 @@ handle_event({connack_accept}, State=#state{subs=Subscribes}) ->
 handle_event({publish, <<"/demo/pi002/digital/0">> = Topic,
 	      _Payload, 1, MsgId}, State) ->
     lager:info("publish: topic(id:~p):~p~n", [MsgId, Topic]),
-    emqttc:puback(emqttc, MsgId),
+    %%emqttc:puback(emqttc, MsgId),
     {ok, State};
 
 %% digital(QoS=0)
@@ -107,7 +107,7 @@ handle_event({publish, Topic, Payload, 1, MsgId}, State) ->
     lager:info("unknown topic received."),
     lager:info("sub: topic(id:~p):~p~n", [MsgId, Topic]),
     lager:info("sub: payload:~p~n", [Payload]),
-    emqttc:puback(emqttc, MsgId),
+    %%emqttc:puback(emqttc, MsgId),
     {ok, State};
 
 handle_event(_Event, State) ->
