@@ -45,9 +45,7 @@ Get application config
 <pre><code>
 get_all_keys() -&gt; [{atom(), term()}]
 </code></pre>
-
-<br></br>
-
+<br />
 
 Get all config keys.
 <a name="set-2"></a>
@@ -70,9 +68,7 @@ Set application config
 <pre><code>
 start_link(FileName) -&gt; {ok, Pid} | ignore | {error, Error}
 </code></pre>
-
-<br></br>
-
+<br />
 
 
 Starts the server

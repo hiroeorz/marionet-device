@@ -40,9 +40,7 @@ Starts the server.</td></tr></table>
 <pre><code>
 start_link(Config) -&gt; {ok, Pid} | ignore | {error, Error}
 </code></pre>
-
-<br></br>
-
+<br />
 
 
 Starts the server

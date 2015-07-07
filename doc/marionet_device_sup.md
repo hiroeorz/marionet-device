@@ -32,9 +32,7 @@ __Authors:__ HIROE Shin ([`shin@HIROE-no-MacBook-Pro.local`](mailto:shin@HIROE-n
 <pre><code>
 start_link() -&gt; {ok, Pid} | ignore | {error, Error}
 </code></pre>
-
-<br></br>
-
+<br />
 
 Starts the supervisor
 

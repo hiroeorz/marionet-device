@@ -30,9 +30,7 @@ __Authors:__ HIROE Shin ([`shin@HIROE-no-MacBook-Pro.local`](mailto:shin@HIROE-n
 <pre><code>
 pack(Obj::term()) -&gt; binary()
 </code></pre>
-
-<br></br>
-
+<br />
 
 format using msgpack
 <a name="pack_io-5"></a>
@@ -55,9 +53,7 @@ Format analog status data.
 <pre><code>
 unpack(Bin::binary()) -&gt; term()
 </code></pre>
-
-<br></br>
-
+<br />
 
 
 <a name="unpack_command-1"></a>

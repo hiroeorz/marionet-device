@@ -32,9 +32,7 @@ __Authors:__ HIROE Shin ([`shin@HIROE-no-MacBook-Pro.local`](mailto:shin@HIROE-n
 <pre><code>
 all_digital() -&gt; [0 | 1]
 </code></pre>
-
-<br></br>
-
+<br />
 
 get all digital state.
 <a name="analog-1"></a>

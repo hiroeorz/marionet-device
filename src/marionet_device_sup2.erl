@@ -74,7 +74,6 @@ init([]) ->
 
     EventSpecs = [status_spec(),
 		  zmq_server_spec(),
-		  event_sup_spec(emqttc_event, marionet_sub_event_handler, []),
 		  event_sup_spec(gpio_pin_event, marionet_device_event, []),
 		  event_sup_spec(gpio_pin_event, IOEventHandler,
 				 [GroupId, DeviceId, AnalogPubInterval])

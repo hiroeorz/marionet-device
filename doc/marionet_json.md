@@ -30,9 +30,7 @@ __Authors:__ HIROE Shin ([`shin@HIROE-no-MacBook-Pro.local`](mailto:shin@HIROE-n
 <pre><code>
 decode(Bin::binary) -&gt; term()
 </code></pre>
-
-<br></br>
-
+<br />
 
 Decode JSON to term()
 <a name="encode-1"></a>
@@ -43,8 +41,6 @@ Decode JSON to term()
 <pre><code>
 encode(Obj::term()) -&gt; binary()
 </code></pre>
-
-<br></br>
-
+<br />
 
 Encode term() to JSON

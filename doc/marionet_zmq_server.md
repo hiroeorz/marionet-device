@@ -40,9 +40,7 @@ Starts the server.</td></tr><tr><td valign="top"><a href="#start_link-3">start_l
 <pre><code>
 start_link(PlcAddress, PlcPort) -&gt; {ok, Pid} | ignore | {error, Error}
 </code></pre>
-
-<br></br>
-
+<br />
 
 
 Starts the server

@@ -28,7 +28,7 @@ start_http() ->
 	     ],
 
     Dispatch = cowboy_router:compile([ {'_', Routes} ]),
-    case cowboy:start_http(http, 10, [{port, 8080}],
+    case cowboy:start_http(http, 10, [{port, 8081}],
 			   [ {env, [{dispatch, Dispatch}]} ]) of
 	{ok, _} -> ok;
 	{error, {already_started, _Pid}} -> ok
