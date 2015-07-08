@@ -58,10 +58,6 @@ init([]) ->
 
     ArduinoEnable = marionet_config:get(arduino_enable),
     OmronFinsEnable = marionet_config:get(omron_fins_enable),
-    IOEventHandler = marionet_config:get(io_event_handler),
-    GroupId = marionet_config:get(group_id),
-    DeviceId = marionet_config:get(device_id),
-    AnalogPubInterval = marionet_config:get(analog_publish_interval),
     MqttEnable = marionet_config:get(mqtt_enable),
 
     GpioSpecs = [gpio_sup_spec()],
@@ -73,39 +69,35 @@ init([]) ->
 	end,
 
     EventSpecs = [status_spec(),
-		  zmq_server_spec(),
-		  event_sup_spec(gpio_pin_event, marionet_device_event, []),
-		  event_sup_spec(gpio_pin_event, IOEventHandler,
-				 [GroupId, DeviceId, AnalogPubInterval])
+		  event_sup_spec(gpio_pin_event, marionet_device_event, [])
 		 ],
 
     ArduinoSpecs = 
 	case ArduinoEnable of
 	    true  -> 
 		[arduino_sup_spec(),
-		 event_sup_spec(arduino_event, marionet_device_event, []),
-		 event_sup_spec(arduino_event, IOEventHandler, 
-				[GroupId, DeviceId, AnalogPubInterval])
+		 event_sup_spec(arduino_event, marionet_device_event, [])
 		];
-		 false -> 
-		     []
-	     end,
-
+	    false -> 
+		[]
+	end,
+    
     FinsSpecs = 
 	case OmronFinsEnable of
 	    true  -> 
 		[fins_port_spec(),
 		 fins_event_spec(),
-		 event_sup_spec(omron_fins_event, IOEventHandler,
-				[GroupId, DeviceId, AnalogPubInterval]),
+		 event_sup_spec(omron_fins_event, marionet_device_event, []),
 		 fins_watcher_spec()
 		];
 	    false ->
 		[]
 	end,
 
+    ZmqSpec = [zmq_server_spec()],
+
     {ok, {SupFlags, 
-	  GpioSpecs ++ MqttSpecs ++ EventSpecs ++ ArduinoSpecs ++ FinsSpecs}}.
+	  GpioSpecs ++ MqttSpecs ++ EventSpecs ++ ArduinoSpecs ++ FinsSpecs ++ ZmqSpec}}.
 
 %%%===================================================================
 %%% Internal functions
@@ -116,11 +108,7 @@ zmq_server_spec() ->
     Shutdown = 2000,
     Type = worker,
 
-    Config = marionet_config:get(omron_fins),
-    IPAddress = proplists:get_value(ip_address, Config),
-    Port = proplists:get_value(port, Config, 9600),
-
-    {marionet_zmq_server, {marionet_zmq_server, start_link, [IPAddress, Port]},
+    {marionet_zmq_server, {marionet_zmq_server, start_link, []},
      Restart, Shutdown, Type, [marionet_zmq_server]}.
 
 event_sup_spec(EventManager, EventHandler, Args) ->

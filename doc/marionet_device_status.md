@@ -17,13 +17,24 @@ __Authors:__ HIROE Shin ([`shin@HIROE-no-MacBook-Pro.local`](mailto:shin@HIROE-n
 ## Function Index ##
 
 
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#all_digital-0">all_digital/0</a></td><td>get all digital state.</td></tr><tr><td valign="top"><a href="#analog-1">analog/1</a></td><td>get digital state of port.</td></tr><tr><td valign="top"><a href="#digital-1">digital/1</a></td><td>get digital state of port.</td></tr><tr><td valign="top"><a href="#start_link-1">start_link/1</a></td><td>Starts the server.</td></tr><tr><td valign="top"><a href="#update_analog_value-2">update_analog_value/2</a></td><td>update analog value(14bit).</td></tr><tr><td valign="top"><a href="#update_digital_port-2">update_digital_port/2</a></td><td>update digital port(8bit).</td></tr></table>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#all_analog-0">all_analog/0</a></td><td>get all digital state.</td></tr><tr><td valign="top"><a href="#all_digital-0">all_digital/0</a></td><td>get all digital state.</td></tr><tr><td valign="top"><a href="#analog-1">analog/1</a></td><td>get digital state of port.</td></tr><tr><td valign="top"><a href="#digital-1">digital/1</a></td><td>get digital state of port.</td></tr><tr><td valign="top"><a href="#start_link-1">start_link/1</a></td><td>Starts the server.</td></tr><tr><td valign="top"><a href="#update_analog_value-2">update_analog_value/2</a></td><td>update analog value(14bit).</td></tr><tr><td valign="top"><a href="#update_digital_port-2">update_digital_port/2</a></td><td>update digital port(8bit).</td></tr></table>
 
 
 <a name="functions"></a>
 
 ## Function Details ##
 
+<a name="all_analog-0"></a>
+
+### all_analog/0 ###
+
+
+<pre><code>
+all_analog() -&gt; [non_neg_integer()]
+</code></pre>
+<br />
+
+get all digital state.
 <a name="all_digital-0"></a>
 
 ### all_digital/0 ###

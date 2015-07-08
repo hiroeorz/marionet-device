@@ -11,7 +11,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/2, start_link/3, close/0]).
+-export([start_link/0, start_link/1, close/0]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -22,27 +22,27 @@
 -define(CLOSE_TIMEOUT, 5000).
 
 -record(state, { context     :: binary(),
-		 socket      :: {pos_integer, binary()},
-		 plc_address :: string() | binary(),
-		 plc_port    :: pos_integer() }).
+		 socket      :: {pos_integer, binary()} }).
 
 %%%===================================================================
 %%% API
 %%%===================================================================
 
 %%--------------------------------------------------------------------
-%% @doc
-%% Starts the server
-%%
-%% @spec start_link(PlcAddress, PlcPort) -> {ok, Pid} | ignore | {error, Error}
+%% @doc Starts the server
 %% @end
 %%--------------------------------------------------------------------
-start_link(PlcAddress, PlcPort) ->
-    start_link(?ZMQ_END_POINT, PlcAddress, PlcPort).
+-spec start_link() -> {ok, pid()} | ignore | {error, term()}.
+start_link() ->
+    start_link(?ZMQ_END_POINT).
 
-start_link(EndPoint, PlcAddress, PlcPort) ->
-    gen_server:start_link({local, ?SERVER}, ?MODULE, 
-			  [EndPoint, PlcAddress, PlcPort], []).
+%%--------------------------------------------------------------------
+%% @doc Starts the server with 
+%% @end
+%%--------------------------------------------------------------------
+-spec start_link(string()) -> {ok, pid()} | ignore | {error, term()}.
+start_link(EndPoint) ->
+    gen_server:start_link({local, ?SERVER}, ?MODULE, [EndPoint], []).
 
 close() ->
     gen_server:call(?SERVER, close).
@@ -62,12 +62,11 @@ close() ->
 %%                     {stop, Reason}
 %% @end
 %%--------------------------------------------------------------------
-init([EndPoint, PlcAddress, PlcPort]) ->
+init([EndPoint]) ->
     {ok, Context} = erlzmq:context(),
     {ok, Socket} = erlzmq:socket(Context, [rep, {active, true}]),
     ok = erlzmq:bind(Socket, EndPoint),
-    {ok, #state{context = Context, socket = Socket,
-		plc_address = PlcAddress, plc_port = PlcPort}}.
+    {ok, #state{context = Context, socket = Socket}}.
 
 %%--------------------------------------------------------------------
 %% @private

@@ -17,8 +17,7 @@ __Authors:__ HIROE Shin ([`shin@HIROE-no-MacBook-Pro.local`](mailto:shin@HIROE-n
 ## Function Index ##
 
 
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#close-0">close/0</a></td><td></td></tr><tr><td valign="top"><a href="#start_link-2">start_link/2</a></td><td>
-Starts the server.</td></tr><tr><td valign="top"><a href="#start_link-3">start_link/3</a></td><td></td></tr></table>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#close-0">close/0</a></td><td></td></tr><tr><td valign="top"><a href="#start_link-0">start_link/0</a></td><td>Starts the server.</td></tr><tr><td valign="top"><a href="#start_link-1">start_link/1</a></td><td></td></tr></table>
 
 
 <a name="functions"></a>
@@ -32,23 +31,25 @@ Starts the server.</td></tr><tr><td valign="top"><a href="#start_link-3">start_l
 `close() -> any()`
 
 
-<a name="start_link-2"></a>
+<a name="start_link-0"></a>
 
-### start_link/2 ###
+### start_link/0 ###
 
 
 <pre><code>
-start_link(PlcAddress, PlcPort) -&gt; {ok, Pid} | ignore | {error, Error}
+start_link() -&gt; {ok, pid()} | ignore | {error, term()}
 </code></pre>
 <br />
 
-
 Starts the server
+<a name="start_link-1"></a>
 
-<a name="start_link-3"></a>
+### start_link/1 ###
 
-### start_link/3 ###
 
-`start_link(EndPoint, PlcAddress, PlcPort) -> any()`
+<pre><code>
+start_link(EndPoint::string()) -&gt; {ok, pid()} | ignore | {error, term()}
+</code></pre>
+<br />
 
 

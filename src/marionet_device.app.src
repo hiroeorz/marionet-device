@@ -96,6 +96,8 @@
                        {digital_port_offset, 3},
                        {analog, [0, 1, 2, 3, 4, 5]},
                        {digital, [11, 12, 13, 14]}
-                      ]}
+                      ]},
+         
+         {zmq, [ {ip_address,  <<"127.0.0.1">>}, {port, 9600}  ]}
   ]}
  ]}.

@@ -55,7 +55,7 @@ handle_event({digital_port_changed, PortNo, Status}, State) ->
     {ok, State};
 
 handle_event({analog_recv, PinNo, Val}, State) ->
-    %% lager:info("analog recv(PinNo:~w): ~w", [PinNo, Val]),
+    %%lager:info("analog recv(PinNo:~w): ~w", [PinNo, Val]),
     ok = marionet_device_status:update_analog_value(PinNo, Val),
     {ok, State}.
 

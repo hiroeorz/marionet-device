@@ -222,7 +222,7 @@ current_millisec() ->
 maybe_publish(Topic, Payload, Opts) ->
     case whereis(emqttc) of
 	undefined -> 
-	    lager:warning("MQTT not connected."),
+	    %%lager:warning("MQTT not connected."),
 	    ok;
 	Pid when is_pid(Pid) ->
 	    emqttc:publish(Pid, Topic, Payload, Opts)

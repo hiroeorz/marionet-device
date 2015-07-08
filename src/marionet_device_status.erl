@@ -16,7 +16,9 @@
 	 digital/1,
 	 all_digital/0,
 	 update_analog_value/2,
-	 analog/1]).
+	 analog/1,
+	 all_analog/0,
+	 analog_multi_value/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -107,6 +109,36 @@ analog(PinNo) ->
 	[]  -> undefined;
 	[{PinNo, V}] -> V
     end.
+
+%%--------------------------------------------------------------------
+%% @doc get all digital state.
+%% @end
+%%--------------------------------------------------------------------
+-spec all_analog() -> [non_neg_integer()].
+all_analog() ->
+    case ets:first(analog) of 
+	'$end_of_table' ->
+	    [];
+	Key ->
+	    all_analog(Key, [])
+    end.
+
+all_analog('$end_of_table', Result) ->
+    lists:reverse(Result);
+
+all_analog(Key, Result) ->
+    [{_PinNo, V}] = ets:lookup(analog, Key),
+    NextKey = ets:next(analog, Key),
+    all_analog(NextKey, [V | Result]).
+
+%%--------------------------------------------------------------------
+%% @doc 与えられた番号リストのアナログ値リストを返す.
+%% @end
+%%--------------------------------------------------------------------
+-spec analog_multi_value([non_neg_integer()]) -> [non_neg_integer()].
+analog_multi_value(AnalogNoList) ->
+    ValList = all_analog(),
+    [lists:nth(No, ValList) || No <- AnalogNoList].
 
 %%%===================================================================
 %%% gen_server callbacks
