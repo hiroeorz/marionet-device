@@ -89,7 +89,7 @@ all_digital(Key, Result) ->
     all_digital(NextKey, [X7, X6, X5, X4, X3, X2, X1, X0 | Result]).
 
 %%--------------------------------------------------------------------
-%% @doc get analog value list, from analog no list.
+%% @doc get digital value list, from digital no list.
 %% @end
 %%--------------------------------------------------------------------
 -spec digital_multi_value([non_neg_integer()]) -> [0 | 1].
