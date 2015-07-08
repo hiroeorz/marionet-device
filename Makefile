@@ -46,7 +46,7 @@ generate-plc:
 
 watch:
 	watchmedo shell-command --patterns="*.erl" --recursive --wait \
-	     --command="./rebar compile xref && dialyzer ebin && scp ebin/*.beam root@172.16.15.113:/root/src/marionet-device/rel/plc/plc/lib/marionet_device-0.1/ebin/ && echo done"
+	     --command="./rebar compile xref edoc && dialyzer ebin && scp ebin/*.beam root@172.16.15.113:/root/src/marionet-device/rel/plc/plc/lib/marionet_device-0.1/ebin/ && echo done"
 
 dialyzer: compile
 	@$(DIALYZER) ebin deps/serial/ebin

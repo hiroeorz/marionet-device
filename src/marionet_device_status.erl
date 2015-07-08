@@ -15,6 +15,7 @@
 	 update_digital_port/2,
 	 digital/1,
 	 all_digital/0,
+	 digital_multi_value/1,
 	 update_analog_value/2,
 	 analog/1,
 	 all_analog/0,
@@ -88,6 +89,15 @@ all_digital(Key, Result) ->
     all_digital(NextKey, [X7, X6, X5, X4, X3, X2, X1, X0 | Result]).
 
 %%--------------------------------------------------------------------
+%% @doc get analog value list, from analog no list.
+%% @end
+%%--------------------------------------------------------------------
+-spec digital_multi_value([non_neg_integer()]) -> [0 | 1].
+digital_multi_value(DigitalNoList) ->
+    ValList = all_digital(),
+    [lists:nth(No, ValList) || No <- DigitalNoList].
+
+%%--------------------------------------------------------------------
 %% @doc update analog value(14bit).
 %% @end
 %%--------------------------------------------------------------------
@@ -132,7 +142,7 @@ all_analog(Key, Result) ->
     all_analog(NextKey, [V | Result]).
 
 %%--------------------------------------------------------------------
-%% @doc 与えられた番号リストのアナログ値リストを返す.
+%% @doc get analog value list, from analog no list.
 %% @end
 %%--------------------------------------------------------------------
 -spec analog_multi_value([non_neg_integer()]) -> [non_neg_integer()].
